@@ -2,6 +2,9 @@ import type { GameEngine, GameId, GameMeta } from "../types";
 import { closestEngine } from "./closest/logic";
 import { whoamiEngine } from "./whoami/logic";
 import { impostorEngine } from "./impostor/logic";
+import { higherLowerEngine } from "./higherlower/logic";
+import { spyEngine } from "./spy/logic";
+import { voteEngine } from "./vote/logic";
 import { STUB_GAMES } from "./stubs";
 
 const IMPLEMENTED: GameMeta[] = [
@@ -38,6 +41,39 @@ const IMPLEMENTED: GameMeta[] = [
     maxPlayers: 12,
     implemented: true,
   },
+  {
+    id: "mas-o-menos",
+    name: "¿Más o menos?",
+    emoji: "📊",
+    tagline: "Más alto, más bajo, más chamuyo.",
+    description:
+      "Hay un número secreto. Por turno tirás un palo. Te dicen si es más o menos. El que lo clava, suma. El que tira afuera del rango que ya se sabe, se pasó y pierde el turno.",
+    minPlayers: 3,
+    maxPlayers: 12,
+    implemented: true,
+  },
+  {
+    id: "espia",
+    name: "Espía",
+    emoji: "🕵️",
+    tagline: "Uno mira, otro miente, todos desconfían.",
+    description:
+      "Tipo Spyfall: un lugar secreto y un oficio para cada uno, menos el espía. Se preguntan. Se vota. El espía puede tirar el lugar. Nadie recibe el rol ni el lugar que no le corresponde.",
+    minPlayers: 4,
+    maxPlayers: 12,
+    implemented: true,
+  },
+  {
+    id: "votacion",
+    name: "Votación",
+    emoji: "🗳️",
+    tagline: "¿Quién de este grupo…? Sin filtro, con consecuencias.",
+    description:
+      "Una pregunta de elenco. Todos votan en secreto. Al revelar se ven solo los totales, nunca quién votó a quién.",
+    minPlayers: 3,
+    maxPlayers: 12,
+    implemented: true,
+  },
 ];
 
 export const GAME_CATALOG: GameMeta[] = [...IMPLEMENTED, ...STUB_GAMES];
@@ -46,6 +82,9 @@ const ENGINES: Record<string, GameEngine> = {
   closest: closestEngine as GameEngine,
   whoami: whoamiEngine as GameEngine,
   impostor: impostorEngine as GameEngine,
+  "mas-o-menos": higherLowerEngine as GameEngine,
+  espia: spyEngine as GameEngine,
+  votacion: voteEngine as GameEngine,
 };
 
 export function getGameMeta(id: GameId): GameMeta | undefined {

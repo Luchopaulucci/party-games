@@ -27,27 +27,31 @@ components/games/<Id>View.tsx
 
 El socket manda `{ public, private }` por asiento. El estado crudo del engine
 nunca viaja. Tokens de sesión tampoco. Tests en `tests/multi` recorren el JSON
-crudo y fallan si un impostor recibe la palabra o el target de ¿Quién soy?
-recibe el personaje.
+crudo y fallan si:
+
+- un impostor recibe la palabra
+- el target de ¿Quién soy? recibe el personaje
+- el espía recibe el lugar, o un civil recibe `"role":"espia"`
+- Votación manda un mapa votante→voto (solo totales + el `myVote` propio)
 
 ## MVP implementados
 
 - `closest` — ¿Quién está más cerca?
 - `whoami` — ¿Quién soy?
 - `impostor` — El impostor
+- `mas-o-menos` — ¿Más o menos?
+- `espia` — Espía
+- `votacion` — Votación
 
-## Stubs (no implementados)
+## Stubs (PR aparte)
 
 | id | Nombre | Idea |
 | --- | --- | --- |
-| `mas-o-menos` | ¿Más o menos? | Más alto / más bajo sobre un número secreto. |
 | `subasta` | Subasta de números | Pujas cercanas a un objetivo. |
-| `espia` | Espía | Lugar + roles, un extraño. |
 | `completa-frase` | Completá la frase | Cierres creativos + voto. |
 | `mentira` | Mentira creíble | Tres datos, una mentira. |
 | `dibuja` | Dibujá y adiviná | Pictionary en el celu. |
 | `reflejos` | Reflejos | Toque rápido a una consigna. |
-| `votacion` | Votación | ¿Quién de este grupo…? |
 
 Para sumar uno: engine + mazo + vista + `implemented: true` en el catálogo.
 La sala y el pass-and-play no se tocan.

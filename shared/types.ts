@@ -51,6 +51,10 @@ export interface TestSeed {
   word?: string;
   category?: string;
   impostorIds?: string[];
+  location?: string;
+  spyIds?: string[];
+  min?: number;
+  max?: number;
 }
 
 export interface GameAction {

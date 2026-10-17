@@ -1,7 +1,7 @@
 "use client";
 
 import { useRouter, useSearchParams } from "next/navigation";
-import { Suspense, useState } from "react";
+import { Suspense, useEffect, useState } from "react";
 import { Shell } from "@/components/Shell";
 import { readSession } from "@/lib/session";
 
@@ -9,9 +9,14 @@ function OnlineForm() {
   const params = useSearchParams();
   const router = useRouter();
   const preset = (params.get("code") ?? "").toUpperCase();
-  const existing = preset ? readSession(preset) : null;
-  const [name, setName] = useState(existing?.name ?? "");
+  const [name, setName] = useState("");
   const [code, setCode] = useState(preset);
+
+  useEffect(() => {
+    if (!preset) return;
+    const existing = readSession(preset);
+    if (existing?.name) setName(existing.name);
+  }, [preset]);
 
   function go(intent: "create" | "join") {
     const clean = name.trim();
@@ -23,7 +28,8 @@ function OnlineForm() {
     }
     const session = readSession((q.get("code") ?? "").toUpperCase());
     if (session) q.set("resume", "1");
-    router.push(`/online/sala/${q.get("code") ?? "nueva"}?${q.toString()}`);
+    const path = `/online/sala/${intent === "create" ? "nueva" : code.trim().toUpperCase()}?${q.toString()}`;
+    router.push(path);
   }
 
   return (

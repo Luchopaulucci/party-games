@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { GamePicker } from "@/components/GamePicker";
 import { PlayerList } from "@/components/PlayerList";
 import { ActiveGame } from "@/components/games/ActiveGame";
@@ -35,10 +35,16 @@ function save(match: LocalMatch | null) {
 }
 
 export function LocalMatchApp() {
-  const [names, setNames] = useState(["Luciano", "Meli", "Coco"]);
+  const [names, setNames] = useState(["Luciano", "Meli", "Coco", "Wanda"]);
   const [draft, setDraft] = useState("");
-  const [match, setMatch] = useState<LocalMatch | null>(() => loadMatch());
+  const [match, setMatch] = useState<LocalMatch | null>(null);
   const [unlocked, setUnlocked] = useState<string | null>(null);
+  const [hydrated, setHydrated] = useState(false);
+
+  useEffect(() => {
+    setMatch(loadMatch());
+    setHydrated(true);
+  }, []);
 
   const currentPlayer = useMemo(() => {
     if (!match || match.revealQueue.length === 0) return null;
@@ -65,6 +71,10 @@ export function LocalMatchApp() {
     if (typeof started === "string") return;
     setUnlocked(null);
     persist(started);
+  }
+
+  if (!hydrated) {
+    return <p className="lead">Acomodando la mesa…</p>;
   }
 
   if (!match) {

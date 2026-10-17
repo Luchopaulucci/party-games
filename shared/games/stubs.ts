@@ -1,22 +1,9 @@
 import type { GameMeta } from "../types";
 
 /**
- * Juegos anunciados para después del MVP. Viven en el registro para que
- * el plugin interface ya tenga el hueco: misma forma (engine + vistas
- * pública/privada + componente de cliente + mazo). No hay lógica acá.
+ * Juegos para un PR aparte. El registro ya tiene el hueco.
  */
 export const STUB_GAMES: GameMeta[] = [
-  {
-    id: "mas-o-menos",
-    name: "¿Más o menos?",
-    emoji: "📊",
-    tagline: "Más alto, más bajo, más chamuyo.",
-    description:
-      "Sale un número secreto. Vas diciendo si es más o menos que un palo. El que se pasa, pierde la ronda.",
-    minPlayers: 3,
-    maxPlayers: 12,
-    implemented: false,
-  },
   {
     id: "subasta",
     name: "Subasta de números",
@@ -26,17 +13,6 @@ export const STUB_GAMES: GameMeta[] = [
       "Hay un número objetivo. Cada quien puja con un número propio. Gana el más cercano que no se haya pasado… o sí, ya veremos.",
     minPlayers: 3,
     maxPlayers: 10,
-    implemented: false,
-  },
-  {
-    id: "espia",
-    name: "Espía",
-    emoji: "🕵️",
-    tagline: "Uno mira, otro miente, todos desconfían.",
-    description:
-      "Un lugar secreto, roles distintos, preguntas cruzadas. Tipo Spyfall pero con bondi y parrilla.",
-    minPlayers: 4,
-    maxPlayers: 12,
     implemented: false,
   },
   {
@@ -80,17 +56,6 @@ export const STUB_GAMES: GameMeta[] = [
     description:
       "Aparece una consigna relámpago. El primero que toca bien, suma. El que se apura mal, resta.",
     minPlayers: 2,
-    maxPlayers: 12,
-    implemented: false,
-  },
-  {
-    id: "votacion",
-    name: "Votación",
-    emoji: "🗳️",
-    tagline: "¿Quién de este grupo…? Sin filtro, con consecuencias.",
-    description:
-      "Preguntas de elenco. Todos votan en secreto. Se revela y se discute hasta el postre.",
-    minPlayers: 3,
     maxPlayers: 12,
     implemented: false,
   },

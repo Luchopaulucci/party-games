@@ -9,9 +9,11 @@ import { readSession } from "@/lib/session";
 function RoomInner() {
   const params = useParams<{ code: string }>();
   const search = useSearchParams();
-  const rawCode = params.code === "nueva" ? undefined : params.code.toUpperCase();
-  const name = search.get("name") ?? readSession(rawCode ?? "")?.name ?? "Invitado";
-  const token = rawCode ? readSession(rawCode)?.token : undefined;
+  const rawCode = params.code === "nueva" ? undefined : String(params.code).toUpperCase();
+  const nameFromQuery = search.get("name")?.trim();
+  const stored = rawCode ? readSession(rawCode) : null;
+  const name = nameFromQuery || stored?.name || "Invitado";
+  const token = stored?.token;
 
   return <RoomClient code={rawCode} name={name} token={token} />;
 }

@@ -30,6 +30,24 @@ function hello(socket: Socket, payload: Record<string, unknown>) {
   return new Promise<Hello>((resolve) => socket.emit("hello", payload, resolve));
 }
 
+function assertNoBallotMap(events: unknown[]) {
+  const walk = (node: unknown, path: string) => {
+    if (!node || typeof node !== "object") return;
+    if (Array.isArray(node)) {
+      node.forEach((item, i) => walk(item, `${path}[${i}]`));
+      return;
+    }
+    const rec = node as Record<string, unknown>;
+    if ("votes" in rec && rec.votes && typeof rec.votes === "object" && !Array.isArray(rec.votes)) {
+      throw new Error(`mapa de votos filtrado en ${path}`);
+    }
+    for (const [key, value] of Object.entries(rec)) {
+      walk(value, `${path}.${key}`);
+    }
+  };
+  events.forEach((ev, i) => walk(ev, `event${i}`));
+}
+
 function waitFor(
   client: Client,
   pred: (state: Record<string, unknown>) => boolean,
@@ -181,6 +199,76 @@ describe("multi-client rooms", () => {
     const hostDump = JSON.stringify(watch[0]!.events.slice(whoStart[0]));
     expect(hostDump).not.toContain(character);
 
+    clients[0]!.socket.emit("toLobby");
+    await waitFor(clients[0]!, (s) => s.status === "lobby", "lobby before higher-lower");
+    clients[0]!.socket.emit("startGame", {
+      gameId: "mas-o-menos",
+      seed: { prompt: "¿Cuánto es el secreto?", trueAnswer: 42, min: 1, max: 100 },
+    });
+    await waitFor(clients[0]!, (s) => s.gameId === "mas-o-menos", "higher-lower started");
+    expect((clients[0]!.box.last?.public as { secret?: number } | undefined)?.secret).toBeUndefined();
+    clients[0]!.socket.emit("action", { type: "guess", payload: { value: 42 } });
+    await waitFor(clients[0]!, (s) => s.status === "finished", "higher-lower finished");
+
+    clients[0]!.socket.emit("toLobby");
+    await waitFor(clients[0]!, (s) => s.status === "lobby", "lobby before spy");
+    const secretLocation = "Hangar Secreto de Ezeiza 77";
+    const spyId = seats[4]!.playerId;
+    const spyStart = watch.map((c) => c.events.length);
+    clients[0]!.socket.emit("startGame", {
+      gameId: "espia",
+      seed: { location: secretLocation, spyIds: [spyId] },
+    });
+    await waitFor(clients[4]!, (s) => s.gameId === "espia", "spy started");
+    await new Promise((r) => setTimeout(r, 80));
+    for (let i = 0; i < watch.length; i += 1) {
+      const dumped = JSON.stringify(watch[i]!.events.slice(spyStart[i]));
+      if (playerIds[i] === spyId) {
+        expect(dumped, "espía no debe recibir el lugar").not.toContain(secretLocation);
+        expect(dumped).toContain("espia");
+      } else {
+        expect(dumped, "civil no debe recibir rol de espía").not.toContain('"role":"espia"');
+        expect(dumped).toContain(secretLocation);
+        expect(dumped).not.toContain(`"spyIds":["${spyId}"]`);
+      }
+    }
+
+    clients[0]!.socket.emit("toLobby");
+    await waitFor(clients[0]!, (s) => s.status === "lobby", "lobby before vote");
+    const voteStart = watch.map((c) => c.events.length);
+    clients[0]!.socket.emit("startGame", {
+      gameId: "votacion",
+      seed: { prompt: "¿Quién se come la última empanada de prueba?" },
+    });
+    await waitFor(clients[0]!, (s) => s.gameId === "votacion", "vote started");
+    const voteClients = [clients[0]!, clients[1]!, coco2, clients[3]!, clients[4]!, clients[5]!];
+    for (let i = 0; i < voteClients.length; i += 1) {
+      const target = seats[(i + 1) % seats.length]!.playerId;
+      voteClients[i]!.socket.emit("action", { type: "vote", payload: { targetId: target } });
+    }
+    await waitFor(clients[0]!, (s) => (s.public as { votedIds?: string[] })?.votedIds?.length === 6, "all voted");
+    clients[0]!.socket.emit("action", { type: "reveal" });
+    await waitFor(clients[0]!, (s) => s.status === "finished", "vote revealed");
+    await new Promise((r) => setTimeout(r, 60));
+    for (let i = 0; i < voteClients.length; i += 1) {
+      const slice = voteClients[i]!.events.slice(voteStart[i]);
+      assertNoBallotMap(slice);
+      const mine = playerIds[i]!;
+      const others = seats.filter((s) => s.playerId !== mine);
+      const dumped = JSON.stringify(slice);
+      for (const other of others) {
+        const foreignVote = `"myVote":"${other.playerId}"`;
+        const iVotedForThem = seats[(i + 1) % seats.length]!.playerId === other.playerId;
+        if (!iVotedForThem) {
+          expect(dumped).not.toContain(foreignVote);
+        }
+      }
+    }
+
+    clients[0]!.socket.emit("toLobby");
+    const lobbyAfterVote = await waitFor(clients[0]!, (s) => s.status === "lobby", "lobby after vote");
+    const hostScoreThen = (lobbyAfterVote.you as { score: number }).score;
+
     clients[0]!.socket.disconnect();
     await new Promise((r) => setTimeout(r, 140));
     const migrated = await waitFor(
@@ -199,9 +287,6 @@ describe("multi-client rooms", () => {
     expect(back.playerId).toBe(seats[0]!.playerId);
     const reclaimedHost = await waitFor(host2, (s) => (s.you as { isHost: boolean }).isHost, "host reclaimed");
     expect((reclaimedHost.you as { isHost: boolean }).isHost).toBe(true);
-    const hostScoreThen = (finishedClosest.players as { id: string; score: number }[]).find(
-      (p) => p.id === seats[0]!.playerId,
-    )?.score;
     expect((reclaimedHost.you as { score: number }).score).toBe(hostScoreThen);
 
     const other = connect(srv.url);

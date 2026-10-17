@@ -7,13 +7,16 @@ Dos modos:
 1. **En línea** — el anfitrión arma una sala (código corto + QR). Cada uno entra con su nombre desde el teléfono. El server es dueño del estado: asiento, puntaje y secretos. Si recargás o se te corta, volvés al mismo asiento. Si el host se va más de N segundos, hostea otro; el original reclama al recargar.
 2. **Pasate el celu** — un solo teléfono, 100% client-side, anda offline (PWA / service worker). Pensado para 375px.
 
-## Juegos MVP
+## Juegos MVP (6)
 
 - **¿Quién está más cerca?** — pregunta numérica, palos tapados, gana el más cercano. Premisa tipo [cuanto-es](https://github.com/Luchopaulucci/cuanto-es) (el repo estaba vacío; copiamos la idea de scoring y armamos un mazo argentino).
 - **¿Quién soy?** — todos ven el personaje menos el target. Preguntas sí/no y un palo al nombre.
 - **El impostor** — la misma palabra para todos menos el/los impostor(es). Se discute y se vota.
+- **¿Más o menos?** — número secreto. Por turno un palo; el server dice *más* / *menos*. El que clava suma 3. Si tirás afuera del rango que ya se sabe, te pasaste y perdés el turno.
+- **Espía** — tipo Spyfall: lugar + oficio para los civiles. El espía no recibe el lugar. Se pregunta, se vota, el espía puede adivinar el sitio. El celu equivocado nunca ve el rol de espía ni el lugar.
+- **Votación** — “¿Quién de este grupo…?”. Votos secretos. Al revelar **solo totales**, nunca el mapa de quién votó a quién.
 
-Los próximos (stubs en el registro, sin lógica): ¿Más o menos?, Subasta de números, Espía, Completá la frase, Mentira creíble, Dibujá y adiviná, Reflejos, Votación. Ver `docs/plugins.md`.
+Quedan para un PR aparte (stubs): Subasta de números, Completá la frase, Mentira creíble, Dibujá y adiviná, Reflejos. Ver `docs/plugins.md`.
 
 ## Stack
 
