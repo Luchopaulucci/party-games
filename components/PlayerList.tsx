@@ -14,7 +14,9 @@ export function PlayerList({
 }) {
   return (
     <div className="players">
-      {players.map((p, i) => (
+      {[...players]
+        .sort((a, b) => b.score - a.score)
+        .map((p, i) => (
         <div className="player" key={p.id}>
           <span className="swatch" style={{ background: playerColor(p, i) }} />
           <div className="meta" style={{ flex: 1 }}>
