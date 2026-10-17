@@ -36,7 +36,7 @@ export function ChainView({
     <div className="stack">
       <p className="prompt">Última: {publicView.lastWord}</p>
       <p className="lead">
-        {privateView.isTurn ? "Tu turno. Tirà una palabra que pegue." : `Espera ${current}.`}
+        {privateView.isTurn ? "Tu turno. Tirá una palabra que pegue." : `Esperá a ${current}.`}
       </p>
       {privateView.isTurn ? (
         <form

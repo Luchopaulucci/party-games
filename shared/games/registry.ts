@@ -44,7 +44,7 @@ const IMPLEMENTED: GameMeta[] = [
     minPlayers: 3,
     maxPlayers: 12,
     implemented: true,
-    howTo: "Preguntá sí/no. El resto contesta. Cuando te late, tirà el nombre.",
+    howTo: "Preguntá sí/no. El resto contesta. Cuando te late, tirá el nombre.",
   },
   {
     id: "impostor",
@@ -231,7 +231,7 @@ const IMPLEMENTED: GameMeta[] = [
     minPlayers: 2,
     maxPlayers: 12,
     implemented: true,
-    howTo: "Leé, tocà una de las 4. Cuando todos mandan (o el host cierra), se ve la buena.",
+    howTo: "Leé, tocá una de las 4. Cuando todos mandan (o el host cierra), se ve la buena.",
   },
   {
     id: "cadena",
@@ -242,7 +242,7 @@ const IMPLEMENTED: GameMeta[] = [
     minPlayers: 2,
     maxPlayers: 12,
     implemented: true,
-    howTo: "Ves la última palabra. Tirà otra que pegue. Al final se ve toda la cadena.",
+    howTo: "Ves la última palabra. Tirá otra que pegue. Al final se ve toda la cadena.",
   },
   {
     id: "emoji",
