@@ -6,6 +6,7 @@ import {
   SERVER_SAFE_ERROR,
   actionPayloadSchema,
   helloPayloadSchema,
+  reactPayloadSchema,
   startGamePayloadSchema,
   type ActionPayload,
   type HelloPayload,
@@ -89,6 +90,13 @@ export function createRealtimeServer(httpServer: HttpServer, opts: CreateRealtim
       const data = socket.data as SocketData;
       if (!data.code || !data.playerId) return cb?.({ ok: false, error: "Sin asiento." });
       const error = rooms.toLobby(data.code, data.playerId);
+      cb?.(error ? { ok: false, error } : { ok: true });
+    });
+
+    onValidated(socket, "react", reactPayloadSchema, (payload, cb) => {
+      const data = socket.data as SocketData;
+      if (!data.code || !data.playerId) return cb?.({ ok: false, error: "Sin asiento." });
+      const error = rooms.react(data.code, data.playerId, payload.emoji);
       cb?.(error ? { ok: false, error } : { ok: true });
     });
 

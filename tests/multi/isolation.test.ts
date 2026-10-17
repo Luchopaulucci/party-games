@@ -457,5 +457,53 @@ describe("multi-client rooms", () => {
     const mimicDumps = await dumpsAfter("mimica");
     expect(mimicDumps[0]).toContain("mima-secreta");
     for (const dump of mimicDumps.slice(1)) expect(dump).not.toContain("mima-secreta");
+
+    host.socket.emit("toLobby");
+    await waitFor(host, (s) => s.status === "lobby", "lobby trivia");
+    host.socket.emit("startGame", {
+      gameId: "trivia",
+      seed: { prompt: "cuánto", options: ["uno", "dos", "tres", "cuatro"], correct: 3 },
+    });
+    for (const dump of await dumpsAfter("trivia")) {
+      expect(dump).not.toContain('"correct":3');
+    }
+
+    host.socket.emit("toLobby");
+    await waitFor(host, (s) => s.status === "lobby", "lobby telefono");
+    host.socket.emit("startGame", { gameId: "telefono", seed: { prompt: "telefono-secreto-original" } });
+    await dumpsAfter("telefono");
+    expect((host.box.last?.private as { previous: string | null }).previous).toBe("telefono-secreto-original");
+    for (const c of clients.slice(1)) {
+      expect((c.box.last?.private as { previous: string | null }).previous).toBeNull();
+      expect(JSON.stringify(c.box.last)).not.toContain("telefono-secreto-original");
+    }
+
+    host.socket.emit("toLobby");
+    await waitFor(host, (s) => s.status === "lobby", "lobby preferis");
+    const prefStart = clients.map((c) => c.events.length);
+    host.socket.emit("startGame", { gameId: "preferis", seed: { prompt: "A", answer: "B" } });
+    await dumpsAfter("preferis");
+    host.socket.emit("action", { type: "vote", payload: { side: "left" } });
+    await new Promise((r) => setTimeout(r, 40));
+    for (const c of clients) {
+      assertNoBallotMap(c.events.slice(prefStart[clients.indexOf(c)]));
+    }
+
+    host.socket.emit("toLobby");
+    await waitFor(host, (s) => s.status === "lobby", "lobby emoji");
+    host.socket.emit("startGame", { gameId: "emoji", seed: { prompt: "🦁", answer: "emoji-secreto", hint: "x" } });
+    for (const dump of await dumpsAfter("emoji")) {
+      expect(dump).not.toContain("emoji-secreto");
+    }
+
+    host.socket.emit("toLobby");
+    await waitFor(host, (s) => s.status === "lobby", "lobby verdad");
+    host.socket.emit("startGame", { gameId: "verdad-reto", seed: { targetId: created.playerId, prompt: "carta-publica" } });
+    await dumpsAfter("verdad-reto");
+    host.socket.emit("action", { type: "pick", payload: { choice: "verdad" } });
+    await new Promise((r) => setTimeout(r, 40));
+    host.socket.emit("action", { type: "vote", payload: { value: "cumplio" } });
+    await new Promise((r) => setTimeout(r, 40));
+    for (const c of clients) assertNoBallotMap(c.events);
   });
 });

@@ -26,6 +26,8 @@ export function GamePicker({
               <small>
                 {game.minPlayers}+ jugadores
                 {playerCount !== undefined && playerCount < game.minPlayers ? " · faltan pibes" : ""}
+                {" · "}
+                {game.howTo}
               </small>
             )}
           </>

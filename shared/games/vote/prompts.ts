@@ -16,4 +16,13 @@ export const VOTE_PROMPTS: VotePrompt[] = [
   { id: "llave", prompt: "¿Quién de este grupo perdería las llaves en la previa y las encontraría en la heladera?" },
   { id: "excusa", prompt: "¿Quién de este grupo tiene la excusa más creativa para llegar tarde?" },
   { id: "playlist", prompt: "¿Quién de este grupo arruinaría la playlist con un tema de la secundaria?" },
+  { id: "heladera", prompt: "¿Quién de este grupo guardaría las llaves en la heladera y lo defendería?" },
+  { id: "audio", prompt: "¿Quién de este grupo manda audios de 4 minutos para decir 'ok'?" },
+  { id: "cumple", prompt: "¿Quién de este grupo organiza el cumple y se olvida de pedir el salón?" },
+  { id: "nafta", prompt: "¿Quién de este grupo nunca pone nafta cuando pide el auto?" },
+  { id: "serie", prompt: "¿Quién de este grupo spoilea sin querer y dice 'uy, perdón'?" },
+  { id: "asiento", prompt: "¿Quién de este grupo se sienta adelante y maneja el auxilio?" },
+  { id: "guita", prompt: "¿Quién de este grupo divide la cuenta hasta el peso y el 10 centavos?" },
+  { id: "ex", prompt: "¿Quién de este grupo sigue al ex en todas las redes 'por las fotos de los perros'?" },
+  { id: "fiesta", prompt: "¿Quién de este grupo dice 'me voy' y se queda dos horas más?" },
 ];

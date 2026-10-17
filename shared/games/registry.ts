@@ -16,6 +16,12 @@ import { neverEngine } from "./never/logic";
 import { stopEngine } from "./stop/logic";
 import { bombEngine } from "./bomb/logic";
 import { mimicEngine } from "./charades/logic";
+import { dareEngine } from "./dare/logic";
+import { triviaEngine } from "./trivia/logic";
+import { chainEngine } from "./chain/logic";
+import { emojiEngine } from "./emoji/logic";
+import { phoneEngine } from "./phone/logic";
+import { wouldEngine } from "./would/logic";
 
 const IMPLEMENTED: GameMeta[] = [
   {
@@ -27,6 +33,7 @@ const IMPLEMENTED: GameMeta[] = [
     minPlayers: 2,
     maxPlayers: 12,
     implemented: true,
+    howTo: "Cada uno tira un número en secreto. Gana el más cerca. Si empatan, se parten los puntos.",
   },
   {
     id: "whoami",
@@ -37,6 +44,7 @@ const IMPLEMENTED: GameMeta[] = [
     minPlayers: 3,
     maxPlayers: 12,
     implemented: true,
+    howTo: "Preguntá sí/no. El resto contesta. Cuando te late, tirà el nombre.",
   },
   {
     id: "impostor",
@@ -47,6 +55,7 @@ const IMPLEMENTED: GameMeta[] = [
     minPlayers: 3,
     maxPlayers: 12,
     implemented: true,
+    howTo: "Si ves la palabra, charlá sin decirla. Si no, fingí. Después se vota. Solo se ven totales.",
   },
   {
     id: "mas-o-menos",
@@ -57,6 +66,7 @@ const IMPLEMENTED: GameMeta[] = [
     minPlayers: 3,
     maxPlayers: 12,
     implemented: true,
+    howTo: "De a uno tiran un número. El server dice más o menos. Quien clava, suma.",
   },
   {
     id: "espia",
@@ -67,6 +77,7 @@ const IMPLEMENTED: GameMeta[] = [
     minPlayers: 4,
     maxPlayers: 12,
     implemented: true,
+    howTo: "Si no sos espía, ves el lugar. Preguntá para pescarlo. El espía puede adivinar el lugar.",
   },
   {
     id: "votacion",
@@ -77,6 +88,7 @@ const IMPLEMENTED: GameMeta[] = [
     minPlayers: 3,
     maxPlayers: 12,
     implemented: true,
+    howTo: "Leé la pregunta. Votá en secreto. Se revelan totales, nunca quién votó a quién.",
   },
   {
     id: "subasta",
@@ -87,6 +99,7 @@ const IMPLEMENTED: GameMeta[] = [
     minPlayers: 3,
     maxPlayers: 10,
     implemented: true,
+    howTo: "Pujá tapado. En modo sin pasarse, gana el más alto que no se pasó.",
   },
   {
     id: "completa-frase",
@@ -97,6 +110,7 @@ const IMPLEMENTED: GameMeta[] = [
     minPlayers: 3,
     maxPlayers: 12,
     implemented: true,
+    howTo: "Completá la frase. Después votá la más graciosa, menos la tuya. Si copian, JINX.",
   },
   {
     id: "mentira",
@@ -107,6 +121,7 @@ const IMPLEMENTED: GameMeta[] = [
     minPlayers: 3,
     maxPlayers: 10,
     implemented: true,
+    howTo: "El narrador tira 3 frases. El resto vota cuál es mentira. No se ve el mapa de votos.",
   },
   {
     id: "dibuja",
@@ -117,6 +132,7 @@ const IMPLEMENTED: GameMeta[] = [
     minPlayers: 3,
     maxPlayers: 12,
     implemented: true,
+    howTo: "Si te toca dibujar, ves la palabra. El resto adivina. El arte es opcional, el chamuyo no.",
   },
   {
     id: "reflejos",
@@ -127,6 +143,7 @@ const IMPLEMENTED: GameMeta[] = [
     minPlayers: 2,
     maxPlayers: 12,
     implemented: true,
+    howTo: "Leé y tocá. El primero que acierta suma. El que erra, resta.",
   },
   {
     id: "onda",
@@ -137,6 +154,7 @@ const IMPLEMENTED: GameMeta[] = [
     minPlayers: 3,
     maxPlayers: 12,
     implemented: true,
+    howTo: "El psíquico ve un número y tira una pista. El resto apunta en la escala.",
   },
   {
     id: "taboo",
@@ -147,6 +165,7 @@ const IMPLEMENTED: GameMeta[] = [
     minPlayers: 3,
     maxPlayers: 10,
     implemented: true,
+    howTo: "Describí la palabra sin usar las prohibidas. Si las decís, te pitan.",
   },
   {
     id: "yo-nunca",
@@ -157,6 +176,7 @@ const IMPLEMENTED: GameMeta[] = [
     minPlayers: 3,
     maxPlayers: 12,
     implemented: true,
+    howTo: "Leé el 'yo nunca'. Tocá yo sí / yo no. Solo se ven totales.",
   },
   {
     id: "tutti",
@@ -167,6 +187,7 @@ const IMPLEMENTED: GameMeta[] = [
     minPlayers: 2,
     maxPlayers: 12,
     implemented: true,
+    howTo: "Una letra, cinco categorías. Únicas valen 2, repetidas 1. Nadie ve lo tuyo hasta el alto.",
   },
   {
     id: "bombita",
@@ -177,6 +198,7 @@ const IMPLEMENTED: GameMeta[] = [
     minPlayers: 2,
     maxPlayers: 12,
     implemented: true,
+    howTo: "Pasala rápido. Nadie ve cuándo explota. Al que le queda, menos un punto.",
   },
   {
     id: "mimica",
@@ -187,6 +209,73 @@ const IMPLEMENTED: GameMeta[] = [
     minPlayers: 3,
     maxPlayers: 12,
     implemented: true,
+    howTo: "Si actuás, ves la palabra. El resto adivina. Sin hablar.",
+  },
+  {
+    id: "verdad-reto",
+    name: "Verdad o reto",
+    emoji: "😈",
+    tagline: "La previa clásica. El juez es la mesa.",
+    description: "Como las apps de previas AR: una carta, la mesa vota si cumplió.",
+    minPlayers: 3,
+    maxPlayers: 12,
+    implemented: true,
+    howTo: "Uno elige verdad o reto. Hace la carta. El resto vota si cumplió. Solo totales.",
+  },
+  {
+    id: "trivia",
+    name: "Preguntados rápido",
+    emoji: "🧠",
+    tagline: "Cultura general con acento rioplatense.",
+    description: "4 opciones. La correcta no viaja hasta que todos contestan.",
+    minPlayers: 2,
+    maxPlayers: 12,
+    implemented: true,
+    howTo: "Leé, tocà una de las 4. Cuando todos mandan (o el host cierra), se ve la buena.",
+  },
+  {
+    id: "cadena",
+    name: "Cadena de palabras",
+    emoji: "🔗",
+    tagline: "Asociá. No copies. No pienses demasiado.",
+    description: "Cada uno tira una palabra que pegue con la anterior.",
+    minPlayers: 2,
+    maxPlayers: 12,
+    implemented: true,
+    howTo: "Ves la última palabra. Tirà otra que pegue. Al final se ve toda la cadena.",
+  },
+  {
+    id: "emoji",
+    name: "Adiviná el emoji",
+    emoji: "😎",
+    tagline: "Tres emojis. Un título. Un orgullo herido.",
+    description: "Canción, peli o cosa argentina en emojis.",
+    minPlayers: 2,
+    maxPlayers: 12,
+    implemented: true,
+    howTo: "Mirá los emojis. Escribí qué es. El primero que clava, suma 3.",
+  },
+  {
+    id: "telefono",
+    name: "Teléfono descompuesto",
+    emoji: "📞",
+    tagline: "Lo que entendiste no es lo que dijeron.",
+    description: "Cada uno reescribe lo anterior. Solo el que escribe ve el texto previo.",
+    minPlayers: 3,
+    maxPlayers: 12,
+    implemented: true,
+    howTo: "Te toca, ves solo la frase anterior y la reescribís. Al final se muestra el desastre.",
+  },
+  {
+    id: "preferis",
+    name: "¿Qué preferís?",
+    emoji: "🤷",
+    tagline: "A o B. Sin término medio. Como en la vida.",
+    description: "This or that. Solo totales, votos anónimos.",
+    minPlayers: 2,
+    maxPlayers: 12,
+    implemented: true,
+    howTo: "Elegí A o B. Se revelan totales, nunca quién votó qué.",
   },
 ];
 
@@ -210,6 +299,12 @@ const ENGINES: Record<string, GameEngine> = {
   tutti: stopEngine as GameEngine,
   bombita: bombEngine as GameEngine,
   mimica: mimicEngine as GameEngine,
+  "verdad-reto": dareEngine as GameEngine,
+  trivia: triviaEngine as GameEngine,
+  cadena: chainEngine as GameEngine,
+  emoji: emojiEngine as GameEngine,
+  telefono: phoneEngine as GameEngine,
+  preferis: wouldEngine as GameEngine,
 };
 
 export function getGameMeta(id: GameId): GameMeta | undefined {

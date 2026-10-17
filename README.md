@@ -7,9 +7,9 @@ Dos modos:
 1. **En línea** — el anfitrión arma una sala (código corto + QR). Cada uno entra con su nombre desde el teléfono. El server es dueño del estado: asiento, puntaje y secretos. Si recargás o se te corta, volvés al mismo asiento. Si el host se va más de N segundos, hostea otro; el original reclama al recargar. Los mensajes de socket se validan (zod) y un payload podrido no tira el proceso. Las salas vacías o inactivas se borran después de un TTL.
 2. **Pasate el celu** — un solo teléfono, 100% client-side, anda offline (PWA / service worker). Pensado para 375px.
 
-## Juegos (17)
+## Juegos (23)
 
-Extras de sala (timer, rondas, cantidad de impostores/espías, modo subasta) van en el lobby. Luciano puede apagarlos.
+Extras de sala (timer, rondas, impostores/espías, modo subasta, **noche de juegos**) van en el lobby. En cada juego hay **¿Cómo se juega?**. Al terminar, podio con stats. Reacciones en vivo y sonido/vibración opcionales.
 
 ### Los 11 de la lista
 
@@ -37,6 +37,12 @@ Extras de sala (timer, rondas, cantidad de impostores/espías, modo subasta) van
 | **Tutti frutti** | Stop / Scattergories. Letra + 5 categorías. Respuestas tapadas hasta el alto. Únicas = 2, repetidas = 1. |
 | **Bombita** | Papa caliente. El `explodeAt` **nunca** se manda al cliente. |
 | **Mímica** | Charadas / Heads Up. La consigna solo la ve quien actúa. |
+| **Verdad o reto** | Apps de previas AR: carta + la mesa vota si cumplió. Totales nomás. |
+| **Preguntados rápido** | Trivia 4 opciones. El índice correcto no viaja hasta el cierre. |
+| **Cadena de palabras** | Asociación libre. La cadena completa recién al revelar. |
+| **Adiviná el emoji** | Canción/peli/cosa en emojis. Respuesta tapada. |
+| **Teléfono descompuesto** | Cada uno reescribe lo anterior. Solo el escritor ve el texto previo. |
+| **¿Qué preferís?** | This or that. Votos anónimos, solo totales. |
 
 ## Estilo
 

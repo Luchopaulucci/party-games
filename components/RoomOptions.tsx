@@ -76,6 +76,18 @@ export function RoomOptions({
           <option value="cerca">El más cercano (aunque se pase)</option>
         </select>
       </label>
+      <label className="player" style={{ display: "flex", justifyContent: "space-between" }}>
+        <span>
+          <strong>Noche de juegos</strong>
+          <small>Encadena varios juegos y acumula puntos. El podio sale al final.</small>
+        </span>
+        <input
+          type="checkbox"
+          checked={Boolean(value.night)}
+          onChange={(e) => onChange({ ...value, night: e.target.checked })}
+          style={{ width: 22, height: 22, accentColor: "#ff8fab" }}
+        />
+      </label>
     </div>
   );
 }

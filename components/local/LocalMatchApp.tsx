@@ -8,6 +8,11 @@ import { GamePicker } from "@/components/GamePicker";
 import { HandoffScreen } from "@/components/HandoffScreen";
 import { PlayerList } from "@/components/PlayerList";
 import { ActiveGame } from "@/components/games/ActiveGame";
+import { HowToPlay } from "@/components/HowToPlay";
+import { PodiumScreen } from "@/components/PodiumScreen";
+import { FxToggle } from "@/components/FxToggle";
+import { nextLocalRound } from "@/lib/local-match";
+import { playFx } from "@/lib/fx";
 import { CATEGORIES, type Category } from "@/shared/games/closest/premise-types";
 import { getGameMeta } from "@/shared/games/registry";
 import type { GameId, GameOptions } from "@/shared/types";
@@ -165,6 +170,7 @@ export function LocalMatchApp() {
             onPicante={() => setPicante((v) => !v)}
           />
           <RoomOptions value={options} onChange={setOptions} />
+          <FxToggle />
         </div>
         <h2>Juegos</h2>
         <GamePicker onPick={begin} playerCount={players.length} />
@@ -194,6 +200,14 @@ export function LocalMatchApp() {
       </p>
 
       <div className="card stack">
+          {meta?.howTo ? <HowToPlay text={meta.howTo} /> : null}
+          {match.status === "finished" ? (
+            <PodiumScreen
+              players={match.players}
+              youId={viewer.id}
+              nightLabel={match.options.night ? "Noche de juegos" : null}
+            />
+          ) : null}
           <ActiveGame
             gameId={match.gameId!}
             publicView={view.public}
@@ -211,6 +225,7 @@ export function LocalMatchApp() {
               persist({ ...applied, passIndex: nextIndex });
               return;
             }
+            if (applied.status === "finished" && match.status !== "finished") playFx("reveal");
             persist(applied);
           }}
         />
@@ -241,13 +256,13 @@ export function LocalMatchApp() {
             type="button"
             onClick={() => {
               if (!match.gameId) return;
-              const next = startLocalGame({ ...match, passIndex: 0 }, match.gameId);
+              const next = nextLocalRound({ ...match, passIndex: 0 });
               if (typeof next === "string") return;
               setUnlocked(null);
               persist(next);
             }}
           >
-            Otra ronda
+            {match.options.night ? "Siguiente de la noche" : "Otra ronda"}
           </button>
           <button
             className="btn btn-ghost"

@@ -19,6 +19,12 @@ import { NeverView } from "./NeverView";
 import { StopView } from "./StopView";
 import { BombView } from "./BombView";
 import { MimicView } from "./MimicView";
+import { DareView } from "./DareView";
+import { TriviaView } from "./TriviaView";
+import { ChainView } from "./ChainView";
+import { EmojiView } from "./EmojiView";
+import { PhoneView } from "./PhoneView";
+import { WouldView } from "./WouldView";
 import type { ClosestPrivateView, ClosestPublicView } from "@/shared/games/closest/logic";
 import type { WhoAmIPrivateView, WhoAmIPublicView } from "@/shared/games/whoami/logic";
 import type { ImpostorPrivateView, ImpostorPublicView } from "@/shared/games/impostor/logic";
@@ -36,6 +42,12 @@ import type { NeverPrivateView, NeverPublicView } from "@/shared/games/never/log
 import type { StopPrivateView, StopPublicView } from "@/shared/games/stop/logic";
 import type { BombPrivateView, BombPublicView } from "@/shared/games/bomb/logic";
 import type { MimicPrivateView, MimicPublicView } from "@/shared/games/charades/logic";
+import type { DarePrivateView, DarePublicView } from "@/shared/games/dare/logic";
+import type { TriviaPrivateView, TriviaPublicView } from "@/shared/games/trivia/logic";
+import type { ChainPrivateView, ChainPublicView } from "@/shared/games/chain/logic";
+import type { EmojiPrivateView, EmojiPublicView } from "@/shared/games/emoji/logic";
+import type { PhonePrivateView, PhonePublicView } from "@/shared/games/phone/logic";
+import type { WouldPrivateView, WouldPublicView } from "@/shared/games/would/logic";
 
 export function ActiveGame({
   gameId,
@@ -94,6 +106,18 @@ export function ActiveGame({
         <BombView publicView={publicView as BombPublicView} privateView={privateView as BombPrivateView} youId={youId} {...common} />
       ) : gameId === "mimica" ? (
         <MimicView publicView={publicView as MimicPublicView} privateView={privateView as MimicPrivateView} youId={youId} {...common} />
+      ) : gameId === "verdad-reto" ? (
+        <DareView publicView={publicView as DarePublicView} privateView={privateView as DarePrivateView} youId={youId} {...common} />
+      ) : gameId === "trivia" ? (
+        <TriviaView publicView={publicView as TriviaPublicView} privateView={privateView as TriviaPrivateView} {...common} />
+      ) : gameId === "cadena" ? (
+        <ChainView publicView={publicView as ChainPublicView} privateView={privateView as ChainPrivateView} {...common} />
+      ) : gameId === "emoji" ? (
+        <EmojiView publicView={publicView as EmojiPublicView} privateView={privateView as EmojiPrivateView} {...common} />
+      ) : gameId === "telefono" ? (
+        <PhoneView publicView={publicView as PhonePublicView} privateView={privateView as PhonePrivateView} {...common} />
+      ) : gameId === "preferis" ? (
+        <WouldView publicView={publicView as WouldPublicView} privateView={privateView as WouldPrivateView} {...common} />
       ) : (
         <p className="lead">Ese juego todavía está en el horno.</p>
       )}

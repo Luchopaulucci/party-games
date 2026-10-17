@@ -3,7 +3,7 @@ name: CI
 on:
   pull_request:
   push:
-    branches: [master, feat/mvp, feat/more-games]
+    branches: [master, feat/mvp, feat/more-games, feat/iteracion-3]
 
 jobs:
   check:
