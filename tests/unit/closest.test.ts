@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import { PREMISES } from "@/shared/games/closest/catalog";
 import { closestEngine, scoreClosestRound } from "@/shared/games/closest/logic";
 import { mulberry32 } from "@/shared/rng";
 
@@ -48,5 +49,15 @@ describe("closest engine privacy", () => {
     expect(closestEngine.isFinished(state)).toBe(true);
     expect(closestEngine.scores(state).a).toBe(5);
     expect((closestEngine.publicView(state) as { trueAnswer: number }).trueAnswer).toBe(4);
+  });
+
+  it("respeta categorías del mazo de ¿Cuánto es?", () => {
+    const state = closestEngine.createState({
+      playerIds: ["a", "b"],
+      rng: mulberry32(1),
+      categories: ["animales"],
+      picante: false,
+    });
+    expect(PREMISES.find((p) => p.id === state.questionId)?.category).toBe("animales");
   });
 });

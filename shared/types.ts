@@ -19,6 +19,7 @@ export interface PlayerPublic {
   score: number;
   connected: boolean;
   isHost: boolean;
+  color: string;
 }
 
 export interface GameMeta {
@@ -37,6 +38,8 @@ export interface GameContext {
   rng: () => number;
   usedContentIds?: string[];
   seed?: TestSeed;
+  categories?: string[];
+  picante?: boolean;
 }
 
 /** Only honored when ALLOW_TEST_SEEDS=1. Never enable that in production. */

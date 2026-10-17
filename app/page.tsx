@@ -4,11 +4,11 @@ import { Shell } from "@/components/Shell";
 export default function HomePage() {
   return (
     <Shell>
-      <p className="badge">v0.1 · previa edition</p>
-      <h1 style={{ marginTop: 14 }}>Juegos para el celu, no para el PowerPoint del trabajo.</h1>
+      <p className="kicker">Un celu. Toda la mesa.</p>
+      <h1 style={{ marginTop: 10 }}>Juegos para el celu, no para el PowerPoint del trabajo.</h1>
       <p className="lead">
         Online cada uno con su teléfono, o te pasás este mismo celu como si fuera una bandeja de
-        fainá. Todo en criollo, con voseo y poca dignidad.
+        fainá. Mismos colores, mismo chamuyo que ¿Cuánto es? Todo en criollo, con voseo y poca dignidad.
       </p>
       <div className="stack">
         <Link className="tile" href="/online">

@@ -16,6 +16,8 @@ describe("RoomManager", () => {
     expect(dumped).not.toContain(a.token);
     expect(dumped).not.toContain(b.code);
     expect(view.players).toHaveLength(2);
+    expect(view.players[0]!.color).toMatch(/^#/);
+    expect(new Set(view.players.map((p) => p.color)).size).toBe(2);
     mgr.dispose();
   });
 
@@ -51,6 +53,23 @@ describe("RoomManager", () => {
     expect(room.hostId).toBe(guest.playerId);
     mgr.joinRoom(host.code, "Anfi", host.token);
     expect(room.hostId).toBe(host.playerId);
+    mgr.dispose();
+  });
+
+  it("guarda categorías y picante al arrancar", () => {
+    const mgr = new RoomManager({ allowTestSeeds: true });
+    const host = mgr.createRoom("Lucho");
+    expect(host.ok).toBe(true);
+    if (!host.ok) return;
+    mgr.joinRoom(host.code, "Meli");
+    const error = mgr.startGame(host.code, host.playerId, "closest", { prompt: "x", trueAnswer: 1 }, {
+      categories: ["animales"],
+      picante: true,
+    });
+    expect(error).toBeNull();
+    const room = mgr.rooms.get(host.code)!;
+    expect(room.categories).toEqual(["animales"]);
+    expect(room.picante).toBe(true);
     mgr.dispose();
   });
 });

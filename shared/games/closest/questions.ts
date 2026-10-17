@@ -4,6 +4,10 @@ export interface ClosestQuestion {
   answer: number;
   unit?: string;
   blurb?: string;
+  category?: string;
+  picante?: boolean;
+  min?: number;
+  max?: number;
 }
 
 /**

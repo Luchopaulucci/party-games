@@ -1,5 +1,6 @@
 "use client";
 
+import { playerColor } from "@/components/PlayerList";
 import type { VotePrivateView, VotePublicView } from "@/shared/games/vote/logic";
 
 export function VoteView({
@@ -14,7 +15,7 @@ export function VoteView({
   privateView: VotePrivateView;
   isHost: boolean;
   youId: string;
-  players: { id: string; name: string }[];
+  players: { id: string; name: string; color?: string }[];
   onAction: (type: string, payload?: unknown) => void;
 }) {
   const nameOf = (id: string) => players.find((p) => p.id === id)?.name ?? "alguien";
@@ -25,12 +26,16 @@ export function VoteView({
         <p className="prompt">{publicView.prompt}</p>
         <p className="lead">Solo los totales. El chusmerío de quién votó a quién se queda en el server.</p>
         <div className="players">
-          {(publicView.totals ?? []).map((row) => (
-            <div className="player" key={row.playerId}>
-              <strong>{nameOf(row.playerId)}</strong>
-              <div className="score">{row.count}</div>
-            </div>
-          ))}
+          {(publicView.totals ?? []).map((row, i) => {
+            const player = players.find((p) => p.id === row.playerId);
+            return (
+              <div className="player" key={row.playerId}>
+                <span className="swatch" style={{ background: playerColor(player ?? { id: row.playerId }, i) }} />
+                <strong style={{ flex: 1 }}>{nameOf(row.playerId)}</strong>
+                <div className="score">{row.count}</div>
+              </div>
+            );
+          })}
         </div>
       </div>
     );

@@ -1,7 +1,10 @@
 "use client";
 
 import { useState } from "react";
+import { CountUp } from "@/components/CountUp";
+import { playerColor } from "@/components/PlayerList";
 import type { ClosestPrivateView, ClosestPublicView } from "@/shared/games/closest/logic";
+import { winnerHeadline } from "@/shared/ui/format";
 
 export function ClosestView({
   publicView,
@@ -13,30 +16,39 @@ export function ClosestView({
   publicView: ClosestPublicView;
   privateView: ClosestPrivateView;
   isHost: boolean;
-  players: { id: string; name: string }[];
+  players: { id: string; name: string; color?: string }[];
   onAction: (type: string, payload?: unknown) => void;
 }) {
   const [value, setValue] = useState("");
   const nameOf = (id: string) => players.find((p) => p.id === id)?.name ?? "alguien";
 
   if (publicView.phase === "reveal") {
+    const ranking = publicView.ranking ?? [];
+    const best = ranking[0]?.distance;
+    const winnerNames = ranking.filter((row) => row.distance === best).map((row) => nameOf(row.playerId));
     return (
       <div className="stack">
+        <p className="kicker">El valor real</p>
         <p className="lead">{publicView.prompt}</p>
-        <div className="big">{publicView.trueAnswer}{publicView.unit ? ` ${publicView.unit}` : ""}</div>
+        <CountUp from={publicView.min ?? 0} to={publicView.trueAnswer ?? 0} unit={publicView.unit} />
         {publicView.blurb ? <p className="lead">{publicView.blurb}</p> : null}
+        <p className="prompt">{winnerHeadline(winnerNames)}</p>
         <div className="players">
-          {(publicView.ranking ?? []).map((row) => (
-            <div className="player" key={row.playerId}>
-              <div className="meta">
-                <strong>{nameOf(row.playerId)}</strong>
-                <small>
-                  palo {row.guess} · a {row.distance} de distancia
-                </small>
+          {ranking.map((row, i) => {
+            const player = players.find((p) => p.id === row.playerId);
+            return (
+              <div className="player" key={row.playerId}>
+                <span className="swatch" style={{ background: playerColor(player ?? { id: row.playerId }, i) }} />
+                <div className="meta" style={{ flex: 1 }}>
+                  <strong>{nameOf(row.playerId)}</strong>
+                  <small>
+                    palo {row.guess} · a {row.distance} de distancia
+                  </small>
+                </div>
+                <div className="score">+{row.points}</div>
               </div>
-              <div className="score">+{row.points}</div>
-            </div>
-          ))}
+            );
+          })}
         </div>
       </div>
     );

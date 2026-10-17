@@ -2,10 +2,12 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { io, type Socket } from "socket.io-client";
+import { CategoryFilters } from "@/components/CategoryFilters";
 import { GamePicker } from "@/components/GamePicker";
 import { PlayerList } from "@/components/PlayerList";
 import { QrCard } from "@/components/QrCard";
 import { ActiveGame } from "@/components/games/ActiveGame";
+import { CATEGORIES, type Category } from "@/shared/games/closest/premise-types";
 import { getGameMeta } from "@/shared/games/registry";
 import type { ClientRoomState, GameId } from "@/shared/types";
 import { socketUrl, writeSession } from "@/lib/session";
@@ -22,6 +24,8 @@ export function RoomClient({
   const [error, setError] = useState<string | null>(null);
   const [state, setState] = useState<ClientRoomState | null>(null);
   const [socket, setSocket] = useState<Socket | null>(null);
+  const [categories, setCategories] = useState<string[]>([...CATEGORIES]);
+  const [picante, setPicante] = useState(false);
 
   useEffect(() => {
     const s = io(socketUrl(), { transports: ["websocket", "polling"] });
@@ -116,10 +120,20 @@ export function RoomClient({
           </div>
           {state.canHost ? (
             <>
+              <div className="card stack">
+                <CategoryFilters
+                  selected={categories}
+                  picante={picante}
+                  onToggle={(id: Category) =>
+                    setCategories((cur) => (cur.includes(id) ? cur.filter((c) => c !== id) : [...cur, id]))
+                  }
+                  onPicante={() => setPicante((v) => !v)}
+                />
+              </div>
               <h2>Elegí el juego</h2>
               <GamePicker
                 playerCount={state.players.filter((p) => p.connected).length}
-                onPick={(id: GameId) => send("startGame", { gameId: id })}
+                onPick={(id: GameId) => send("startGame", { gameId: id, categories, picante })}
               />
             </>
           ) : (

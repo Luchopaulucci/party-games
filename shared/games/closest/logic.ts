@@ -1,6 +1,7 @@
 import type { GameAction, GameContext, GameEngine, ScoreMap } from "../../types";
 import { pickRandom } from "../../rng";
 import { CLOSEST_QUESTIONS, type ClosestQuestion } from "./questions";
+import { filterPremises, premisesToQuestions } from "./catalog";
 
 export type ClosestPhase = "answering" | "reveal";
 
@@ -11,6 +12,7 @@ export interface ClosestState {
   unit?: string;
   blurb?: string;
   trueAnswer: number;
+  min: number;
   guesses: Record<string, number>;
   ranking: ClosestRank[] | null;
 }
@@ -29,6 +31,7 @@ export interface ClosestPublicView {
   blurb?: string;
   submittedIds: string[];
   trueAnswer?: number;
+  min?: number;
   ranking?: ClosestRank[];
 }
 
@@ -81,7 +84,15 @@ function pickQuestion(ctx: GameContext): ClosestQuestion {
     const found = CLOSEST_QUESTIONS.find((q) => q.id === ctx.seed?.questionId);
     if (found) return found;
   }
-  return pickRandom(CLOSEST_QUESTIONS, ctx.rng, ctx.usedContentIds ?? [], (q) => q.id);
+  const fromPack = premisesToQuestions(filterPremises({ categories: ctx.categories, picante: ctx.picante }));
+  const extras = CLOSEST_QUESTIONS.filter((q) => {
+    const cat = q.category ?? "argentina";
+    if (ctx.categories?.length && !ctx.categories.includes(cat)) return false;
+    if (!ctx.picante && q.picante) return false;
+    return true;
+  });
+  const pool = fromPack.length > 0 ? [...fromPack, ...extras.filter((e) => !fromPack.some((p) => p.id === e.id))] : extras;
+  return pickRandom(pool.length ? pool : CLOSEST_QUESTIONS, ctx.rng, ctx.usedContentIds ?? [], (q) => q.id);
 }
 
 export const closestEngine: GameEngine<ClosestState> = {
@@ -96,6 +107,7 @@ export const closestEngine: GameEngine<ClosestState> = {
       unit: question.unit,
       blurb: question.blurb,
       trueAnswer: question.answer,
+      min: question.min ?? 0,
       guesses: {},
       ranking: null,
     };
@@ -135,6 +147,7 @@ export const closestEngine: GameEngine<ClosestState> = {
     };
     if (state.phase === "reveal") {
       view.trueAnswer = state.trueAnswer;
+      view.min = state.min;
       view.ranking = state.ranking ?? undefined;
     }
     return view;

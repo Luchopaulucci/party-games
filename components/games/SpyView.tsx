@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { playerColor } from "@/components/PlayerList";
 import type { SpyPrivateView, SpyPublicView } from "@/shared/games/spy/logic";
 
 export function SpyView({
@@ -15,7 +16,7 @@ export function SpyView({
   privateView: SpyPrivateView;
   isHost: boolean;
   youId: string;
-  players: { id: string; name: string }[];
+  players: { id: string; name: string; color?: string }[];
   onAction: (type: string, payload?: unknown) => void;
 }) {
   const [guess, setGuess] = useState("");
@@ -37,12 +38,16 @@ export function SpyView({
         ) : null}
         {publicView.totals?.length ? (
           <div className="players">
-            {publicView.totals.map((row) => (
-              <div className="player" key={row.playerId}>
-                <strong>{nameOf(row.playerId)}</strong>
-                <div className="score">{row.votes}</div>
-              </div>
-            ))}
+            {publicView.totals.map((row, i) => {
+              const player = players.find((p) => p.id === row.playerId);
+              return (
+                <div className="player" key={row.playerId}>
+                  <span className="swatch" style={{ background: playerColor(player ?? { id: row.playerId }, i) }} />
+                  <strong style={{ flex: 1 }}>{nameOf(row.playerId)}</strong>
+                  <div className="score">{row.votes}</div>
+                </div>
+              );
+            })}
           </div>
         ) : null}
       </div>

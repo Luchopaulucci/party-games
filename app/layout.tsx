@@ -1,14 +1,14 @@
 import type { Metadata, Viewport } from "next";
-import { Fraunces, Outfit } from "next/font/google";
+import { Fraunces, Source_Sans_3 } from "next/font/google";
 import { RegisterSW } from "@/components/RegisterSW";
 import "./globals.css";
 
-const outfit = Outfit({ subsets: ["latin"], variable: "--font-outfit" });
-const fraunces = Fraunces({ subsets: ["latin"], variable: "--font-fraunces" });
+const sans = Source_Sans_3({ subsets: ["latin"], variable: "--font-sans" });
+const display = Fraunces({ subsets: ["latin"], variable: "--font-display" });
 
 export const metadata: Metadata = {
   title: "La Previa",
-  description: "Juegos de celu para cuando el asado está a medio punto.",
+  description: "Un celu. Toda la mesa. Juegos de previa en criollo.",
   applicationName: "La Previa",
   manifest: "/manifest.webmanifest",
   appleWebApp: { capable: true, title: "La Previa" },
@@ -18,13 +18,13 @@ export const viewport: Viewport = {
   width: "device-width",
   initialScale: 1,
   maximumScale: 1,
-  themeColor: "#140c1c",
+  themeColor: "#1e1446",
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="es-AR">
-      <body className={`${outfit.variable} ${fraunces.variable}`}>
+      <body className={`${sans.variable} ${display.variable}`}>
         <RegisterSW />
         {children}
       </body>

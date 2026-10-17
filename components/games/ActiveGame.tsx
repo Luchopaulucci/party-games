@@ -28,7 +28,7 @@ export function ActiveGame({
   privateView: unknown;
   isHost: boolean;
   youId: string;
-  players: { id: string; name: string }[];
+  players: { id: string; name: string; color?: string }[];
   onAction: (type: string, payload?: unknown) => void;
 }) {
   if (gameId === "closest") {

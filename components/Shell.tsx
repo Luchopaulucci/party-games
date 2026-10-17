@@ -3,7 +3,7 @@ import Link from "next/link";
 export function Shell({
   children,
   backHref = "/",
-  kicker = "la previa",
+  kicker = "un celu. toda la mesa.",
 }: {
   children: React.ReactNode;
   backHref?: string;

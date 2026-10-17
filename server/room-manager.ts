@@ -13,12 +13,14 @@ import {
 } from "../shared/types";
 import { getEngine, getGameMeta } from "../shared/games/registry";
 import { mulberry32 } from "../shared/rng";
+import { nextPlayerColor } from "../shared/ui/colors";
 
 export interface Seat {
   id: string;
   token: string;
   name: string;
   score: number;
+  color: string;
   connected: boolean;
   lastSeenAt: number;
   socketIds: Set<string>;
@@ -37,6 +39,8 @@ export interface Room {
   usedContentIds: string[];
   notice: RoomNotice | null;
   createdAt: number;
+  categories: string[];
+  picante: boolean;
 }
 
 export interface HelloResult {
@@ -103,6 +107,7 @@ export class RoomManager {
       token: newToken(),
       name: clean,
       score: 0,
+      color: nextPlayerColor([]),
       connected: true,
       lastSeenAt: this.now(),
       socketIds: new Set(),
@@ -117,6 +122,8 @@ export class RoomManager {
       gameId: null,
       gameState: null,
       scoredRound: false,
+      categories: [],
+      picante: false,
       usedContentIds: [],
       notice: null,
       createdAt: this.now(),
@@ -164,6 +171,7 @@ export class RoomManager {
       token: newToken(),
       name: clean,
       score: 0,
+      color: nextPlayerColor(room.seats.map((s) => s.color)),
       connected: true,
       lastSeenAt: this.now(),
       socketIds: new Set(),
@@ -231,7 +239,13 @@ export class RoomManager {
     this.hostTimers.delete(code);
   }
 
-  startGame(code: string, hostId: string, gameId: GameId, seed?: TestSeed): string | null {
+  startGame(
+    code: string,
+    hostId: string,
+    gameId: GameId,
+    seed?: TestSeed,
+    pack?: { categories?: string[]; picante?: boolean },
+  ): string | null {
     const room = this.rooms.get(code);
     if (!room) return "Sala introvable.";
     if (room.hostId !== hostId) return "Solo el anfitrión arranca la joda.";
@@ -242,6 +256,8 @@ export class RoomManager {
     if (connected.length < meta.minPlayers) {
       return `Hacen falta ${meta.minPlayers} conectados. Invita a alguien, no seas lobo estepario.`;
     }
+    if (pack?.categories) room.categories = pack.categories;
+    if (pack?.picante !== undefined) room.picante = pack.picante;
     const ctx = this.context(room, seed);
     room.gameId = gameId;
     room.gameState = engine.createState(ctx);
@@ -327,6 +343,7 @@ export class RoomManager {
       score: seat.score,
       connected: seat.connected,
       isHost: seat.id === room.hostId,
+      color: seat.color,
     };
   }
 
@@ -337,6 +354,8 @@ export class RoomManager {
       rng: mulberry32(seedNum),
       usedContentIds: room.usedContentIds,
       seed: this.allowTestSeeds ? seed : undefined,
+      categories: room.categories,
+      picante: room.picante,
     };
   }
 

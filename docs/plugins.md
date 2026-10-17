@@ -36,7 +36,7 @@ crudo y fallan si:
 
 ## MVP implementados
 
-- `closest` — ¿Quién está más cerca?
+- `closest` — ¿Quién está más cerca? (mazos, filtros y tokens de ¿Cuánto es?)
 - `whoami` — ¿Quién soy?
 - `impostor` — El impostor
 - `mas-o-menos` — ¿Más o menos?

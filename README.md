@@ -9,7 +9,7 @@ Dos modos:
 
 ## Juegos MVP (6)
 
-- **¿Quién está más cerca?** — pregunta numérica, palos tapados, gana el más cercano. Premisa tipo [cuanto-es](https://github.com/Luchopaulucci/cuanto-es) (el repo estaba vacío; copiamos la idea de scoring y armamos un mazo argentino).
+- **¿Quién está más cerca?** — pregunta numérica, palos tapados, gana el más cercano. Reusa el mazo, las categorías clásicas/fiesta/picante, los colores de jugador y el reveal con count-up de [¿Cuánto es?](https://github.com/Luchopaulucci/cuanto-es).
 - **¿Quién soy?** — todos ven el personaje menos el target. Preguntas sí/no y un palo al nombre.
 - **El impostor** — la misma palabra para todos menos el/los impostor(es). Se discute y se vota.
 - **¿Más o menos?** — número secreto. Por turno un palo; el server dice *más* / *menos*. El que clava suma 3. Si tirás afuera del rango que ya se sabe, te pasaste y perdés el turno.
@@ -17,6 +17,10 @@ Dos modos:
 - **Votación** — “¿Quién de este grupo…?”. Votos secretos. Al revelar **solo totales**, nunca el mapa de quién votó a quién.
 
 Quedan para un PR aparte (stubs): Subasta de números, Completá la frase, Mentira creíble, Dibujá y adiviná, Reflejos. Ver `docs/plugins.md`.
+
+## Estilo
+
+Tokens, tipografías (Fraunces + Source Sans 3), paleta de jugadores, handoff a pantalla completa del color del jugador, chips de categoría y el tono de previa salen de [¿Cuánto es?](https://github.com/Luchopaulucci/cuanto-es). Los 6 juegos de este MVP los reusan.
 
 ## Stack
 

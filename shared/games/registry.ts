@@ -14,7 +14,7 @@ const IMPLEMENTED: GameMeta[] = [
     emoji: "🎯",
     tagline: "Un número. Palos tapados. Gana el que no se fue al pasto.",
     description:
-      "Sale una pregunta con respuesta numérica. Cada uno manda un palo en secreto. El más cercano al dato real se lleva los puntos. Inspirado en la idea de cuanto-es.",
+      "Sale una pregunta con respuesta numérica. Cada uno manda un palo en secreto. El más cercano al dato real se lleva los puntos. Mazo, filtros y reveal de ¿Cuánto es?.",
     minPlayers: 2,
     maxPlayers: 12,
     implemented: true,

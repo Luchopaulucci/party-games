@@ -1,11 +1,13 @@
 import { getEngine } from "@/shared/games/registry";
 import { mulberry32 } from "@/shared/rng";
 import type { GameId, RoomStatus } from "@/shared/types";
+import { nextPlayerColor } from "@/shared/ui/colors";
 
 export interface LocalPlayer {
   id: string;
   name: string;
   score: number;
+  color: string;
 }
 
 export interface LocalMatch {
@@ -18,6 +20,8 @@ export interface LocalMatch {
   usedContentIds: string[];
   passIndex: number;
   revealQueue: string[];
+  categories: string[];
+  picante: boolean;
 }
 
 export function newLocalId(): string {
@@ -25,12 +29,14 @@ export function newLocalId(): string {
   return `p${Math.random().toString(36).slice(2, 10)}`;
 }
 
-export function createLocalMatch(names: string[]): LocalMatch {
-  const players = names.map((name) => ({
-    id: newLocalId(),
-    name,
-    score: 0,
-  }));
+export function createLocalMatch(input: { name: string; color?: string }[] | string[]): LocalMatch {
+  const used: string[] = [];
+  const players = input.map((item) => {
+    const name = typeof item === "string" ? item : item.name;
+    const color = (typeof item === "string" ? undefined : item.color) || nextPlayerColor(used);
+    used.push(color);
+    return { id: newLocalId(), name, score: 0, color };
+  });
   return {
     players,
     hostId: players[0]!.id,
@@ -41,6 +47,22 @@ export function createLocalMatch(names: string[]): LocalMatch {
     usedContentIds: [],
     passIndex: 0,
     revealQueue: [],
+    categories: [],
+    picante: false,
+  };
+}
+
+export function hydrateMatch(raw: LocalMatch): LocalMatch {
+  const used: string[] = [];
+  return {
+    ...raw,
+    categories: raw.categories ?? [],
+    picante: Boolean(raw.picante),
+    players: raw.players.map((p) => {
+      const color = p.color || nextPlayerColor(used);
+      used.push(color);
+      return { ...p, color };
+    }),
   };
 }
 
@@ -49,21 +71,32 @@ function ctx(match: LocalMatch) {
     playerIds: match.players.map((p) => p.id),
     rng: mulberry32(Math.floor(Math.random() * 1e9)),
     usedContentIds: match.usedContentIds,
+    categories: match.categories,
+    picante: match.picante,
   };
 }
 
-export function startLocalGame(match: LocalMatch, gameId: GameId): LocalMatch | string {
+export function startLocalGame(
+  match: LocalMatch,
+  gameId: GameId,
+  pack?: { categories?: string[]; picante?: boolean },
+): LocalMatch | string {
   const engine = getEngine(gameId);
   if (!engine) return "Ese juego todavía es vaporware.";
-  const gameState = engine.createState(ctx(match));
-  return {
+  const next: LocalMatch = {
     ...match,
+    categories: pack?.categories ?? match.categories ?? [],
+    picante: pack?.picante ?? match.picante ?? false,
+  };
+  const gameState = engine.createState(ctx(next));
+  return {
+    ...next,
     gameId,
     gameState,
     status: "playing",
     scoredRound: false,
     passIndex: 0,
-    revealQueue: match.players.map((p) => p.id),
+    revealQueue: next.players.map((p) => p.id),
   };
 }
 

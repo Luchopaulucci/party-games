@@ -53,10 +53,18 @@ export function createRealtimeServer(httpServer: HttpServer, opts: CreateRealtim
       cb?.(result);
     });
 
-    socket.on("startGame", (payload: { gameId: GameId; seed?: TestSeed }, cb?: (res: unknown) => void) => {
+    socket.on(
+      "startGame",
+      (
+        payload: { gameId: GameId; seed?: TestSeed; categories?: string[]; picante?: boolean },
+        cb?: (res: unknown) => void,
+      ) => {
       const data = socket.data as SocketData;
       if (!data.code || !data.playerId) return cb?.({ ok: false, error: "Primero entra a una sala." });
-      const error = rooms.startGame(data.code, data.playerId, payload.gameId, payload.seed);
+      const error = rooms.startGame(data.code, data.playerId, payload.gameId, payload.seed, {
+        categories: payload.categories,
+        picante: payload.picante,
+      });
       cb?.(error ? { ok: false, error } : { ok: true });
     });
 
