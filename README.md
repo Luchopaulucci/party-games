@@ -4,7 +4,7 @@ Juegos de celu para la juntada. Mobile-first, español rioplatense (voseo), tono
 
 Dos modos:
 
-1. **En línea** — el anfitrión arma una sala (código corto + QR). Cada uno entra con su nombre desde el teléfono. El server es dueño del estado: asiento, puntaje y secretos. Si recargás o se te corta, volvés al mismo asiento. Si el host se va más de N segundos, hostea otro; el original reclama al recargar.
+1. **En línea** — el anfitrión arma una sala (código corto + QR). Cada uno entra con su nombre desde el teléfono. El server es dueño del estado: asiento, puntaje y secretos. Si recargás o se te corta, volvés al mismo asiento. Si el host se va más de N segundos, hostea otro; el original reclama al recargar. Los mensajes de socket se validan (zod) y un payload podrido no tira el proceso. Las salas vacías o inactivas se borran después de un TTL.
 2. **Pasate el celu** — un solo teléfono, 100% client-side, anda offline (PWA / service worker). Pensado para 375px.
 
 ## Juegos MVP (6)
@@ -49,6 +49,7 @@ Scripts:
 | `npm run dev` | Next + Socket.IO en paralelo |
 | `npm test` | Unitarios de lógica / salas |
 | `npm run test:multi` | 6 clientes socket, reconexión, host, aislamiento, fugas |
+| `npm run typecheck` | `tsc --noEmit` |
 | `npm run lint` | ESLint |
 | `npm run build` | Next + compile del server |
 | `npm start` | Un solo proceso (UI + sockets) en `$PORT` |

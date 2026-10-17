@@ -1,19 +1,20 @@
 import type { Server as HttpServer } from "node:http";
 import { Server, type Socket } from "socket.io";
-import type { GameId, TestSeed } from "../shared/types";
-import { RoomManager, type Room } from "./room-manager";
+import type { ZodType } from "zod";
+import {
+  BAD_PAYLOAD_ERROR,
+  SERVER_SAFE_ERROR,
+  actionPayloadSchema,
+  helloPayloadSchema,
+  startGamePayloadSchema,
+  type ActionPayload,
+  type HelloPayload,
+  type StartGamePayload,
+} from "../shared/protocol";
+import { MAX_HTTP_BUFFER_SIZE, type GameId } from "../shared/types";
+import { RoomManager, type Room, type RoomManagerOptions } from "./room-manager";
 
-export interface HelloPayload {
-  intent: "create" | "join";
-  name: string;
-  code?: string;
-  token?: string;
-}
-
-export interface CreateRealtimeOptions {
-  hostGraceMs?: number;
-  allowTestSeeds?: boolean;
-}
+export type CreateRealtimeOptions = RoomManagerOptions;
 
 interface SocketData {
   code?: string;
@@ -24,26 +25,32 @@ interface SocketData {
 export function createRealtimeServer(httpServer: HttpServer, opts: CreateRealtimeOptions = {}) {
   const io = new Server(httpServer, {
     cors: { origin: true, credentials: true },
+    maxHttpBufferSize: MAX_HTTP_BUFFER_SIZE,
   });
   const rooms = new RoomManager({
     hostGraceMs: opts.hostGraceMs ?? Number(process.env.HOST_GRACE_MS || 12_000),
     allowTestSeeds: opts.allowTestSeeds ?? process.env.ALLOW_TEST_SEEDS === "1",
+    emptyRoomTtlMs: opts.emptyRoomTtlMs,
+    inactiveRoomTtlMs: opts.inactiveRoomTtlMs,
+    sweepIntervalMs: opts.sweepIntervalMs,
+    now: opts.now,
   });
 
   rooms.onChange = (room) => emitRoom(io, rooms, room);
 
   io.on("connection", (socket: Socket) => {
-    socket.on("hello", (payload: HelloPayload, cb?: (res: unknown) => void) => {
+    onValidated(socket, "hello", helloPayloadSchema, (payload: HelloPayload, cb) => {
       const result =
         payload.intent === "create"
           ? rooms.createRoom(payload.name)
-          : rooms.joinRoom(payload.code ?? "", payload.name, payload.token);
+          : rooms.joinRoom(payload.code, payload.name, payload.token);
 
       if (!result.ok) {
         cb?.(result);
         return;
       }
 
+      releaseSeat(socket, rooms);
       const data = socket.data as SocketData;
       data.code = result.code;
       data.token = result.token;
@@ -53,36 +60,32 @@ export function createRealtimeServer(httpServer: HttpServer, opts: CreateRealtim
       cb?.(result);
     });
 
-    socket.on(
-      "startGame",
-      (
-        payload: { gameId: GameId; seed?: TestSeed; categories?: string[]; picante?: boolean },
-        cb?: (res: unknown) => void,
-      ) => {
+    onValidated(socket, "startGame", startGamePayloadSchema, (payload: StartGamePayload, cb) => {
       const data = socket.data as SocketData;
       if (!data.code || !data.playerId) return cb?.({ ok: false, error: "Primero entra a una sala." });
-      const error = rooms.startGame(data.code, data.playerId, payload.gameId, payload.seed, {
+      const error = rooms.startGame(data.code, data.playerId, payload.gameId as GameId, payload.seed, {
         categories: payload.categories,
         picante: payload.picante,
+        options: payload.options,
       });
       cb?.(error ? { ok: false, error } : { ok: true });
     });
 
-    socket.on("action", (payload: { type: string; payload?: unknown }, cb?: (res: unknown) => void) => {
+    onValidated(socket, "action", actionPayloadSchema, (payload: ActionPayload, cb) => {
       const data = socket.data as SocketData;
       if (!data.code || !data.playerId) return cb?.({ ok: false, error: "Sin asiento." });
       const error = rooms.applyAction(data.code, data.playerId, payload);
       cb?.(error ? { ok: false, error } : { ok: true });
     });
 
-    socket.on("nextRound", (cb?: (res: unknown) => void) => {
+    onValidated(socket, "nextRound", null, (_payload, cb) => {
       const data = socket.data as SocketData;
       if (!data.code || !data.playerId) return cb?.({ ok: false, error: "Sin asiento." });
       const error = rooms.nextRound(data.code, data.playerId);
       cb?.(error ? { ok: false, error } : { ok: true });
     });
 
-    socket.on("toLobby", (cb?: (res: unknown) => void) => {
+    onValidated(socket, "toLobby", null, (_payload, cb) => {
       const data = socket.data as SocketData;
       if (!data.code || !data.playerId) return cb?.({ ok: false, error: "Sin asiento." });
       const error = rooms.toLobby(data.code, data.playerId);
@@ -90,19 +93,64 @@ export function createRealtimeServer(httpServer: HttpServer, opts: CreateRealtim
     });
 
     socket.on("disconnect", () => {
-      rooms.detachSocket(socket.id);
+      try {
+        rooms.detachSocket(socket.id);
+      } catch (err) {
+        console.error("[socket:disconnect]", err);
+      }
     });
   });
 
   return { io, rooms };
 }
 
-function emitRoom(io: Server, rooms: RoomManager, room: Room) {
-  for (const seat of room.seats) {
-    const view = rooms.project(room, seat.id);
-    if (!view) continue;
-    for (const sid of seat.socketIds) {
-      io.to(sid).emit("state", view);
+function releaseSeat(socket: Socket, rooms: RoomManager) {
+  const data = socket.data as SocketData;
+  if (!data.code) return;
+  socket.leave(data.code);
+  rooms.detachSocket(socket.id);
+  data.code = undefined;
+  data.token = undefined;
+  data.playerId = undefined;
+}
+
+function onValidated<T>(
+  socket: Socket,
+  event: string,
+  schema: ZodType<T> | null,
+  handler: (payload: T, cb?: (res: unknown) => void) => void,
+) {
+  socket.on(event, (...args: unknown[]) => {
+    const cb = typeof args[args.length - 1] === "function" ? (args.pop() as (res: unknown) => void) : undefined;
+    try {
+      const raw = args[0];
+      if (!schema) {
+        handler(undefined as T, cb);
+        return;
+      }
+      const parsed = schema.safeParse(raw);
+      if (!parsed.success) {
+        cb?.({ ok: false, error: BAD_PAYLOAD_ERROR });
+        return;
+      }
+      handler(parsed.data, cb);
+    } catch (err) {
+      console.error(`[socket:${event}]`, err);
+      cb?.({ ok: false, error: SERVER_SAFE_ERROR });
     }
+  });
+}
+
+function emitRoom(io: Server, rooms: RoomManager, room: Room) {
+  try {
+    for (const seat of room.seats) {
+      const view = rooms.project(room, seat.id);
+      if (!view) continue;
+      for (const sid of seat.socketIds) {
+        io.to(sid).emit("state", view);
+      }
+    }
+  } catch (err) {
+    console.error("[emitRoom]", err);
   }
 }

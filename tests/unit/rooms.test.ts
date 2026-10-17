@@ -72,4 +72,66 @@ describe("RoomManager", () => {
     expect(room.picante).toBe(true);
     mgr.dispose();
   });
+
+  it("no explota con name/code que no son string y filtra categorías", () => {
+    const mgr = new RoomManager({ allowTestSeeds: true, sweepIntervalMs: 0 });
+    expect(mgr.createRoom(123).ok).toBe(false);
+    expect(mgr.createRoom({ replace: () => "x" }).ok).toBe(false);
+    expect(mgr.joinRoom(123, "Lucho").ok).toBe(false);
+    expect(mgr.joinRoom({ trim: () => "AAAA" }, "Lucho").ok).toBe(false);
+    const host = mgr.createRoom("Lucho");
+    expect(host.ok).toBe(true);
+    if (!host.ok) return;
+    mgr.joinRoom(host.code, "Meli");
+    const error = mgr.startGame(host.code, host.playerId, "closest", { prompt: "x", trueAnswer: 1 }, {
+      categories: ["animales", "no-existe", 4 as unknown as string],
+      picante: "sí" as unknown as boolean,
+      options: { timerSec: 45, impostorCount: 99, extra: true },
+    });
+    expect(error).toBeNull();
+    const room = mgr.rooms.get(host.code)!;
+    expect(room.categories).toEqual(["animales"]);
+    expect(room.picante).toBe(false);
+    expect(room.options).toEqual({ timerSec: 45 });
+    mgr.dispose();
+  });
+
+  it("borra salas vacías/inactivas y limpia timers", () => {
+    let now = 1_000;
+    const mgr = new RoomManager({
+      allowTestSeeds: true,
+      hostGraceMs: 5_000,
+      emptyRoomTtlMs: 500,
+      inactiveRoomTtlMs: 5_000,
+      sweepIntervalMs: 0,
+      now: () => now,
+    });
+    const keep = mgr.createRoom("Viva");
+    const empty = mgr.createRoom("Huérfana");
+    const idle = mgr.createRoom("Olvidada");
+    expect(keep.ok && empty.ok && idle.ok).toBe(true);
+    if (!keep.ok || !empty.ok || !idle.ok) return;
+    const guest = mgr.joinRoom(empty.code, "Invitado");
+    expect(guest.ok).toBe(true);
+    if (!guest.ok) return;
+
+    mgr.attachSocket(empty.code, empty.token, "s-empty-host");
+    mgr.attachSocket(empty.code, guest.token, "s-empty-guest");
+    mgr.detachSocket("s-empty-host");
+    expect(mgr.hasHostTimer(empty.code)).toBe(true);
+    mgr.detachSocket("s-empty-guest");
+
+    now += 600;
+    mgr.sweepRooms();
+    expect(mgr.rooms.has(empty.code)).toBe(false);
+    expect(mgr.hasHostTimer(empty.code)).toBe(false);
+    expect(mgr.rooms.has(keep.code)).toBe(true);
+    expect(mgr.rooms.has(idle.code)).toBe(true);
+
+    now += 5_000;
+    mgr.sweepRooms();
+    expect(mgr.rooms.has(keep.code)).toBe(false);
+    expect(mgr.rooms.has(idle.code)).toBe(false);
+    mgr.dispose();
+  });
 });

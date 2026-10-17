@@ -40,6 +40,7 @@ export interface GameContext {
   seed?: TestSeed;
   categories?: string[];
   picante?: boolean;
+  options?: Record<string, unknown>;
 }
 
 /** Only honored when ALLOW_TEST_SEEDS=1. Never enable that in production. */
@@ -102,3 +103,7 @@ export const ROOM_CODE_ALPHABET = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
 export const MAX_PLAYERS = 12;
 export const MIN_NAME_LENGTH = 2;
 export const MAX_NAME_LENGTH = 18;
+export const EMPTY_ROOM_TTL_MS = 2 * 60 * 1000;
+export const INACTIVE_ROOM_TTL_MS = 3 * 60 * 60 * 1000;
+export const ROOM_SWEEP_INTERVAL_MS = 20_000;
+export const MAX_HTTP_BUFFER_SIZE = 100 * 1024;
