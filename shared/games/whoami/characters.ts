@@ -1,0 +1,48 @@
+export interface WhoAmICharacter {
+  id: string;
+  name: string;
+  hint: string;
+}
+
+export const WHOAMI_CHARACTERS: WhoAmICharacter[] = [
+  { id: "messi", name: "Lionel Messi", hint: "Sale en todas las pintadas de Rosario y en las remeras de tu primo." },
+  { id: "diego", name: "Diego Maradona", hint: "Mitad santo, mitad quilombo, 100% 10." },
+  { id: "mirtha", name: "Mirtha Legrand", hint: "Almuerza desde que el mundo es mundo." },
+  { id: "moria", name: "Moria Casán", hint: "La one. Si no la cachás, no viste televisión argentina." },
+  { id: "susana", name: "Susana Giménez", hint: "¿Qué hacés, chiquita? Rubia, living blanco, rating." },
+  { id: "wanda", name: "Wanda Nara", hint: "Empresaria, media y una cantidad industrial de tapas." },
+  { id: "lali", name: "Lali Espósito", hint: "De Cris Morena al Madison. Pop nacional con glitter." },
+  { id: "tini", name: "Tini Stoessel", hint: "Violeta creció y se hizo festival." },
+  { id: "dibu", name: "Emiliano Martínez", hint: "Ataja penales y después te baila la familia." },
+  { id: "kun", name: "Sergio Agüero", hint: "El 9 que ahora comenta con una risa que no para." },
+  { id: "riquelme", name: "Juan Román Riquelme", hint: "Pausa, perfil bajo y una última pelota parada." },
+  { id: "gallardo", name: "Marcelo Gallardo", hint: "Muñeco. River. Cara de pocos amigos en el banco." },
+  { id: "bilardo", name: "Carlos Bilardo", hint: "Tácticas, algodones y un mundial en la cabeza." },
+  { id: "menotti", name: "César Luis Menotti", hint: "El Flaco. Cigarrillo y fútbol como arte." },
+  { id: "coscu", name: "Coscu", hint: "Streamer cordobés, coscu army, casquito." },
+  { id: "ibai-no", name: "Momo", hint: "Twitch argentino, risa grave, siempre en call." },
+  { id: "cris", name: "Cristina Fernández de Kirchner", hint: "Patria, pulsera y un discurso de 40 minutos." },
+  { id: "milei", name: "Javier Milei", hint: "Pelos, motosierra y un perro en el lore." },
+  { id: "peron", name: "Juan Domingo Perón", hint: "Tres veces presidente y una cantidad infinita de remeras." },
+  { id: "evita", name: "Eva Perón", hint: "Balcón, moño y un país entero discutiendo su foto." },
+  { id: "che", name: "Ernesto Che Guevara", hint: "La remera más vendida del planeta, nacido en Rosario." },
+  { id: "gardel", name: "Carlos Gardel", hint: "Cada día canta mejor. Sombrero y sonrisa." },
+  { id: "charly", name: "Charly García", hint: "Lentes, piano y un país entero de canciones." },
+  { id: "spinetta", name: "Luis Alberto Spinetta", hint: "Flaco, poesía y un jardín de gente." },
+  { id: "mercedes", name: "Mercedes Sosa", hint: "La Negra. Voz que te para un acto escolar y una plaza." },
+  { id: "lesluthiers", name: "Les Luthiers", hint: "Humor erudito, instrumentos imposibles y un señor que explica de más." },
+  { id: "capusotto", name: "Diego Capusotto", hint: "Peter Capusotto, bombos y una televisión que se ríe de sí misma." },
+  { id: "nati-jentel", name: "Nicolás de Bari (el Eternauta, Juan Salvo)", hint: "Nevó en Buenos Aires y el traje no es de Carnaval." },
+  { id: "mafalda", name: "Mafalda", hint: "Odia la sopa y pregunta cosas que incomodan a los adultos." },
+  { id: "clemente", name: "Clemente", hint: "Pájaro de Caloi, 9 de julio, humor ácido en una viñeta." },
+  { id: "patoruzu", name: "Patoruzú", hint: "Tehuelche millonario, corazón enorme, historieta nacional." },
+  { id: "chapulin-no", name: "El Chavo", hint: "No es argentino, pero tu infancia sí lo adoptó. El de la vecindad." },
+  { id: "marley", name: "Marley", hint: "Viajes, cámaras escondidas y 'esto es increíble'." },
+  { id: "guido", name: "Guido Kaczka", hint: "Preguntados, un living y un chiste cada quince segundos." },
+  { id: "stefani", name: "Stefi Roitman", hint: "TikTok, bailes y una cantidad sospechosa de sol." },
+  { id: "china", name: "La China Suárez", hint: "Actriz, tapas y un feed que es un culebrón." },
+  { id: "tato", name: "Tato Bores", hint: "El hombre de negro, monólogos de domingo y la política como sketch." },
+  { id: "fontanarrosa", name: "Roberto Fontanarrosa", hint: "Negro, Inodoro Pereyra y un café en Rosario." },
+  { id: "sabat", name: "Héctor 'El Negro' Pérez (el Coco Basile)", hint: "Coco. Selección, frases eternas y cara de 'ya fue'." },
+  { id: "dolina", name: "Alejandro Dolina", hint: "La venganza será terrible. Noche, tangos y mitología barrial." },
+];
