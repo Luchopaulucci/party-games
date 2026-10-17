@@ -7,6 +7,7 @@ import {
   ROOM_CODE_ALPHABET,
   type GameId,
   type PlayerPublic,
+  type GameOptions,
   type RoomNotice,
   type RoomStatus,
   type TestSeed,
@@ -41,6 +42,7 @@ export interface Room {
   createdAt: number;
   categories: string[];
   picante: boolean;
+  options: GameOptions;
 }
 
 export interface HelloResult {
@@ -124,6 +126,7 @@ export class RoomManager {
       scoredRound: false,
       categories: [],
       picante: false,
+      options: {},
       usedContentIds: [],
       notice: null,
       createdAt: this.now(),
@@ -244,7 +247,7 @@ export class RoomManager {
     hostId: string,
     gameId: GameId,
     seed?: TestSeed,
-    pack?: { categories?: string[]; picante?: boolean },
+    pack?: { categories?: string[]; picante?: boolean; options?: GameOptions },
   ): string | null {
     const room = this.rooms.get(code);
     if (!room) return "Sala introvable.";
@@ -258,6 +261,7 @@ export class RoomManager {
     }
     if (pack?.categories) room.categories = pack.categories;
     if (pack?.picante !== undefined) room.picante = pack.picante;
+    if (pack?.options) room.options = pack.options;
     const ctx = this.context(room, seed);
     room.gameId = gameId;
     room.gameState = engine.createState(ctx);
@@ -356,6 +360,8 @@ export class RoomManager {
       seed: this.allowTestSeeds ? seed : undefined,
       categories: room.categories,
       picante: room.picante,
+      options: room.options,
+      now: this.now,
     };
   }
 

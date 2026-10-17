@@ -66,7 +66,7 @@ export const voteEngine: GameEngine<VoteState> = {
       return { ...state, votes: { ...state.votes, [playerId]: target } };
     }
 
-    if (action.type === "reveal") {
+    if (action.type === "reveal" || action.type === "timeout") {
       return { ...state, phase: "reveal" };
     }
 

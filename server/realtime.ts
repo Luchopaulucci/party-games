@@ -1,6 +1,6 @@
 import type { Server as HttpServer } from "node:http";
 import { Server, type Socket } from "socket.io";
-import type { GameId, TestSeed } from "../shared/types";
+import type { GameId, GameOptions, TestSeed } from "../shared/types";
 import { RoomManager, type Room } from "./room-manager";
 
 export interface HelloPayload {
@@ -56,7 +56,7 @@ export function createRealtimeServer(httpServer: HttpServer, opts: CreateRealtim
     socket.on(
       "startGame",
       (
-        payload: { gameId: GameId; seed?: TestSeed; categories?: string[]; picante?: boolean },
+        payload: { gameId: GameId; seed?: TestSeed; categories?: string[]; picante?: boolean; options?: GameOptions },
         cb?: (res: unknown) => void,
       ) => {
       const data = socket.data as SocketData;
@@ -64,6 +64,7 @@ export function createRealtimeServer(httpServer: HttpServer, opts: CreateRealtim
       const error = rooms.startGame(data.code, data.playerId, payload.gameId, payload.seed, {
         categories: payload.categories,
         picante: payload.picante,
+        options: payload.options,
       });
       cb?.(error ? { ok: false, error } : { ok: true });
     });

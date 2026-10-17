@@ -4,12 +4,13 @@ import { useEffect, useMemo, useState } from "react";
 import { io, type Socket } from "socket.io-client";
 import { CategoryFilters } from "@/components/CategoryFilters";
 import { GamePicker } from "@/components/GamePicker";
+import { RoomOptions } from "@/components/RoomOptions";
 import { PlayerList } from "@/components/PlayerList";
 import { QrCard } from "@/components/QrCard";
 import { ActiveGame } from "@/components/games/ActiveGame";
 import { CATEGORIES, type Category } from "@/shared/games/closest/premise-types";
 import { getGameMeta } from "@/shared/games/registry";
-import type { ClientRoomState, GameId } from "@/shared/types";
+import type { ClientRoomState, GameId, GameOptions } from "@/shared/types";
 import { socketUrl, writeSession } from "@/lib/session";
 
 export function RoomClient({
@@ -26,6 +27,7 @@ export function RoomClient({
   const [socket, setSocket] = useState<Socket | null>(null);
   const [categories, setCategories] = useState<string[]>([...CATEGORIES]);
   const [picante, setPicante] = useState(false);
+  const [options, setOptions] = useState<GameOptions>({ timerSec: 0, rounds: 1, mode: "no-pasarse" });
 
   useEffect(() => {
     const s = io(socketUrl(), { transports: ["websocket", "polling"] });
@@ -127,14 +129,15 @@ export function RoomClient({
                   onToggle={(id: Category) =>
                     setCategories((cur) => (cur.includes(id) ? cur.filter((c) => c !== id) : [...cur, id]))
                   }
-                  onPicante={() => setPicante((v) => !v)}
-                />
-              </div>
-              <h2>Elegí el juego</h2>
-              <GamePicker
-                playerCount={state.players.filter((p) => p.connected).length}
-                onPick={(id: GameId) => send("startGame", { gameId: id, categories, picante })}
+                onPicante={() => setPicante((v) => !v)}
               />
+              <RoomOptions value={options} onChange={setOptions} />
+            </div>
+            <h2>Elegí el juego</h2>
+            <GamePicker
+              playerCount={state.players.filter((p) => p.connected).length}
+              onPick={(id: GameId) => send("startGame", { gameId: id, categories, picante, options })}
+            />
             </>
           ) : (
             <p className="lead">Esperá que el anfitrión deje de hablar y apriete un botón.</p>
@@ -151,6 +154,7 @@ export function RoomClient({
               isHost={state.canHost}
               youId={state.you.id}
               players={state.players}
+              timerSec={options.timerSec}
               onAction={(type, payload) => send("action", { type, payload })}
             />
           </div>

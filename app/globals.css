@@ -168,7 +168,8 @@ label {
 }
 
 input,
-textarea {
+textarea,
+select {
   width: 100%;
   border: 0;
   background: rgba(255, 255, 255, 0.1);
@@ -177,6 +178,10 @@ textarea {
   padding: 12px 14px;
   outline: none;
   min-height: 48px;
+}
+
+select option {
+  color: #1e1446;
 }
 
 input:focus,
@@ -402,6 +407,15 @@ textarea:focus {
 .color-dot.on {
   outline: 2px solid var(--color-cream);
   outline-offset: 2px;
+}
+
+.draw-pad {
+  width: 100%;
+  aspect-ratio: 1;
+  border-radius: 18px;
+  background: #fff8f0;
+  touch-action: none;
+  display: block;
 }
 
 .secret {

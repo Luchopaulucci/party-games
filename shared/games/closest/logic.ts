@@ -129,7 +129,7 @@ export const closestEngine: GameEngine<ClosestState> = {
       return { ...state, guesses, phase: "reveal", ranking };
     }
 
-    if (action.type === "reveal") {
+    if (action.type === "reveal" || action.type === "timeout") {
       const ranking = scoreClosestRound(state.guesses, state.trueAnswer);
       return { ...state, phase: "reveal", ranking };
     }

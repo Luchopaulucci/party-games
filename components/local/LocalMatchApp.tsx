@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { CategoryFilters } from "@/components/CategoryFilters";
+import { RoomOptions } from "@/components/RoomOptions";
 import { ColorDots } from "@/components/ColorDots";
 import { GamePicker } from "@/components/GamePicker";
 import { HandoffScreen } from "@/components/HandoffScreen";
@@ -9,7 +10,7 @@ import { PlayerList } from "@/components/PlayerList";
 import { ActiveGame } from "@/components/games/ActiveGame";
 import { CATEGORIES, type Category } from "@/shared/games/closest/premise-types";
 import { getGameMeta } from "@/shared/games/registry";
-import type { GameId } from "@/shared/types";
+import type { GameId, GameOptions } from "@/shared/types";
 import { PLAYER_COLORS, nextPlayerColor } from "@/shared/ui/colors";
 import {
   createLocalMatch,
@@ -55,6 +56,7 @@ export function LocalMatchApp() {
   const [draft, setDraft] = useState("");
   const [categories, setCategories] = useState<string[]>([...CATEGORIES]);
   const [picante, setPicante] = useState(false);
+  const [options, setOptions] = useState<GameOptions>({ timerSec: 0, rounds: 1, mode: "no-pasarse" });
   const [match, setMatch] = useState<LocalMatch | null>(null);
   const [unlocked, setUnlocked] = useState<string | null>(null);
   const [hydrated, setHydrated] = useState(false);
@@ -88,7 +90,7 @@ export function LocalMatchApp() {
 
   function begin(gameId: GameId) {
     const created = createLocalMatch(players.filter((p) => p.name.trim().length >= 2));
-    const started = startLocalGame(created, gameId, { categories, picante });
+    const started = startLocalGame(created, gameId, { categories, picante, options });
     if (typeof started === "string") return;
     setUnlocked(null);
     persist(started);
@@ -162,6 +164,7 @@ export function LocalMatchApp() {
             }
             onPicante={() => setPicante((v) => !v)}
           />
+          <RoomOptions value={options} onChange={setOptions} />
         </div>
         <h2>Juegos</h2>
         <GamePicker onPick={begin} playerCount={players.length} />
@@ -191,14 +194,15 @@ export function LocalMatchApp() {
       </p>
 
       <div className="card stack">
-        <ActiveGame
-          gameId={match.gameId!}
-          publicView={view.public}
-          privateView={view.private}
-          isHost
-          youId={viewer.id}
-          players={match.players}
-          onAction={(type, payload) => {
+          <ActiveGame
+            gameId={match.gameId!}
+            publicView={view.public}
+            privateView={view.private}
+            isHost
+            youId={viewer.id}
+            players={match.players}
+            timerSec={match.options.timerSec}
+            onAction={(type, payload) => {
             const applied = localAction(match, viewer.id, { type, payload });
             const shouldPass = match.gameId === "closest" && type === "guess";
             const nextIndex = match.passIndex + 1;

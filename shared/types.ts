@@ -9,7 +9,23 @@ export type GameId =
   | "mentira"
   | "dibuja"
   | "reflejos"
-  | "votacion";
+  | "votacion"
+  | "onda"
+  | "taboo"
+  | "yo-nunca"
+  | "tutti"
+  | "bombita"
+  | "mimica";
+
+export interface GameOptions {
+  timerSec?: number;
+  rounds?: number;
+  packs?: string[];
+  mode?: string;
+  impostorCount?: number;
+  spyCount?: number;
+  maxGuesses?: number;
+}
 
 export type RoomStatus = "lobby" | "playing" | "finished";
 
@@ -40,6 +56,8 @@ export interface GameContext {
   seed?: TestSeed;
   categories?: string[];
   picante?: boolean;
+  options?: GameOptions;
+  now?: () => number;
 }
 
 /** Only honored when ALLOW_TEST_SEEDS=1. Never enable that in production. */
@@ -58,6 +76,15 @@ export interface TestSeed {
   spyIds?: string[];
   min?: number;
   max?: number;
+  answer?: string;
+  answers?: string[];
+  lieIndex?: number;
+  target?: number;
+  letter?: string;
+  poles?: [string, string];
+  forbidden?: string[];
+  options?: string[];
+  correct?: number;
 }
 
 export interface GameAction {
