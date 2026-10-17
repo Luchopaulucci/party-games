@@ -3,7 +3,7 @@ name: CI
 on:
   pull_request:
   push:
-    branches: [master, feat/mvp]
+    branches: [master, feat/mvp, feat/more-games]
 
 jobs:
   check:
@@ -17,6 +17,7 @@ jobs:
           cache: npm
       - run: npm ci
       - run: npm run lint
+      - run: npm run typecheck
       - run: npm test
       - run: npm run test:multi
       - run: npm run build

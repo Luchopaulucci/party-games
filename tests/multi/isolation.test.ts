@@ -127,7 +127,9 @@ describe("multi-client rooms", () => {
     coco.client.socket.disconnect();
 
     const coco2 = connect(srv.url);
-    cleanups.push(() => coco2.socket.disconnect());
+    cleanups.push(() => {
+      coco2.socket.disconnect();
+    });
     await new Promise<void>((r) => coco2.socket.on("connect", () => r()));
     const reclaimed = await hello(coco2.socket, {
       intent: "join",
@@ -281,7 +283,9 @@ describe("multi-client rooms", () => {
     expect((migrated.players as { id: string; isHost: boolean }[]).find((p) => p.id === seats[1]!.playerId)?.isHost).toBe(true);
 
     const host2 = connect(srv.url);
-    cleanups.push(() => host2.socket.disconnect());
+    cleanups.push(() => {
+      host2.socket.disconnect();
+    });
     await new Promise<void>((r) => host2.socket.on("connect", () => r()));
     const back = await hello(host2.socket, { intent: "join", name: "Lucho", code, token: seats[0]!.token });
     expect(back.playerId).toBe(seats[0]!.playerId);
@@ -290,12 +294,16 @@ describe("multi-client rooms", () => {
     expect((reclaimedHost.you as { score: number }).score).toBe(hostScoreThen);
 
     const other = connect(srv.url);
-    cleanups.push(() => other.socket.disconnect());
+    cleanups.push(() => {
+      other.socket.disconnect();
+    });
     await new Promise<void>((r) => other.socket.on("connect", () => r()));
     const roomB = await hello(other.socket, { intent: "create", name: "OtraSala" });
     expect(roomB.code).not.toBe(code);
     const buddy = connect(srv.url);
-    cleanups.push(() => buddy.socket.disconnect());
+    cleanups.push(() => {
+      buddy.socket.disconnect();
+    });
     await new Promise<void>((r) => buddy.socket.on("connect", () => r()));
     await hello(buddy.socket, { intent: "join", name: "BuddyB", code: roomB.code });
     other.socket.emit("startGame", { gameId: "closest", seed: { prompt: "solo B", trueAnswer: 99 } });

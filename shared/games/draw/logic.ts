@@ -1,5 +1,6 @@
 import type { GameEngine, ScoreMap } from "../../types";
 import { pickRandom } from "../../rng";
+import { sanitizeStrokeColor } from "../../protocol";
 import { sameText } from "../helpers";
 import { DRAW_WORDS } from "./words";
 
@@ -58,13 +59,17 @@ export const drawEngine: GameEngine<DrawState> = {
 
     if (action.type === "stroke" && playerId === state.drawerId) {
       const stroke = (action.payload as { stroke?: DrawStroke })?.stroke;
-      if (!stroke?.points?.length) return state;
+      if (!stroke || !Array.isArray(stroke.points) || stroke.points.length === 0) return state;
       const points = stroke.points
         .slice(0, 200)
-        .map((p) => ({ x: Number(p.x), y: Number(p.y) }))
+        .filter((p): p is DrawPoint => !!p && typeof p === "object")
+        .map((p) => ({ x: Number((p as DrawPoint).x), y: Number((p as DrawPoint).y) }))
         .filter((p) => Number.isFinite(p.x) && Number.isFinite(p.y));
       if (!points.length) return state;
-      return { ...state, strokes: [...state.strokes, { color: stroke.color || "#1e1446", points }].slice(-80) };
+      return {
+        ...state,
+        strokes: [...state.strokes, { color: sanitizeStrokeColor(stroke.color), points }].slice(-80),
+      };
     }
 
     if (action.type === "open-guess" && playerId === state.drawerId) {

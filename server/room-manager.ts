@@ -1,10 +1,11 @@
 import { randomBytes, randomInt } from "node:crypto";
 import {
+  EMPTY_ROOM_TTL_MS,
   HOST_GRACE_DEFAULT_MS,
+  INACTIVE_ROOM_TTL_MS,
   MAX_PLAYERS,
-  MAX_NAME_LENGTH,
-  MIN_NAME_LENGTH,
   ROOM_CODE_ALPHABET,
+  ROOM_SWEEP_INTERVAL_MS,
   type GameId,
   type PlayerPublic,
   type GameOptions,
@@ -12,6 +13,14 @@ import {
   type RoomStatus,
   type TestSeed,
 } from "../shared/types";
+import {
+  cleanName,
+  normalizeRoomCode,
+  sanitizeCategories,
+  sanitizeGameOptions,
+  sanitizeTestSeed,
+  sanitizeToken,
+} from "../shared/protocol";
 import { getEngine, getGameMeta } from "../shared/games/registry";
 import { mulberry32 } from "../shared/rng";
 import { nextPlayerColor } from "../shared/ui/colors";
@@ -40,6 +49,7 @@ export interface Room {
   usedContentIds: string[];
   notice: RoomNotice | null;
   createdAt: number;
+  lastActivityAt: number;
   categories: string[];
   picante: boolean;
   options: GameOptions;
@@ -61,6 +71,9 @@ export interface RoomManagerOptions {
   hostGraceMs?: number;
   now?: () => number;
   allowTestSeeds?: boolean;
+  emptyRoomTtlMs?: number;
+  inactiveRoomTtlMs?: number;
+  sweepIntervalMs?: number;
 }
 
 function makeCode(): string {
@@ -69,12 +82,6 @@ function makeCode(): string {
     code += ROOM_CODE_ALPHABET[randomInt(ROOM_CODE_ALPHABET.length)];
   }
   return code;
-}
-
-function cleanName(raw: string): string | null {
-  const name = raw.replace(/\s+/g, " ").trim();
-  if (name.length < MIN_NAME_LENGTH || name.length > MAX_NAME_LENGTH) return null;
-  return name;
 }
 
 function newId(): string {
@@ -88,18 +95,30 @@ function newToken(): string {
 export class RoomManager {
   readonly rooms = new Map<string, Room>();
   readonly hostGraceMs: number;
+  readonly emptyRoomTtlMs: number;
+  readonly inactiveRoomTtlMs: number;
   private readonly now: () => number;
   private readonly allowTestSeeds: boolean;
   private readonly hostTimers = new Map<string, NodeJS.Timeout>();
+  private readonly sweepTimer: NodeJS.Timeout | null;
   onChange: ((room: Room) => void) | null = null;
 
   constructor(opts: RoomManagerOptions = {}) {
     this.hostGraceMs = opts.hostGraceMs ?? HOST_GRACE_DEFAULT_MS;
+    this.emptyRoomTtlMs = opts.emptyRoomTtlMs ?? EMPTY_ROOM_TTL_MS;
+    this.inactiveRoomTtlMs = opts.inactiveRoomTtlMs ?? INACTIVE_ROOM_TTL_MS;
     this.now = opts.now ?? Date.now;
     this.allowTestSeeds = opts.allowTestSeeds ?? process.env.ALLOW_TEST_SEEDS === "1";
+    const sweepEvery = opts.sweepIntervalMs ?? ROOM_SWEEP_INTERVAL_MS;
+    if (sweepEvery > 0) {
+      this.sweepTimer = setInterval(() => this.sweepRooms(), sweepEvery);
+      this.sweepTimer.unref();
+    } else {
+      this.sweepTimer = null;
+    }
   }
 
-  createRoom(name: string): HelloResult | HelloError {
+  createRoom(name: unknown): HelloResult | HelloError {
     const clean = cleanName(name);
     if (!clean) return { ok: false, error: "Poné un nombre decente, entre 2 y 18 letras." };
     let code = makeCode();
@@ -114,6 +133,7 @@ export class RoomManager {
       lastSeenAt: this.now(),
       socketIds: new Set(),
     };
+    const createdAt = this.now();
     const room: Room = {
       code,
       seats: [seat],
@@ -129,18 +149,22 @@ export class RoomManager {
       options: {},
       usedContentIds: [],
       notice: null,
-      createdAt: this.now(),
+      createdAt,
+      lastActivityAt: createdAt,
     };
     this.rooms.set(code, room);
     return { ok: true, code, playerId: seat.id, token: seat.token };
   }
 
-  joinRoom(code: string, name: string, token?: string): HelloResult | HelloError {
-    const room = this.rooms.get(code.trim().toUpperCase());
+  joinRoom(code: unknown, name: unknown, token?: unknown): HelloResult | HelloError {
+    const normalized = normalizeRoomCode(code);
+    if (!normalized) return { ok: false, error: "Esa sala no existe. Revisá el código, crack." };
+    const room = this.rooms.get(normalized);
     if (!room) return { ok: false, error: "Esa sala no existe. Revisá el código, crack." };
 
-    if (token) {
-      const existing = room.seats.find((s) => s.token === token);
+    const safeToken = sanitizeToken(token);
+    if (safeToken) {
+      const existing = room.seats.find((s) => s.token === safeToken);
       if (existing) {
         existing.connected = true;
         existing.lastSeenAt = this.now();
@@ -242,12 +266,32 @@ export class RoomManager {
     this.hostTimers.delete(code);
   }
 
+  hasHostTimer(code: string) {
+    return this.hostTimers.has(code);
+  }
+
+  deleteRoom(code: string) {
+    this.clearHostTimer(code);
+    this.rooms.delete(code);
+  }
+
+  sweepRooms() {
+    const t = this.now();
+    for (const room of [...this.rooms.values()]) {
+      const idle = t - room.lastActivityAt;
+      const empty = room.seats.length === 0 || room.seats.every((s) => !s.connected);
+      if ((empty && idle >= this.emptyRoomTtlMs) || idle >= this.inactiveRoomTtlMs) {
+        this.deleteRoom(room.code);
+      }
+    }
+  }
+
   startGame(
     code: string,
     hostId: string,
     gameId: GameId,
-    seed?: TestSeed,
-    pack?: { categories?: string[]; picante?: boolean; options?: GameOptions },
+    seed?: unknown,
+    pack?: { categories?: unknown; picante?: unknown; options?: unknown },
   ): string | null {
     const room = this.rooms.get(code);
     if (!room) return "Sala introvable.";
@@ -259,12 +303,17 @@ export class RoomManager {
     if (connected.length < meta.minPlayers) {
       return `Hacen falta ${meta.minPlayers} conectados. Invita a alguien, no seas lobo estepario.`;
     }
-    if (pack?.categories) room.categories = pack.categories;
-    if (pack?.picante !== undefined) room.picante = pack.picante;
-    if (pack?.options) room.options = pack.options;
-    const ctx = this.context(room, seed);
+    if (pack?.categories !== undefined) room.categories = sanitizeCategories(pack.categories);
+    if (typeof pack?.picante === "boolean") room.picante = pack.picante;
+    if (pack?.options !== undefined) room.options = sanitizeGameOptions(pack.options);
+    const ctx = this.context(room, sanitizeTestSeed(seed, this.allowTestSeeds));
+    try {
+      room.gameState = engine.createState(ctx);
+    } catch (err) {
+      console.error("[createState]", err);
+      return "No se pudo armar la ronda. Probá de nuevo.";
+    }
     room.gameId = gameId;
-    room.gameState = engine.createState(ctx);
     room.status = "playing";
     room.scoredRound = false;
     room.notice = null;
@@ -277,11 +326,19 @@ export class RoomManager {
     if (!room || !room.gameId || room.gameState == null) return "No hay ronda en curso.";
     const engine = getEngine(room.gameId);
     if (!engine) return "Juego desconocido.";
+    if (typeof action?.type !== "string" || action.type.length < 1 || action.type.length > 40) {
+      return "Jugada inválida.";
+    }
     if (action.type === "reveal" || action.type === "open-vote") {
       if (room.hostId !== playerId) return "Eso lo aprieta el anfitrión.";
     }
     const ctx = this.context(room);
-    room.gameState = engine.reduce(room.gameState, action, playerId, ctx);
+    try {
+      room.gameState = engine.reduce(room.gameState, action, playerId, ctx);
+    } catch (err) {
+      console.error("[reduce]", err);
+      return "Esa jugada no cierra. Probá de nuevo.";
+    }
     if (engine.isFinished(room.gameState) && !room.scoredRound) {
       const gained = engine.scores(room.gameState);
       for (const seat of room.seats) {
@@ -318,23 +375,29 @@ export class RoomManager {
   }
 
   project(room: Room, playerId: string) {
-    const you = room.seats.find((s) => s.id === playerId);
-    if (!you) return null;
-    const engine = room.gameId ? getEngine(room.gameId) : undefined;
-    return {
-      code: room.code,
-      you: this.publicSeat(room, you),
-      players: room.seats.map((s) => this.publicSeat(room, s)),
-      status: room.status,
-      gameId: room.gameId,
-      public: engine && room.gameState != null ? engine.publicView(room.gameState) : null,
-      private: engine && room.gameState != null ? engine.privateView(room.gameState, playerId) : null,
-      notice: room.notice,
-      canHost: room.hostId === playerId,
-    };
+    try {
+      const you = room.seats.find((s) => s.id === playerId);
+      if (!you) return null;
+      const engine = room.gameId ? getEngine(room.gameId) : undefined;
+      return {
+        code: room.code,
+        you: this.publicSeat(room, you),
+        players: room.seats.map((s) => this.publicSeat(room, s)),
+        status: room.status,
+        gameId: room.gameId,
+        public: engine && room.gameState != null ? engine.publicView(room.gameState) : null,
+        private: engine && room.gameState != null ? engine.privateView(room.gameState, playerId) : null,
+        notice: room.notice,
+        canHost: room.hostId === playerId,
+      };
+    } catch (err) {
+      console.error("[project]", err);
+      return null;
+    }
   }
 
   dispose() {
+    if (this.sweepTimer) clearInterval(this.sweepTimer);
     for (const t of this.hostTimers.values()) clearTimeout(t);
     this.hostTimers.clear();
     this.rooms.clear();
@@ -366,6 +429,7 @@ export class RoomManager {
   }
 
   private emit(room: Room) {
+    room.lastActivityAt = this.now();
     this.onChange?.(room);
   }
 }

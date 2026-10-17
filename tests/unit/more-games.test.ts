@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { mulberry32 } from "@/shared/rng";
+import type { GameContext, TestSeed } from "@/shared/types";
 import { auctionEngine, scoreAuction } from "@/shared/games/auction/logic";
 import { phraseEngine } from "@/shared/games/phrase/logic";
 import { lieEngine } from "@/shared/games/lie/logic";
@@ -13,12 +14,16 @@ import { bombEngine } from "@/shared/games/bomb/logic";
 import { mimicEngine } from "@/shared/games/charades/logic";
 
 const ids = ["a", "b", "c", "d"];
-const ctx = (seed: Record<string, unknown> = {}) => ({
+const ctx = (seed: TestSeed = {}): GameContext => ({
   playerIds: ids,
   rng: mulberry32(3),
   seed,
   now: () => 1_000_000,
 });
+
+function view<T>(value: unknown): T {
+  return value as T;
+}
 
 describe("subasta", () => {
   it("sin pasarse gana el más alto que no se pasó", () => {
@@ -32,7 +37,7 @@ describe("subasta", () => {
     state = auctionEngine.reduce(state, { type: "bid", payload: { value: 40 } }, "a", ctx());
     const pub = JSON.stringify(auctionEngine.publicView(state));
     expect(pub).not.toContain("50");
-    expect(auctionEngine.privateView(state, "b").bid).toBeNull();
+    expect(view<{ bid: number | null }>(auctionEngine.privateView(state, "b")).bid).toBeNull();
   });
 });
 
@@ -47,7 +52,7 @@ describe("completa-frase", () => {
     s = phraseEngine.reduce(s, { type: "vote", payload: { answerId: "a-b" } }, "a", c);
     const pub = JSON.stringify(phraseEngine.publicView(s));
     expect(pub).not.toContain('"votes"');
-    expect(phraseEngine.privateView(s, "c").myVote).toBeNull();
+    expect(view<{ myVote: string | null }>(phraseEngine.privateView(s, "c")).myVote).toBeNull();
     s = phraseEngine.reduce(s, { type: "reveal" }, "a", c);
     expect(JSON.stringify(phraseEngine.publicView(s))).not.toMatch(/"votes":\{/);
   });
@@ -58,8 +63,8 @@ describe("mentira", () => {
     const c = ctx({ targetId: "a", answers: ["uno", "dos", "tres"], lieIndex: 2 });
     let s = lieEngine.createState(c);
     s = lieEngine.reduce(s, { type: "write", payload: { statements: ["uno", "dos", "tres"], lieIndex: 2 } }, "a", c);
-    expect(lieEngine.privateView(s, "b").lieIndex).toBeNull();
-    expect(lieEngine.publicView(s).lieIndex).toBeUndefined();
+    expect(view<{ lieIndex: number | null }>(lieEngine.privateView(s, "b")).lieIndex).toBeNull();
+    expect(view<{ lieIndex?: number }>(lieEngine.publicView(s)).lieIndex).toBeUndefined();
     s = lieEngine.reduce(s, { type: "vote", payload: { index: 1 } }, "b", c);
     s = lieEngine.reduce(s, { type: "reveal" }, "a", c);
     expect(JSON.stringify(lieEngine.publicView(s))).not.toMatch(/"votes":\{/);
@@ -71,9 +76,31 @@ describe("dibuja", () => {
   it("solo el dibujante ve la palabra", () => {
     const c = ctx({ word: "mate secreto", targetId: "a" });
     const s = drawEngine.createState(c);
-    expect(drawEngine.privateView(s, "a").word).toBe("mate secreto");
-    expect(drawEngine.privateView(s, "b").word).toBeNull();
+    expect(view<{ word: string | null }>(drawEngine.privateView(s, "a")).word).toBe("mate secreto");
+    expect(view<{ word: string | null }>(drawEngine.privateView(s, "b")).word).toBeNull();
     expect(JSON.stringify(drawEngine.publicView(s))).not.toContain("mate secreto");
+  });
+
+  it("ignora puntos nulos y colores que no son hex", () => {
+    const c = ctx({ word: "mate", targetId: "a" });
+    let s = drawEngine.createState(c);
+    s = drawEngine.reduce(
+      s,
+      { type: "stroke", payload: { stroke: { color: "javascript:alert(1)", points: [null, { x: 3, y: 4 }] } } },
+      "a",
+      c,
+    );
+    const pub = view<{ strokes: { color: string; points: { x: number; y: number }[] }[] }>(drawEngine.publicView(s));
+    expect(pub.strokes).toHaveLength(1);
+    expect(pub.strokes[0]!.color).toBe("#1e1446");
+    expect(pub.strokes[0]!.points).toEqual([{ x: 3, y: 4 }]);
+    const again = drawEngine.reduce(
+      s,
+      { type: "stroke", payload: { stroke: { color: "#C42B54", points: [null] } } },
+      "a",
+      c,
+    );
+    expect(view<{ strokes: unknown[] }>(drawEngine.publicView(again)).strokes).toHaveLength(1);
   });
 });
 
@@ -81,7 +108,7 @@ describe("reflejos", () => {
   it("no publica el índice correcto hasta terminar", () => {
     const c = ctx({ prompt: "x", options: ["a", "b", "c", "d"], correct: 2 });
     let s = reflexEngine.createState(c);
-    expect(reflexEngine.publicView(s).correct).toBeUndefined();
+    expect(view<{ correct?: number }>(reflexEngine.publicView(s)).correct).toBeUndefined();
     s = reflexEngine.reduce(s, { type: "tap", payload: { index: 2 } }, "b", c);
     expect(reflexEngine.scores(s).b).toBe(3);
   });
@@ -91,8 +118,8 @@ describe("onda", () => {
   it("el target solo lo ve el psíquico", () => {
     const c = ctx({ targetId: "a", target: 77, poles: ["Frío", "Caliente"] });
     const s = waveEngine.createState(c);
-    expect(waveEngine.privateView(s, "a").target).toBe(77);
-    expect(waveEngine.privateView(s, "b").target).toBeNull();
+    expect(view<{ target: number | null }>(waveEngine.privateView(s, "a")).target).toBe(77);
+    expect(view<{ target: number | null }>(waveEngine.privateView(s, "b")).target).toBeNull();
     expect(JSON.stringify(waveEngine.publicView(s))).not.toContain("77");
   });
 });
@@ -100,10 +127,10 @@ describe("onda", () => {
 describe("taboo y mímica", () => {
   it("esconden la palabra al resto", () => {
     const taboo = tabooEngine.createState(ctx({ word: "secreto-taboo", targetId: "a", forbidden: ["no", "digas", "esto", "che"] }));
-    expect(tabooEngine.privateView(taboo, "b").word).toBeNull();
+    expect(view<{ word: string | null }>(tabooEngine.privateView(taboo, "b")).word).toBeNull();
     expect(JSON.stringify(tabooEngine.publicView(taboo))).not.toContain("secreto-taboo");
     const mimic = mimicEngine.createState(ctx({ word: "secreto-mima", targetId: "a" }));
-    expect(mimicEngine.privateView(mimic, "b").word).toBeNull();
+    expect(view<{ word: string | null }>(mimicEngine.privateView(mimic, "b")).word).toBeNull();
     expect(JSON.stringify(mimicEngine.publicView(mimic))).not.toContain("secreto-mima");
   });
 });
@@ -118,8 +145,8 @@ describe("yo nunca", () => {
     s = neverEngine.reduce(s, { type: "choose", payload: { value: "no" } }, "d", c);
     const pub = JSON.stringify(neverEngine.publicView(s));
     expect(pub).not.toContain('"choices"');
-    expect(neverEngine.publicView(s).yesCount).toBe(2);
-    expect(neverEngine.privateView(s, "b").myChoice).toBe("no");
+    expect(view<{ yesCount?: number }>(neverEngine.publicView(s)).yesCount).toBe(2);
+    expect(view<{ myChoice: string | null }>(neverEngine.privateView(s, "b")).myChoice).toBe("no");
   });
 });
 
