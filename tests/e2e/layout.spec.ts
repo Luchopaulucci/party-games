@@ -119,8 +119,9 @@ test.describe("layout márgenes", () => {
         expect(pillWraps, `pill partida ${id}`).toBe(false);
         if (id === "impostor") {
           await expect(page.getByText(/Sos impostor|No sos impostor/)).toBeVisible();
+          await expect(page.getByRole("button", { name: "Listo, pasá el celu" })).toBeVisible();
+          await expect(page.getByText(/Listos:/)).toHaveCount(0);
           await expect(page.getByTestId("clock-preset-30")).toHaveCount(0);
-          await expect(page.getByTestId("clock-preset-0")).toHaveCount(0);
         }
         await assertLayout(page);
       }

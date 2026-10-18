@@ -305,7 +305,10 @@ export function LocalMatchApp({ gameId }: { gameId: GameId }) {
             }}
           />
         ) : null}
-        {match.status === "playing" && match.revealQueue.length > 1 && match.gameId !== "mentira" ? (
+        {match.status === "playing" &&
+        match.revealQueue.length > 1 &&
+        match.gameId &&
+        !["mentira", "impostor", "emoji", "completa-frase"].includes(match.gameId) ? (
           <button
             className="btn btn-ghost"
             type="button"

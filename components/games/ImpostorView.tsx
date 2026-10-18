@@ -65,19 +65,19 @@ export function ImpostorView({
             </>
           )}
         </div>
-        <p className="lead">
-          Reloj de charla: {clockLabel(publicView.discussSec)}. Se elige en el lobby, antes de arrancar.
-        </p>
+        <p className="lead">Reloj de charla: {clockLabel(publicView.discussSec)}.</p>
         {privateView.ready ? (
-          <div className="notice">Ya diste OK. Esperá al resto.</div>
+          <div className="notice">{local ? "Listo. Pasá el celu." : "Ya diste OK. Esperá al resto."}</div>
         ) : (
           <button className="btn btn-primary" type="button" onClick={() => onAction("ready")}>
-            OK, ya vi
+            {local ? "Listo, pasá el celu" : "OK, ya vi"}
           </button>
         )}
-        <p className="lead">
-          Listos: {publicView.readyIds.length}/{players.length}
-        </p>
+        {local ? null : (
+          <p className="lead">
+            Listos: {publicView.readyIds.length}/{players.length}
+          </p>
+        )}
       </div>
     );
   }

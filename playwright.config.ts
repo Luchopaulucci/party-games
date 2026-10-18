@@ -9,7 +9,7 @@ export default defineConfig({
     viewport: { width: 375, height: 812 },
   },
   webServer: {
-    command: "npx next start --port 3010",
+    command: "NODE_ENV=production PORT=3010 node dist/server/index.js",
     url: "http://127.0.0.1:3010",
     reuseExistingServer: false,
     timeout: 60_000,

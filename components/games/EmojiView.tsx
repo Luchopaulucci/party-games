@@ -7,12 +7,14 @@ export function EmojiView({
   publicView,
   privateView,
   players,
+  local,
   onAction,
 }: {
   publicView: EmojiPublicView;
   privateView: EmojiPrivateView;
   isHost: boolean;
   players: { id: string; name: string }[];
+  local?: boolean;
   onAction: (type: string, payload?: unknown) => void;
 }) {
   if (publicView.phase === "reveal") {
@@ -35,7 +37,7 @@ export function EmojiView({
         <div className="notice">Ya la viste. Pasá el celu.</div>
       ) : (
         <button className="btn btn-primary" type="button" onClick={() => onAction("pass")}>
-          Pasar el teléfono
+          {local ? "Listo, pasá el celu" : "Listo"}
         </button>
       )}
       <p className="lead">

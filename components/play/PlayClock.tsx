@@ -36,7 +36,7 @@ export function PlayClock({
 
   return (
     <div className="stack" data-testid="play-clock">
-      {!running ? (
+      {!running && onChange ? (
         <>
           <p className="kicker">Reloj</p>
           <div className="chips">
