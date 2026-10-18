@@ -14,10 +14,10 @@ import {
 } from "../shared/protocol";
 import { MAX_HTTP_BUFFER_SIZE } from "../shared/types";
 import { RoomManager, type Room, type RoomManagerOptions } from "./room-manager";
-import { resolveAllowedOrigins, socketIoCors } from "./origins";
+import { resolveAllowedOrigins, socketIoCors, type OriginPolicy } from "./origins";
 
 export type CreateRealtimeOptions = RoomManagerOptions & {
-  allowedOrigins?: string[] | true;
+  allowedOrigins?: OriginPolicy | string[];
 };
 
 interface SocketData {
