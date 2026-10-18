@@ -1,4 +1,4 @@
-import type { GameId } from "@/shared/types";
+import type { GameId } from "../types";
 
 export const STICKER_FILLS = {
   blue: "#4da2ff",
