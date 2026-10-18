@@ -668,9 +668,9 @@ select:focus-visible {
 }
 
 .chip.on {
-  background: var(--color-kippo-pink);
+  background: transparent;
   border-color: var(--color-kippo-pink);
-  color: var(--color-ghost-white);
+  color: var(--color-kippo-pink);
 }
 
 .kicker {

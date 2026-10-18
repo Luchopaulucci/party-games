@@ -17,7 +17,6 @@ export function ScreenMotion({ children, replay }: { children: ReactNode; replay
       );
       if (!items.length) return;
       gsap.from(items, {
-        y: 8,
         autoAlpha: 0,
         duration: MOTION.duration,
         stagger: MOTION.stagger,
