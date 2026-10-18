@@ -42,6 +42,7 @@ export function ActiveGame({
   players,
   onAction,
   timerSec,
+  local,
 }: {
   gameId: GameId;
   publicView: unknown;
@@ -51,25 +52,44 @@ export function ActiveGame({
   players: { id: string; name: string; color?: string }[];
   onAction: (type: string, payload?: unknown) => void;
   timerSec?: number;
+  local?: boolean;
 }) {
   const common = { isHost, players, onAction };
+  const skipTimer = gameId === "impostor" || gameId === "emoji";
   return (
     <div className="stack">
-      <RoundTimer seconds={timerSec} active onTimeout={() => onAction("timeout")} />
+      {skipTimer ? null : <RoundTimer seconds={timerSec} active onTimeout={() => onAction("timeout")} />}
       {gameId === "closest" ? (
         <ClosestView publicView={publicView as ClosestPublicView} privateView={privateView as ClosestPrivateView} {...common} />
       ) : gameId === "whoami" ? (
         <WhoAmIView publicView={publicView as WhoAmIPublicView} privateView={privateView as WhoAmIPrivateView} {...common} />
       ) : gameId === "impostor" ? (
-        <ImpostorView publicView={publicView as ImpostorPublicView} privateView={privateView as ImpostorPrivateView} youId={youId} {...common} />
+        <ImpostorView
+          publicView={publicView as ImpostorPublicView}
+          privateView={privateView as ImpostorPrivateView}
+          youId={youId}
+          local={local}
+          {...common}
+        />
       ) : gameId === "mas-o-menos" ? (
         <HigherLowerView publicView={publicView as HigherLowerPublicView} privateView={privateView as HigherLowerPrivateView} {...common} />
       ) : gameId === "espia" ? (
         <SpyView publicView={publicView as SpyPublicView} privateView={privateView as SpyPrivateView} youId={youId} {...common} />
       ) : gameId === "votacion" ? (
-        <VoteView publicView={publicView as VotePublicView} privateView={privateView as VotePrivateView} youId={youId} {...common} />
+        <VoteView
+          publicView={publicView as VotePublicView}
+          privateView={privateView as VotePrivateView}
+          youId={youId}
+          local={local}
+          {...common}
+        />
       ) : gameId === "completa-frase" ? (
-        <PhraseView publicView={publicView as PhrasePublicView} privateView={privateView as PhrasePrivateView} {...common} />
+        <PhraseView
+          publicView={publicView as PhrasePublicView}
+          privateView={privateView as PhrasePrivateView}
+          local={local}
+          {...common}
+        />
       ) : gameId === "mentira" ? (
         <LieView publicView={publicView as LiePublicView} privateView={privateView as LiePrivateView} {...common} />
       ) : gameId === "reflejos" ? (

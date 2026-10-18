@@ -1,5 +1,6 @@
 import type { GameContext, GameEngine, ScoreMap } from "../../types";
 import { pickRandom } from "../../rng";
+import { pickRandomReader } from "../../play/reader";
 import { VOTE_PROMPTS } from "./prompts";
 
 export type VotePhase = "voting" | "reveal";
@@ -9,6 +10,7 @@ export interface VoteState {
   promptId: string;
   prompt: string;
   votes: Record<string, string>;
+  readerId: string;
 }
 
 export interface VoteTotal {
@@ -20,11 +22,13 @@ export interface VotePublicView {
   phase: VotePhase;
   prompt: string;
   votedIds: string[];
+  readerId: string;
   totals?: VoteTotal[];
 }
 
 export interface VotePrivateView {
   myVote: string | null;
+  isReader: boolean;
 }
 
 function pickPrompt(ctx: GameContext) {
@@ -44,16 +48,27 @@ export function voteTotals(votes: Record<string, string>): VoteTotal[] {
     .sort((a, b) => b.count - a.count || a.playerId.localeCompare(b.playerId));
 }
 
+function parseTarget(payload: unknown, playerIds: string[]): string | null {
+  if (payload == null || typeof payload !== "object") return null;
+  const target = (payload as { targetId?: unknown }).targetId;
+  return typeof target === "string" && playerIds.includes(target) ? target : null;
+}
+
 export const voteEngine: GameEngine<VoteState> = {
   id: "votacion",
 
   createState(ctx) {
     const prompt = pickPrompt(ctx);
+    const reader = pickRandomReader(
+      ctx.playerIds.map((id) => ({ id })),
+      ctx.rng,
+    );
     return {
       phase: "voting",
       promptId: prompt.id,
       prompt: prompt.prompt,
       votes: {},
+      readerId: reader?.id ?? ctx.playerIds[0]!,
     };
   },
 
@@ -61,9 +76,11 @@ export const voteEngine: GameEngine<VoteState> = {
     if (state.phase === "reveal") return state;
 
     if (action.type === "vote") {
-      const target = String((action.payload as { targetId?: unknown })?.targetId ?? "");
-      if (!target || !ctx.playerIds.includes(target)) return state;
-      return { ...state, votes: { ...state.votes, [playerId]: target } };
+      const target = parseTarget(action.payload, ctx.playerIds);
+      if (!target) return state;
+      const votes = { ...state.votes, [playerId]: target };
+      const allIn = ctx.playerIds.every((id) => votes[id]);
+      return { ...state, votes, phase: allIn ? "reveal" : "voting" };
     }
 
     if (action.type === "reveal" || action.type === "timeout") {
@@ -78,6 +95,7 @@ export const voteEngine: GameEngine<VoteState> = {
       phase: state.phase,
       prompt: state.prompt,
       votedIds: Object.keys(state.votes),
+      readerId: state.readerId,
     };
     if (state.phase === "reveal") {
       view.totals = voteTotals(state.votes);
@@ -86,7 +104,7 @@ export const voteEngine: GameEngine<VoteState> = {
   },
 
   privateView(state, playerId): VotePrivateView {
-    return { myVote: state.votes[playerId] ?? null };
+    return { myVote: state.votes[playerId] ?? null, isReader: state.readerId === playerId };
   },
 
   isFinished(state) {

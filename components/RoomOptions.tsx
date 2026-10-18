@@ -1,6 +1,7 @@
 "use client";
 
 import type { GameId, GameOptions } from "@/shared/types";
+import { WHOAMI_PACKS } from "@/shared/games/whoami/characters";
 
 const TIMERS = [0, 30, 45, 60, 90];
 const ROUNDS = [1, 3, 5, 8];
@@ -50,7 +51,7 @@ export function RoomOptions({
       </label>
       {showImpostors ? (
         <label>
-          Impostores
+          Impostores (siempre menos que el resto)
           <select
             value={value.impostorCount ?? 0}
             onChange={(e) => onChange({ ...value, impostorCount: Number(e.target.value) })}
@@ -60,6 +61,32 @@ export function RoomOptions({
             <option value={2}>2</option>
           </select>
         </label>
+      ) : null}
+      {gameId === "whoami" ? (
+        <div className="stack">
+          <p className="kicker">Filtros de ¿Quién soy?</p>
+          <div className="chips">
+            {WHOAMI_PACKS.map((pack) => {
+              const selected = (value.packs?.length ? value.packs : WHOAMI_PACKS.map((p) => p.id)).includes(pack.id);
+              return (
+                <button
+                  key={pack.id}
+                  type="button"
+                  className={`chip ${selected ? "on" : ""}`}
+                  onClick={() => {
+                    const current = value.packs?.length ? [...value.packs] : WHOAMI_PACKS.map((p) => p.id);
+                    const next = current.includes(pack.id)
+                      ? current.filter((id) => id !== pack.id)
+                      : [...current, pack.id];
+                    onChange({ ...value, packs: next.length ? next : [pack.id] });
+                  }}
+                >
+                  {pack.label}
+                </button>
+              );
+            })}
+          </div>
+        </div>
       ) : null}
       {showSpies ? (
         <label>

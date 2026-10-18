@@ -1,86 +1,77 @@
 import type { GameEngine, ScoreMap } from "../../types";
-import { pickRandom } from "../../rng";
+import { shuffle } from "../../rng";
 import { NEVER_PROMPTS } from "./prompts";
 
-export type NeverPhase = "tap" | "reveal";
+export type NeverPhase = "card" | "done";
 
 export interface NeverState {
   phase: NeverPhase;
-  promptId: string;
-  prompt: string;
-  choices: Record<string, "si" | "no">;
+  deck: { id: string; prompt: string }[];
+  index: number;
 }
 
 export interface NeverPublicView {
   phase: NeverPhase;
   prompt: string;
-  tappedIds: string[];
-  yesCount?: number;
-  noCount?: number;
+  index: number;
+  total: number;
 }
 
 export interface NeverPrivateView {
-  myChoice: "si" | "no" | null;
+  myChoice: null;
 }
 
 export const neverEngine: GameEngine<NeverState> = {
   id: "yo-nunca",
 
   createState(ctx) {
-    const item = ctx.seed?.prompt
-      ? { id: ctx.seed.questionId ?? "seeded", prompt: ctx.seed.prompt }
-      : pickRandom(NEVER_PROMPTS, ctx.rng, ctx.usedContentIds ?? [], (p) => p.id);
-    return { phase: "tap", promptId: item.id, prompt: item.prompt, choices: {} };
+    if (ctx.seed?.prompt) {
+      const first = { id: ctx.seed.questionId ?? "seeded", prompt: ctx.seed.prompt };
+      const rest = shuffle(
+        NEVER_PROMPTS.filter((p) => p.id !== first.id),
+        ctx.rng,
+      );
+      return { phase: "card", deck: [first, ...rest], index: 0 };
+    }
+    return { phase: "card", deck: shuffle(NEVER_PROMPTS, ctx.rng), index: 0 };
   },
 
-  reduce(state, action, playerId, ctx) {
-    if (state.phase === "reveal") return state;
-    if (action.type === "choose") {
-      const raw = String((action.payload as { value?: unknown })?.value ?? "");
-      if (raw !== "si" && raw !== "no") return state;
-      const value: "si" | "no" = raw;
-      const choices = { ...state.choices, [playerId]: value };
-      const everyone = ctx.playerIds.every((id) => choices[id] !== undefined);
-      return { ...state, choices, phase: everyone ? "reveal" : "tap" };
+  reduce(state, action) {
+    if (state.phase === "done") return state;
+    if (action.type === "next" || action.type === "choose") {
+      const next = state.index + 1;
+      if (next >= state.deck.length) return { ...state, phase: "done", index: state.deck.length - 1 };
+      return { ...state, index: next };
     }
     if (action.type === "reveal" || action.type === "timeout") {
-      return { ...state, phase: "reveal" };
+      return { ...state, phase: "done" };
     }
     return state;
   },
 
   publicView(state): NeverPublicView {
-    const view: NeverPublicView = {
+    const card = state.deck[state.index] ?? state.deck[0]!;
+    return {
       phase: state.phase,
-      prompt: state.prompt,
-      tappedIds: Object.keys(state.choices),
+      prompt: card.prompt,
+      index: state.index,
+      total: state.deck.length,
     };
-    if (state.phase === "reveal") {
-      const values = Object.values(state.choices);
-      view.yesCount = values.filter((v) => v === "si").length;
-      view.noCount = values.filter((v) => v === "no").length;
-    }
-    return view;
   },
 
-  privateView(state, playerId): NeverPrivateView {
-    return { myChoice: state.choices[playerId] ?? null };
+  privateView(): NeverPrivateView {
+    return { myChoice: null };
   },
 
   isFinished(state) {
-    return state.phase === "reveal";
+    return state.phase === "done";
   },
 
-  scores(state): ScoreMap {
-    if (state.phase !== "reveal") return {};
-    const out: ScoreMap = {};
-    for (const [id, choice] of Object.entries(state.choices)) {
-      if (choice === "si") out[id] = 1;
-    }
-    return out;
+  scores(): ScoreMap {
+    return {};
   },
 
   usedContentId(state) {
-    return state.promptId;
+    return state.deck[state.index]?.id;
   },
 };
