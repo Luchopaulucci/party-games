@@ -236,7 +236,7 @@ export function LocalMatchApp({ gameId }: { gameId: GameId }) {
           <FxToggle />
         </div>
 
-        <button className="btn btn-primary lobby-cta" type="button" disabled={!canStart} onClick={begin}>
+        <button className="btn btn-primary" type="button" disabled={!canStart} onClick={begin}>
           Empezar {meta.name}
         </button>
       </div>
