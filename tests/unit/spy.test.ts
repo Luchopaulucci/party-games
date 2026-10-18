@@ -26,6 +26,16 @@ describe("espía", () => {
     expect(pub).not.toContain('"d"');
   });
 
+  it("un payload podrido no crashea ni filtra el escenario", () => {
+    let state = spyEngine.createState(ctx);
+    state = spyEngine.reduce(state, { type: "guess-location", payload: 1 }, "d", ctx);
+    state = spyEngine.reduce(state, { type: "vote", payload: null }, "a", ctx);
+    expect(state.phase).toBe("discuss");
+    expect((spyEngine.publicView(state) as { location?: string }).location).toBeUndefined();
+    expect((spyEngine.privateView(state, "d") as { location: string | null }).location).toBeNull();
+    expect((spyEngine.privateView(state, "a") as { role: string }).role).toBe("civil");
+  });
+
   it("al pescar al espía suman los civiles", () => {
     let state = spyEngine.createState(ctx);
     state = spyEngine.reduce(state, { type: "open-vote" }, "a", ctx);

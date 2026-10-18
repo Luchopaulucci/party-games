@@ -12,7 +12,7 @@ import {
   type HelloPayload,
   type StartGamePayload,
 } from "../shared/protocol";
-import { MAX_HTTP_BUFFER_SIZE, type GameId } from "../shared/types";
+import { MAX_HTTP_BUFFER_SIZE } from "../shared/types";
 import { RoomManager, type Room, type RoomManagerOptions } from "./room-manager";
 
 export type CreateRealtimeOptions = RoomManagerOptions;
@@ -38,6 +38,13 @@ export function createRealtimeServer(httpServer: HttpServer, opts: CreateRealtim
   });
 
   rooms.onChange = (room) => emitRoom(io, rooms, room);
+  rooms.onClosed = ({ text, seats }) => {
+    for (const seat of seats) {
+      for (const sid of seat.socketIds) {
+        io.to(sid).emit("roomClosed", { text, reason: "host-left" });
+      }
+    }
+  };
 
   io.on("connection", (socket: Socket) => {
     onValidated(socket, "hello", helloPayloadSchema, (payload: HelloPayload, cb) => {
@@ -64,7 +71,7 @@ export function createRealtimeServer(httpServer: HttpServer, opts: CreateRealtim
     onValidated(socket, "startGame", startGamePayloadSchema, (payload: StartGamePayload, cb) => {
       const data = socket.data as SocketData;
       if (!data.code || !data.playerId) return cb?.({ ok: false, error: "Primero entra a una sala." });
-      const error = rooms.startGame(data.code, data.playerId, payload.gameId as GameId, payload.seed, {
+      const error = rooms.startGame(data.code, data.playerId, payload.gameId, payload.seed, {
         categories: payload.categories,
         picante: payload.picante,
         options: payload.options,
@@ -98,6 +105,18 @@ export function createRealtimeServer(httpServer: HttpServer, opts: CreateRealtim
       if (!data.code || !data.playerId) return cb?.({ ok: false, error: "Sin asiento." });
       const error = rooms.react(data.code, data.playerId, payload.emoji);
       cb?.(error ? { ok: false, error } : { ok: true });
+    });
+
+    onValidated(socket, "leaveRoom", null, (_payload, cb) => {
+      const data = socket.data as SocketData;
+      if (!data.code || !data.playerId) return cb?.({ ok: false, error: "Sin asiento." });
+      const result = rooms.leaveRoom(data.code, data.playerId);
+      if (typeof result === "string") return cb?.({ ok: false, error: result });
+      socket.leave(data.code);
+      data.code = undefined;
+      data.token = undefined;
+      data.playerId = undefined;
+      cb?.({ ok: true, closed: result.closed, text: result.text });
     });
 
     socket.on("disconnect", () => {

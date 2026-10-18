@@ -2,7 +2,7 @@ import { createServer } from "node:http";
 import { io as clientIo, type Socket } from "socket.io-client";
 import { afterEach, describe, expect, it } from "vitest";
 import { createRealtimeServer } from "@/server/realtime";
-import { BAD_PAYLOAD_ERROR } from "@/shared/protocol";
+import { BAD_PAYLOAD_ERROR, UNKNOWN_GAME_ERROR } from "@/shared/protocol";
 
 type Hello = { ok: boolean; error?: string; code?: string; playerId?: string; token?: string };
 
@@ -208,7 +208,7 @@ describe("payloads malformados y limpieza", () => {
     expect(srv.rooms.rooms.has(keep.code!)).toBe(true);
   });
 
-  it("un trazo de Dibujo con points:[null] no tumba el server ni la otra sala", async () => {
+  it("startGame rechaza cada uno de los 8 ids borrados y no tumba el server", async () => {
     const srv = await listen();
     cleanups.push(() => {
       srv.rooms.dispose();
@@ -217,42 +217,45 @@ describe("payloads malformados y limpieza", () => {
     });
     const host = connect(srv.url);
     const guest = connect(srv.url);
-    const third = connect(srv.url);
     const other = connect(srv.url);
     cleanups.push(() => {
       host.socket.disconnect();
       guest.socket.disconnect();
-      third.socket.disconnect();
       other.socket.disconnect();
     });
-    await Promise.all([
-      waitConnected(host.socket),
-      waitConnected(guest.socket),
-      waitConnected(third.socket),
-      waitConnected(other.socket),
-    ]);
+    await Promise.all([waitConnected(host.socket), waitConnected(guest.socket), waitConnected(other.socket)]);
 
     const created = await hello(host.socket, { intent: "create", name: "Lucho" });
     const joined = await hello(guest.socket, { intent: "join", name: "Meli", code: created.code });
-    const joined3 = await hello(third.socket, { intent: "join", name: "Coco", code: created.code });
-    expect(created.ok && joined.ok && joined3.ok).toBe(true);
-    await waitFor(host.box, host.socket, (s) => (s.players as unknown[]).length === 3);
+    expect(created.ok && joined.ok).toBe(true);
+    await waitFor(host.box, host.socket, (s) => (s.players as unknown[]).length === 2);
     const otherRoom = await hello(other.socket, { intent: "create", name: "Otra" });
     expect(otherRoom.ok).toBe(true);
 
-    const started = await ack(host.socket, "startGame", {
-      gameId: "dibuja",
-      seed: { word: "mate", targetId: created.playerId },
-    });
-    expect(started.ok).toBe(true);
-    await waitFor(host.box, host.socket, (s) => s.gameId === "dibuja");
+    const removed = [
+      "subasta",
+      "dibuja",
+      "onda",
+      "taboo",
+      "bombita",
+      "mimica",
+      "verdad-reto",
+      "telefono",
+    ];
+    for (const gameId of removed) {
+      const started = await ack(host.socket, "startGame", { gameId });
+      expect(started.ok, gameId).toBe(false);
+      expect([BAD_PAYLOAD_ERROR, UNKNOWN_GAME_ERROR]).toContain(started.error);
+      expect(host.box.last?.gameId ?? null, gameId).toBeNull();
+      expect(srv.rooms.rooms.has(created.code!)).toBe(true);
+    }
 
-    const stroke = await ack(host.socket, "action", {
-      type: "stroke",
-      payload: { stroke: { color: "not-a-color", points: [null, { x: 1, y: 2 }] } },
+    const ok = await ack(host.socket, "startGame", {
+      gameId: "closest",
+      seed: { prompt: "x", trueAnswer: 1 },
     });
-    expect(stroke.ok).toBe(true);
-    expect(srv.rooms.rooms.has(created.code!)).toBe(true);
+    expect(ok.ok).toBe(true);
+    await waitFor(host.box, host.socket, (s) => s.gameId === "closest");
     expect(srv.rooms.rooms.has(otherRoom.code!)).toBe(true);
 
     const still = await hello(other.socket, { intent: "create", name: "Sigo" });

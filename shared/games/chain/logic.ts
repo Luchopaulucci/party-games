@@ -17,13 +17,28 @@ export interface ChainState {
 export interface ChainPublicView {
   phase: ChainPhase;
   currentId: string;
-  lastWord: string;
   count: number;
   chain?: { playerId: string; text: string }[];
+  phrase?: string;
 }
 
 export interface ChainPrivateView {
   isTurn: boolean;
+  lastWord: string | null;
+}
+
+export function parseChainWords(payload: unknown): string | null {
+  const raw =
+    typeof payload === "string"
+      ? payload
+      : payload && typeof payload === "object"
+        ? (payload as { text?: unknown }).text
+        : null;
+  if (typeof raw !== "string") return null;
+  const words = raw.trim().split(/\s+/).filter(Boolean);
+  if (words.length < 1 || words.length > 2) return null;
+  if (words.some((w) => w.length > 24)) return null;
+  return words.join(" ");
 }
 
 export const chainEngine: GameEngine<ChainState> = {
@@ -39,15 +54,15 @@ export const chainEngine: GameEngine<ChainState> = {
       seedId: seed.id,
       words: [{ playerId: "mesa", text: seed.word }],
       currentId,
-      maxTurns: ctx.playerIds.length * 2,
+      maxTurns: ctx.playerIds.length,
     };
   },
 
   reduce(state, action, playerId, ctx) {
     if (state.phase === "reveal") return state;
     if (action.type === "word" && playerId === state.currentId) {
-      const text = String((action.payload as { text?: unknown })?.text ?? "").trim();
-      if (text.length < 2 || text.length > 32) return state;
+      const text = parseChainWords(action.payload);
+      if (!text) return state;
       const last = state.words[state.words.length - 1]!.text;
       if (normalize(text) === normalize(last)) return state;
       const words = [...state.words, { playerId, text }];
@@ -63,19 +78,22 @@ export const chainEngine: GameEngine<ChainState> = {
   },
 
   publicView(state): ChainPublicView {
-    const last = state.words[state.words.length - 1]!;
     const view: ChainPublicView = {
       phase: state.phase,
       currentId: state.currentId,
-      lastWord: last.text,
       count: state.words.length - 1,
     };
-    if (state.phase === "reveal") view.chain = state.words;
+    if (state.phase === "reveal") {
+      view.chain = state.words;
+      view.phrase = state.words.map((w) => w.text).join(" ");
+    }
     return view;
   },
 
   privateView(state, playerId): ChainPrivateView {
-    return { isTurn: state.phase === "turn" && playerId === state.currentId };
+    const last = state.words[state.words.length - 1]!;
+    const isTurn = state.phase === "turn" && playerId === state.currentId;
+    return { isTurn, lastWord: isTurn ? last.text : null };
   },
 
   isFinished(state) {

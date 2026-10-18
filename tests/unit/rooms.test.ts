@@ -1,5 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { RoomManager } from "@/server/room-manager";
+import { UNKNOWN_GAME_ERROR } from "@/shared/protocol";
+import { GAME_IDS } from "@/shared/types";
 
 describe("RoomManager", () => {
   it("aísla salas y no filtra tokens en la proyección", () => {
@@ -132,6 +134,71 @@ describe("RoomManager", () => {
     mgr.sweepRooms();
     expect(mgr.rooms.has(keep.code)).toBe(false);
     expect(mgr.rooms.has(idle.code)).toBe(false);
+    mgr.dispose();
+  });
+
+  it("rechaza startGame con cada uno de los 8 ids borrados y no crashea", () => {
+    const mgr = new RoomManager({ allowTestSeeds: true, sweepIntervalMs: 0 });
+    const host = mgr.createRoom("Lucho");
+    expect(host.ok).toBe(true);
+    if (!host.ok) return;
+    mgr.joinRoom(host.code, "Meli");
+    const removed = [
+      "subasta",
+      "dibuja",
+      "onda",
+      "taboo",
+      "bombita",
+      "mimica",
+      "verdad-reto",
+      "telefono",
+    ];
+    for (const gameId of removed) {
+      const error = mgr.startGame(host.code, host.playerId, gameId);
+      expect(error, gameId).toBe(UNKNOWN_GAME_ERROR);
+      const room = mgr.rooms.get(host.code)!;
+      expect(room.status, gameId).toBe("lobby");
+      expect(room.gameId, gameId).toBeNull();
+    }
+    const ok = mgr.startGame(host.code, host.playerId, "closest", { prompt: "x", trueAnswer: 1 });
+    expect(ok).toBeNull();
+    expect(mgr.rooms.get(host.code)!.gameId).toBe("closest");
+    mgr.dispose();
+  });
+
+  it("si sale el anfitrión se borra la sala; si sale otro, no", () => {
+    const mgr = new RoomManager({ allowTestSeeds: true, sweepIntervalMs: 0 });
+    const host = mgr.createRoom("Lucho");
+    expect(host.ok).toBe(true);
+    if (!host.ok) return;
+    const guest = mgr.joinRoom(host.code, "Meli");
+    expect(guest.ok).toBe(true);
+    if (!guest.ok) return;
+    const guestLeft = mgr.leaveRoom(host.code, guest.playerId);
+    expect(guestLeft).toEqual({ closed: false });
+    expect(mgr.rooms.get(host.code)?.seats.map((s) => s.name)).toEqual(["Lucho"]);
+    const hostLeft = mgr.leaveRoom(host.code, host.playerId);
+    expect(hostLeft).toMatchObject({ closed: true });
+    expect(mgr.rooms.has(host.code)).toBe(false);
+    mgr.dispose();
+  });
+
+  it("arranca cada uno de los 15 juegos restantes", () => {
+    const mgr = new RoomManager({ allowTestSeeds: true, sweepIntervalMs: 0 });
+    const host = mgr.createRoom("Lucho");
+    expect(host.ok).toBe(true);
+    if (!host.ok) return;
+    mgr.joinRoom(host.code, "Meli");
+    mgr.joinRoom(host.code, "Coco");
+    mgr.joinRoom(host.code, "Wanda");
+    for (const gameId of GAME_IDS) {
+      const back = mgr.toLobby(host.code, host.playerId);
+      expect(back, gameId).toBeNull();
+      const error = mgr.startGame(host.code, host.playerId, gameId);
+      expect(error, gameId).toBeNull();
+      expect(mgr.rooms.get(host.code)!.gameId, gameId).toBe(gameId);
+      expect(mgr.rooms.get(host.code)!.status, gameId).toBe("playing");
+    }
     mgr.dispose();
   });
 });

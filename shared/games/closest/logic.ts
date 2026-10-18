@@ -13,6 +13,8 @@ export interface ClosestState {
   blurb?: string;
   trueAnswer: number;
   min: number;
+  sliderMin: number;
+  sliderMax: number;
   guesses: Record<string, number>;
   ranking: ClosestRank[] | null;
 }
@@ -30,6 +32,8 @@ export interface ClosestPublicView {
   unit?: string;
   blurb?: string;
   submittedIds: string[];
+  sliderMin: number;
+  sliderMax: number;
   trueAnswer?: number;
   min?: number;
   ranking?: ClosestRank[];
@@ -71,6 +75,21 @@ export function scoreClosestRound(
   return entries;
 }
 
+export function sliderBounds(answer: number, min?: number, max?: number): { min: number; max: number } {
+  if (min != null && max != null && max > min) return { min, max };
+  if (answer >= 1800 && answer <= 2100) return { min: min ?? 1800, max: max ?? 2030 };
+  const lo = min ?? 0;
+  const hi = max ?? Math.max(lo + 20, Math.round(Math.abs(answer) * 3) || 100);
+  return { min: lo, max: hi };
+}
+
+function parseGuess(payload: unknown): number | null {
+  const raw = payload && typeof payload === "object" ? (payload as { value?: unknown }).value : payload;
+  const value = typeof raw === "number" ? raw : typeof raw === "string" ? Number(raw.replace(",", ".")) : Number.NaN;
+  if (!Number.isFinite(value)) return null;
+  return value;
+}
+
 function pickQuestion(ctx: GameContext): ClosestQuestion {
   if (ctx.seed?.prompt && ctx.seed.trueAnswer !== undefined) {
     return {
@@ -100,6 +119,7 @@ export const closestEngine: GameEngine<ClosestState> = {
 
   createState(ctx) {
     const question = pickQuestion(ctx);
+    const bounds = sliderBounds(question.answer, question.min, question.max);
     return {
       phase: "answering",
       questionId: question.id,
@@ -107,7 +127,9 @@ export const closestEngine: GameEngine<ClosestState> = {
       unit: question.unit,
       blurb: question.blurb,
       trueAnswer: question.answer,
-      min: question.min ?? 0,
+      min: bounds.min,
+      sliderMin: bounds.min,
+      sliderMax: bounds.max,
       guesses: {},
       ranking: null,
     };
@@ -117,8 +139,8 @@ export const closestEngine: GameEngine<ClosestState> = {
     if (state.phase === "reveal") return state;
 
     if (action.type === "guess") {
-      const value = Number((action.payload as { value?: unknown })?.value);
-      if (!Number.isFinite(value)) return state;
+      const value = parseGuess(action.payload);
+      if (value === null) return state;
       if (state.guesses[playerId] !== undefined) return state;
       const guesses = { ...state.guesses, [playerId]: value };
       const everyoneIn = ctx.playerIds.every((id) => guesses[id] !== undefined);
@@ -144,6 +166,8 @@ export const closestEngine: GameEngine<ClosestState> = {
       unit: state.unit,
       blurb: state.phase === "reveal" ? state.blurb : undefined,
       submittedIds: Object.keys(state.guesses),
+      sliderMin: state.sliderMin,
+      sliderMax: state.sliderMax,
     };
     if (state.phase === "reveal") {
       view.trueAnswer = state.trueAnswer;

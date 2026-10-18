@@ -6,6 +6,7 @@ import {
   MAX_PLAYERS,
   ROOM_CODE_ALPHABET,
   ROOM_SWEEP_INTERVAL_MS,
+  isPlayableGameId,
   type GameId,
   type PlayerPublic,
   type GameOptions,
@@ -21,10 +22,11 @@ import {
   sanitizeGameOptions,
   sanitizeTestSeed,
   sanitizeToken,
+  UNKNOWN_GAME_ERROR,
+  REACTION_EMOJIS,
 } from "../shared/protocol";
 import { getEngine, getGameMeta } from "../shared/games/registry";
 import { orderNightQueue } from "../shared/games/night";
-import { REACTION_EMOJIS } from "../shared/protocol";
 import { mulberry32 } from "../shared/rng";
 import { nextPlayerColor } from "../shared/ui/colors";
 
@@ -108,6 +110,7 @@ export class RoomManager {
   private readonly hostTimers = new Map<string, NodeJS.Timeout>();
   private readonly sweepTimer: NodeJS.Timeout | null;
   onChange: ((room: Room) => void) | null = null;
+  onClosed: ((info: { code: string; text: string; seats: Seat[] }) => void) | null = null;
 
   constructor(opts: RoomManagerOptions = {}) {
     this.hostGraceMs = opts.hostGraceMs ?? HOST_GRACE_DEFAULT_MS;
@@ -298,16 +301,17 @@ export class RoomManager {
   startGame(
     code: string,
     hostId: string,
-    gameId: GameId,
+    gameId: unknown,
     seed?: unknown,
     pack?: { categories?: unknown; picante?: unknown; options?: unknown },
   ): string | null {
     const room = this.rooms.get(code);
     if (!room) return "Sala introvable.";
     if (room.hostId !== hostId) return "Solo el anfitrión arranca la joda.";
+    if (!isPlayableGameId(gameId)) return UNKNOWN_GAME_ERROR;
     const meta = getGameMeta(gameId);
     const engine = getEngine(gameId);
-    if (!meta?.implemented || !engine) return "Ese juego todavía es humo. Elegí uno que exista.";
+    if (!meta?.implemented || !engine) return UNKNOWN_GAME_ERROR;
     const connected = room.seats.filter((s) => s.connected);
     if (connected.length < meta.minPlayers) {
       return `Hacen falta ${meta.minPlayers} conectados. Invita a alguien, no seas lobo estepario.`;
@@ -388,6 +392,31 @@ export class RoomManager {
     }
     if (!room.gameId) return "Elegí un juego primero.";
     return this.startGame(code, hostId, room.gameId);
+  }
+
+  leaveRoom(code: string, playerId: string): { closed: boolean; text?: string } | string {
+    const room = this.rooms.get(code);
+    if (!room) return "Sala introvable.";
+    const seat = room.seats.find((s) => s.id === playerId);
+    if (!seat) return "No estás en esta sala.";
+    if (seat.id === room.hostId) {
+      const text = `${seat.name} se fue. Se cayó la previa.`;
+      this.closeRoom(room, text);
+      return { closed: true, text };
+    }
+    room.seats = room.seats.filter((s) => s.id !== playerId);
+    this.emit(room);
+    if (room.seats.length === 0) {
+      this.deleteRoom(room.code);
+      return { closed: true, text: "La sala quedó vacía." };
+    }
+    return { closed: false };
+  }
+
+  closeRoom(room: Room, text: string) {
+    const seats = room.seats.map((s) => s);
+    this.onClosed?.({ code: room.code, text, seats });
+    this.deleteRoom(room.code);
   }
 
   toLobby(code: string, hostId: string): string | null {

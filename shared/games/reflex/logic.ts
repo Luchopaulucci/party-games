@@ -1,71 +1,72 @@
 import type { GameEngine, ScoreMap } from "../../types";
-import { pickRandom } from "../../rng";
-import { REFLEX_PROMPTS } from "./prompts";
 
 export type ReflexPhase = "live" | "done";
 
+export interface ReflexStop {
+  playerId: string;
+  elapsed: number;
+  distance: number;
+}
+
 export interface ReflexState {
   phase: ReflexPhase;
-  promptId: string;
-  prompt: string;
-  options: string[];
-  correct: number;
-  taps: Record<string, number>;
-  winnerId: string | null;
+  target: number;
+  started: Record<string, boolean>;
+  stops: Record<string, number>;
 }
 
 export interface ReflexPublicView {
   phase: ReflexPhase;
-  prompt: string;
-  options: string[];
-  tappedIds: string[];
-  winnerId: string | null;
-  correct?: number;
+  target: number;
+  startedIds: string[];
+  stoppedIds: string[];
+  results?: ReflexStop[];
+  winnerId?: string;
 }
 
 export interface ReflexPrivateView {
-  myTap: number | null;
+  started: boolean;
+  myElapsed: number | null;
+}
+
+export function randomReflexTarget(rng: () => number): number {
+  return Math.round((2 + rng() * 4) * 100) / 100;
+}
+
+function parseElapsed(payload: unknown): number | null {
+  if (payload == null || typeof payload !== "object") return null;
+  const raw = (payload as { elapsed?: unknown }).elapsed;
+  const value = typeof raw === "number" ? raw : typeof raw === "string" ? Number(raw.replace(",", ".")) : Number.NaN;
+  if (!Number.isFinite(value) || value < 0 || value > 60) return null;
+  return Math.round(value * 100) / 100;
 }
 
 export const reflexEngine: GameEngine<ReflexState> = {
   id: "reflejos",
 
   createState(ctx) {
-    const item =
-      ctx.seed?.prompt && ctx.seed.options && ctx.seed.correct !== undefined
-        ? {
-            id: ctx.seed.questionId ?? "seeded",
-            prompt: ctx.seed.prompt,
-            options: ctx.seed.options,
-            correct: ctx.seed.correct,
-          }
-        : pickRandom(REFLEX_PROMPTS, ctx.rng, ctx.usedContentIds ?? [], (p) => p.id);
-    return {
-      phase: "live",
-      promptId: item.id,
-      prompt: item.prompt,
-      options: item.options,
-      correct: item.correct,
-      taps: {},
-      winnerId: null,
-    };
+    const target =
+      typeof ctx.seed?.target === "number" && Number.isFinite(ctx.seed.target)
+        ? Math.round(ctx.seed.target * 100) / 100
+        : randomReflexTarget(ctx.rng);
+    return { phase: "live", target, started: {}, stops: {} };
   },
 
   reduce(state, action, playerId, ctx) {
     if (state.phase === "done") return state;
-    if (action.type === "tap") {
-      if (state.taps[playerId] !== undefined) return state;
-      const index = Number((action.payload as { index?: unknown })?.index);
-      if (!Number.isInteger(index) || index < 0 || index >= state.options.length) return state;
-      const taps = { ...state.taps, [playerId]: index };
-      if (index === state.correct) {
-        return { ...state, taps, phase: "done", winnerId: playerId };
-      }
-      const allWrong = ctx.playerIds.every((id) => taps[id] !== undefined && taps[id] !== state.correct);
-      if (allWrong) return { ...state, taps, phase: "done", winnerId: null };
-      return { ...state, taps };
+    if (action.type === "start") {
+      if (state.started[playerId] || state.stops[playerId] !== undefined) return state;
+      return { ...state, started: { ...state.started, [playerId]: true } };
     }
-    if (action.type === "timeout") {
+    if (action.type === "stop") {
+      if (!state.started[playerId] || state.stops[playerId] !== undefined) return state;
+      const elapsed = parseElapsed(action.payload);
+      if (elapsed == null) return state;
+      const stops = { ...state.stops, [playerId]: elapsed };
+      const everyone = ctx.playerIds.every((id) => stops[id] !== undefined);
+      return { ...state, stops, phase: everyone ? "done" : "live" };
+    }
+    if (action.type === "timeout" || action.type === "reveal") {
       return { ...state, phase: "done" };
     }
     return state;
@@ -74,17 +75,26 @@ export const reflexEngine: GameEngine<ReflexState> = {
   publicView(state): ReflexPublicView {
     const view: ReflexPublicView = {
       phase: state.phase,
-      prompt: state.prompt,
-      options: state.options,
-      tappedIds: Object.keys(state.taps),
-      winnerId: state.winnerId,
+      target: state.target,
+      startedIds: Object.keys(state.started),
+      stoppedIds: Object.keys(state.stops),
     };
-    if (state.phase === "done") view.correct = state.correct;
+    if (state.phase === "done") {
+      const results = Object.entries(state.stops)
+        .map(([playerId, elapsed]) => ({
+          playerId,
+          elapsed,
+          distance: Math.round(Math.abs(elapsed - state.target) * 100) / 100,
+        }))
+        .sort((a, b) => a.distance - b.distance || a.playerId.localeCompare(b.playerId));
+      view.results = results;
+      view.winnerId = results[0]?.playerId;
+    }
     return view;
   },
 
   privateView(state, playerId): ReflexPrivateView {
-    return { myTap: state.taps[playerId] ?? null };
+    return { started: Boolean(state.started[playerId]), myElapsed: state.stops[playerId] ?? null };
   },
 
   isFinished(state) {
@@ -93,15 +103,10 @@ export const reflexEngine: GameEngine<ReflexState> = {
 
   scores(state): ScoreMap {
     if (state.phase !== "done") return {};
-    const out: ScoreMap = {};
-    if (state.winnerId) out[state.winnerId] = 3;
-    for (const [id, tap] of Object.entries(state.taps)) {
-      if (tap !== state.correct) out[id] = (out[id] ?? 0) - 1;
-    }
-    return out;
-  },
-
-  usedContentId(state) {
-    return state.promptId;
+    const ranked = Object.entries(state.stops)
+      .map(([id, elapsed]) => ({ id, distance: Math.abs(elapsed - state.target) }))
+      .sort((a, b) => a.distance - b.distance || a.id.localeCompare(b.id));
+    if (!ranked[0]) return {};
+    return { [ranked[0].id]: 3 };
   },
 };

@@ -8,15 +8,16 @@ export function playerColor(player: { id: string; color?: string }, index = 0): 
 export function PlayerList({
   players,
   youId,
+  showScores = false,
 }: {
   players: { id: string; name: string; score: number; connected?: boolean; isHost?: boolean; color?: string }[];
   youId?: string;
+  showScores?: boolean;
 }) {
+  const list = showScores ? [...players].sort((a, b) => b.score - a.score) : players;
   return (
     <div className="players">
-      {[...players]
-        .sort((a, b) => b.score - a.score)
-        .map((p, i) => (
+      {list.map((p, i) => (
         <div className="player" key={p.id}>
           <span className="swatch" style={{ background: playerColor(p, i) }} />
           <div className="meta" style={{ flex: 1 }}>
@@ -29,7 +30,7 @@ export function PlayerList({
               {p.connected === false ? " · se fue a picar" : ""}
             </small>
           </div>
-          <div className="score">{p.score}</div>
+          {showScores ? <div className="score">{p.score}</div> : null}
         </div>
       ))}
     </div>

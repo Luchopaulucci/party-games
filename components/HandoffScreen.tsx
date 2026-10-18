@@ -19,7 +19,7 @@ export function HandoffScreen({
       </p>
       <div className="stack" style={{ justifyItems: "center", textAlign: "center" }}>
         <p className="lead" style={{ color: ink, margin: 0, opacity: 0.85 }}>
-          Pasá el celu a
+          Pasale el teléfono a
         </p>
         <h1 style={{ color: ink, fontSize: "3.6rem" }}>{name}</h1>
         <p className="lead" style={{ color: ink, margin: 0, opacity: 0.8 }}>

@@ -2,74 +2,124 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { CategoryFilters } from "@/components/CategoryFilters";
-import { RoomOptions } from "@/components/RoomOptions";
 import { ColorDots } from "@/components/ColorDots";
-import { GamePicker } from "@/components/GamePicker";
-import { HandoffScreen } from "@/components/HandoffScreen";
-import { PlayerList } from "@/components/PlayerList";
-import { ActiveGame } from "@/components/games/ActiveGame";
-import { HowToPlay } from "@/components/HowToPlay";
-import { PodiumScreen } from "@/components/PodiumScreen";
 import { FxToggle } from "@/components/FxToggle";
-import { nextLocalRound } from "@/lib/local-match";
+import { HowToPlay } from "@/components/HowToPlay";
+import { PlayerList } from "@/components/PlayerList";
+import { PodiumScreen } from "@/components/PodiumScreen";
+import { RoomOptions, gameUsesCategories } from "@/components/RoomOptions";
+import { ActiveGame } from "@/components/games/ActiveGame";
+import { PassPhone } from "@/components/play/PassPhone";
 import { playFx } from "@/lib/fx";
 import { CATEGORIES, type Category } from "@/shared/games/closest/premise-types";
 import { getGameMeta } from "@/shared/games/registry";
 import type { GameId, GameOptions } from "@/shared/types";
-import { PLAYER_COLORS, nextPlayerColor } from "@/shared/ui/colors";
+import { MAX_LOCAL_PLAYERS, PLAYER_COLORS, nextPlayerColor } from "@/shared/ui/colors";
 import {
   createLocalMatch,
   hydrateMatch,
   localAction,
+  localStorageKey,
   localView,
   newLocalId,
+  nextLocalRound,
+  resetLocalToLobby,
   startLocalGame,
   type LocalMatch,
 } from "@/lib/local-match";
 
-const STORAGE = "previa:local:v1";
+const MIN_PLAYERS = 2;
+
+const PASS_AFTER: Partial<Record<GameId, string[]>> = {
+  closest: ["guess"],
+  impostor: ["ready"],
+  emoji: ["pass"],
+  mentira: ["write", "vote"],
+  "completa-frase": ["write", "vote"],
+  cadena: ["word"],
+  votacion: ["vote"],
+  reflejos: ["stop"],
+};
+
+function advancePass(match: LocalMatch, applied: LocalMatch, type: string): LocalMatch {
+  if (applied.status !== "playing" || !applied.gameId) return applied;
+  const pub = localView(applied, applied.players[0]?.id ?? "").public as Record<string, unknown> | null;
+  const current = [pub?.currentId, pub?.currentPlayerId, pub?.currentWriterId].find(
+    (v): v is string => typeof v === "string",
+  );
+  if (current) {
+    const idx = applied.revealQueue.indexOf(current);
+    if (idx >= 0 && idx !== match.passIndex) return { ...applied, passIndex: idx };
+  }
+  if (!PASS_AFTER[applied.gameId]?.includes(type)) return applied;
+  const nextIndex = match.passIndex + 1;
+  if (nextIndex < applied.revealQueue.length) return { ...applied, passIndex: nextIndex };
+  return applied;
+}
 
 type DraftPlayer = { id: string; name: string; color: string };
 
 const DEFAULT_PLAYERS: DraftPlayer[] = [
-  { id: "d1", name: "Luciano", color: PLAYER_COLORS[0] },
-  { id: "d2", name: "Meli", color: PLAYER_COLORS[1] },
-  { id: "d3", name: "Coco", color: PLAYER_COLORS[2] },
-  { id: "d4", name: "Wanda", color: PLAYER_COLORS[3] },
+  { id: "d1", name: "Luciano", color: PLAYER_COLORS[0]! },
+  { id: "d2", name: "Meli", color: PLAYER_COLORS[1]! },
+  { id: "d3", name: "Coco", color: PLAYER_COLORS[2]! },
+  { id: "d4", name: "Wanda", color: PLAYER_COLORS[3]! },
 ];
 
-function loadMatch(): LocalMatch | null {
+function loadMatch(gameId: GameId): LocalMatch | null {
   if (typeof window === "undefined") return null;
   try {
-    const raw = localStorage.getItem(STORAGE);
-    return raw ? hydrateMatch(JSON.parse(raw) as LocalMatch) : null;
+    const raw = localStorage.getItem(localStorageKey(gameId));
+    if (!raw) return null;
+    const match = hydrateMatch(JSON.parse(raw) as LocalMatch);
+    if (match.gameId && match.gameId !== gameId) return null;
+    return match;
   } catch {
     return null;
   }
 }
 
-function save(match: LocalMatch | null) {
+function save(gameId: GameId, match: LocalMatch | null) {
   if (!match) {
-    localStorage.removeItem(STORAGE);
+    localStorage.removeItem(localStorageKey(gameId));
     return;
   }
-  localStorage.setItem(STORAGE, JSON.stringify(match));
+  localStorage.setItem(localStorageKey(gameId), JSON.stringify(match));
 }
 
-export function LocalMatchApp() {
+export function LocalMatchApp({ gameId }: { gameId: GameId }) {
+  const meta = getGameMeta(gameId);
   const [players, setPlayers] = useState<DraftPlayer[]>(DEFAULT_PLAYERS);
   const [draft, setDraft] = useState("");
   const [categories, setCategories] = useState<string[]>([...CATEGORIES]);
   const [picante, setPicante] = useState(false);
-  const [options, setOptions] = useState<GameOptions>({ timerSec: 0, rounds: 1, mode: "no-pasarse" });
+  const [options, setOptions] = useState<GameOptions>({ timerSec: 0, rounds: 1 });
   const [match, setMatch] = useState<LocalMatch | null>(null);
   const [unlocked, setUnlocked] = useState<string | null>(null);
   const [hydrated, setHydrated] = useState(false);
 
   useEffect(() => {
-    setMatch(loadMatch());
+    setMatch(loadMatch(gameId));
     setHydrated(true);
-  }, []);
+  }, [gameId]);
+
+  useEffect(() => {
+    const onExit = () => {
+      save(gameId, null);
+      setMatch(null);
+      setUnlocked(null);
+    };
+    window.addEventListener("previa:local-exit", onExit);
+    return () => window.removeEventListener("previa:local-exit", onExit);
+  }, [gameId]);
+
+  const readyPlayers = players.filter((p) => p.name.trim().length >= 2);
+  const minNeeded = Math.max(MIN_PLAYERS, meta?.minPlayers ?? MIN_PLAYERS);
+  const canStart =
+    Boolean(meta) &&
+    readyPlayers.length >= minNeeded &&
+    readyPlayers.length <= MAX_LOCAL_PLAYERS &&
+    (!gameUsesCategories(gameId) || categories.length > 0);
 
   const currentPlayer = useMemo(() => {
     if (!match || match.revealQueue.length === 0) return null;
@@ -79,12 +129,13 @@ export function LocalMatchApp() {
 
   function persist(next: LocalMatch) {
     setMatch(next);
-    save(next);
+    save(gameId, next);
   }
 
   function addPlayer() {
     const clean = draft.trim();
     if (clean.length < 2) return;
+    if (players.length >= MAX_LOCAL_PLAYERS) return;
     if (players.some((p) => p.name.toLowerCase() === clean.toLowerCase())) return;
     setPlayers([
       ...players,
@@ -93,57 +144,85 @@ export function LocalMatchApp() {
     setDraft("");
   }
 
-  function begin(gameId: GameId) {
-    const created = createLocalMatch(players.filter((p) => p.name.trim().length >= 2));
-    const started = startLocalGame(created, gameId, { categories, picante, options });
+  function setPlayerColor(id: string, color: string) {
+    const taken = players.filter((p) => p.id !== id).map((p) => p.color);
+    if (taken.includes(color)) return;
+    setPlayers(players.map((p) => (p.id === id ? { ...p, color } : p)));
+  }
+
+  function begin() {
+    if (!canStart) return;
+    const created = createLocalMatch(readyPlayers);
+    const started = startLocalGame(created, gameId, {
+      categories: gameUsesCategories(gameId) ? categories : [],
+      picante: gameUsesCategories(gameId) ? picante : false,
+      options,
+    });
     if (typeof started === "string") return;
     setUnlocked(null);
     persist(started);
   }
 
-  if (!hydrated) {
+  function exitToLobby() {
+    const next = resetLocalToLobby(readyPlayers);
+    save(gameId, null);
+    setMatch(null);
+    setUnlocked(null);
+    return next;
+  }
+
+  if (!hydrated || !meta) {
     return <p className="lead">Acomodando la mesa…</p>;
   }
 
   if (!match) {
     return (
       <div className="stack">
-        <p className="kicker">Un celu. Toda la mesa.</p>
-        <h1>Pasate el celu</h1>
-        <p className="lead">
-          Adiviná pavadas, votá sin filtro y pasá el teléfono. Nadie mira el número del otro. Si se
-          corta el WiFi de la quinta, seguimos igual.
+        <p className="pill">
+          {meta.emoji} {meta.name}
         </p>
+        <h1>Lobby</h1>
+        <p className="lead">
+          Mínimo {minNeeded} jugadores, máximo {MAX_LOCAL_PLAYERS}. El color se asigna solo.
+        </p>
+
         <div className="card stack">
-          <p className="kicker">Jugadores ({players.length})</p>
-          {players.map((p) => (
-            <div className="player" key={p.id} style={{ alignItems: "flex-start", flexWrap: "wrap" }}>
-              <span className="swatch" style={{ background: p.color, marginTop: 8 }} />
-              <div className="meta" style={{ flex: 1, gap: 8 }}>
-                <input
-                  value={p.name}
-                  onChange={(e) =>
-                    setPlayers(players.map((x) => (x.id === p.id ? { ...x, name: e.target.value } : x)))
-                  }
-                  aria-label={`Nombre de ${p.name}`}
-                  style={{ minHeight: 40, background: "transparent", padding: "4px 0" }}
-                />
-                <ColorDots
-                  value={p.color}
-                  name={p.name}
-                  onChange={(color) => setPlayers(players.map((x) => (x.id === p.id ? { ...x, color } : x)))}
-                />
+          <p className="kicker">
+            Jugadores ({players.length}/{MAX_LOCAL_PLAYERS})
+          </p>
+          {players.map((p) => {
+            const taken = players.filter((x) => x.id !== p.id).map((x) => x.color);
+            return (
+              <div className="player" key={p.id} style={{ alignItems: "flex-start", flexWrap: "wrap" }}>
+                <span className="swatch" style={{ background: p.color, marginTop: 8 }} />
+                <div className="meta" style={{ flex: 1, gap: 8 }}>
+                  <input
+                    value={p.name}
+                    onChange={(e) =>
+                      setPlayers(players.map((x) => (x.id === p.id ? { ...x, name: e.target.value } : x)))
+                    }
+                    aria-label={`Nombre de ${p.name}`}
+                    style={{ minHeight: 40, background: "transparent", padding: "4px 0" }}
+                  />
+                  <ColorDots
+                    value={p.color}
+                    name={p.name}
+                    taken={taken}
+                    onChange={(color) => setPlayerColor(p.id, color)}
+                  />
+                </div>
+                <button
+                  className="btn btn-ghost"
+                  style={{ width: "auto", padding: "6px 10px", minHeight: 40 }}
+                  type="button"
+                  disabled={players.length <= MIN_PLAYERS}
+                  onClick={() => setPlayers(players.filter((x) => x.id !== p.id))}
+                >
+                  fuiste
+                </button>
               </div>
-              <button
-                className="btn btn-ghost"
-                style={{ width: "auto", padding: "6px 10px", minHeight: 40 }}
-                type="button"
-                onClick={() => setPlayers(players.filter((x) => x.id !== p.id))}
-              >
-                fuiste
-              </button>
-            </div>
-          ))}
+            );
+          })}
           <form
             className="row"
             onSubmit={(e) => {
@@ -153,61 +232,85 @@ export function LocalMatchApp() {
           >
             <label style={{ flex: 1 }}>
               Sumá a alguien
-              <input value={draft} onChange={(e) => setDraft(e.target.value)} placeholder="Nombre, apodo, trauma" />
+              <input
+                value={draft}
+                onChange={(e) => setDraft(e.target.value)}
+                placeholder="Nombre, apodo, trauma"
+                disabled={players.length >= MAX_LOCAL_PLAYERS}
+              />
             </label>
-            <button className="btn btn-gold" type="submit" style={{ alignSelf: "end", width: "auto" }}>
+            <button
+              className="btn btn-gold"
+              type="submit"
+              style={{ alignSelf: "end", width: "auto" }}
+              disabled={players.length >= MAX_LOCAL_PLAYERS}
+            >
               Agregar
             </button>
           </form>
+          {readyPlayers.length < minNeeded ? (
+            <p className="category-hint">
+              Faltan jugadores para arrancar ({readyPlayers.length}/{minNeeded}).
+            </p>
+          ) : null}
         </div>
+
+        {gameUsesCategories(gameId) ? (
+          <div className="card stack">
+            <CategoryFilters
+              selected={categories}
+              picante={picante}
+              onToggle={(id: Category) =>
+                setCategories((cur) => (cur.includes(id) ? cur.filter((c) => c !== id) : [...cur, id]))
+              }
+              onPicante={() => setPicante((v) => !v)}
+            />
+          </div>
+        ) : null}
+
         <div className="card stack">
-          <CategoryFilters
-            selected={categories}
-            picante={picante}
-            onToggle={(id: Category) =>
-              setCategories((cur) => (cur.includes(id) ? cur.filter((c) => c !== id) : [...cur, id]))
-            }
-            onPicante={() => setPicante((v) => !v)}
-          />
-          <RoomOptions value={options} onChange={setOptions} />
+          <RoomOptions value={options} onChange={setOptions} gameId={gameId} />
           <FxToggle />
         </div>
-        <h2>Juegos</h2>
-        <GamePicker onPick={begin} playerCount={players.length} />
+
+        <button className="btn btn-primary" type="button" disabled={!canStart} onClick={begin}>
+          Empezar {meta.name}
+        </button>
       </div>
     );
   }
 
-  const meta = match.gameId ? getGameMeta(match.gameId) : null;
+  const playingMeta = match.gameId ? getGameMeta(match.gameId) : meta;
   const viewer = currentPlayer ?? match.players[0]!;
   const view = localView(match, viewer.id);
   const needsGate = match.status === "playing" && match.revealQueue.length > 0 && unlocked !== viewer.id;
 
   if (needsGate && currentPlayer) {
-    return (
-      <HandoffScreen
-        name={currentPlayer.name}
-        color={currentPlayer.color}
-        onReady={() => setUnlocked(currentPlayer.id)}
-      />
-    );
+    return <PassPhone name={currentPlayer.name} color={currentPlayer.color} onReady={() => setUnlocked(currentPlayer.id)} />;
   }
 
   return (
     <div className="stack">
       <p className="pill">
-        {meta?.emoji} {meta?.name} · pass-and-play
+        {playingMeta?.emoji} {playingMeta?.name} · pass-and-play
       </p>
 
       <div className="card stack">
-          {meta?.howTo ? <HowToPlay text={meta.howTo} /> : null}
-          {match.status === "finished" ? (
+        {playingMeta?.howTo ? <HowToPlay text={playingMeta.howTo} /> : null}
+        {match.status === "finished" ? (
+          <>
             <PodiumScreen
               players={match.players}
               youId={viewer.id}
               nightLabel={match.options.night ? "Noche de juegos" : null}
             />
-          ) : null}
+            <div className="card stack">
+              <h3>Tabla</h3>
+              <PlayerList players={match.players} youId={viewer.id} showScores />
+            </div>
+          </>
+        ) : null}
+        {match.status !== "finished" ? (
           <ActiveGame
             gameId={match.gameId!}
             publicView={view.public}
@@ -216,19 +319,16 @@ export function LocalMatchApp() {
             youId={viewer.id}
             players={match.players}
             timerSec={match.options.timerSec}
+            local
             onAction={(type, payload) => {
-            const applied = localAction(match, viewer.id, { type, payload });
-            const shouldPass = match.gameId === "closest" && type === "guess";
-            const nextIndex = match.passIndex + 1;
-            if (shouldPass && nextIndex < match.revealQueue.length && applied.status === "playing") {
-              setUnlocked(null);
-              persist({ ...applied, passIndex: nextIndex });
-              return;
-            }
-            if (applied.status === "finished" && match.status !== "finished") playFx("reveal");
-            persist(applied);
-          }}
-        />
+              const applied = localAction(match, viewer.id, { type, payload });
+              if (applied.status === "finished" && match.status !== "finished") playFx("reveal");
+              const next = advancePass(match, applied, type);
+              if (next.passIndex !== match.passIndex) setUnlocked(null);
+              persist(next);
+            }}
+          />
+        ) : null}
         {match.status === "playing" && match.revealQueue.length > 1 ? (
           <button
             className="btn btn-ghost"
@@ -242,11 +342,6 @@ export function LocalMatchApp() {
             Pasar celu
           </button>
         ) : null}
-      </div>
-
-      <div className="card stack">
-        <h3>Tabla</h3>
-        <PlayerList players={match.players} youId={viewer.id} />
       </div>
 
       {match.status === "finished" ? (
@@ -264,31 +359,11 @@ export function LocalMatchApp() {
           >
             {match.options.night ? "Siguiente de la noche" : "Otra ronda"}
           </button>
-          <button
-            className="btn btn-ghost"
-            type="button"
-            onClick={() => {
-              save(null);
-              setMatch(null);
-              setUnlocked(null);
-            }}
-          >
-            Nueva previa
+          <button className="btn btn-ghost" type="button" onClick={exitToLobby}>
+            Al lobby
           </button>
         </div>
-      ) : (
-        <button
-          className="btn btn-ghost"
-          type="button"
-          onClick={() => {
-            save(null);
-            setMatch(null);
-            setUnlocked(null);
-          }}
-        >
-          Cortar y volver
-        </button>
-      )}
+      ) : null}
     </div>
   );
 }

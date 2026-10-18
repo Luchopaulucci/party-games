@@ -27,6 +27,16 @@ describe("más o menos", () => {
     expect((higherLowerEngine.publicView(state) as { secret?: number }).secret).toBeUndefined();
   });
 
+  it("un guess inválido no crashea ni filtra el secreto", () => {
+    let state = higherLowerEngine.createState(ctx);
+    state = higherLowerEngine.reduce(state, { type: "guess", payload: { value: "x" } }, "a", ctx);
+    state = higherLowerEngine.reduce(state, { type: "guess", payload: [1, 2] }, "a", ctx);
+    expect(higherLowerEngine.isFinished(state)).toBe(false);
+    expect((higherLowerEngine.publicView(state) as { secret?: number }).secret).toBeUndefined();
+    expect(higherLowerEngine.privateView(state, "b")).toEqual({ isYourTurn: false });
+    expect(higherLowerEngine.privateView(state, "a")).toEqual({ isYourTurn: true });
+  });
+
   it("da 3 puntos al que clava", () => {
     let state = higherLowerEngine.createState(ctx);
     state = higherLowerEngine.reduce(state, { type: "guess", payload: { value: 42 } }, "a", ctx);

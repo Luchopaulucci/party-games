@@ -28,6 +28,14 @@ export interface LocalMatch {
   nightIndex: number;
 }
 
+export function localStorageKey(gameId: GameId): string {
+  return `previa:local:v1:${gameId}`;
+}
+
+export function resetLocalToLobby(players: { name: string; color?: string }[]): LocalMatch {
+  return createLocalMatch(players);
+}
+
 export function newLocalId(): string {
   if (typeof crypto !== "undefined" && crypto.randomUUID) return crypto.randomUUID();
   return `p${Math.random().toString(36).slice(2, 10)}`;
@@ -143,7 +151,7 @@ export function nextLocalRound(match: LocalMatch): LocalMatch | string {
 function revealQueueFor(_gameId: GameId, state: unknown, ids: string[]): string[] {
   if (!state || typeof state !== "object") return ids;
   const rec = state as Record<string, unknown>;
-  const keys = ["drawerId", "psychicId", "actorId", "storytellerId", "speakerId", "holderId", "chooserId", "currentId"];
+  const keys = ["storytellerId", "chooserId", "currentId"];
   const first = keys.map((k) => rec[k]).find((v): v is string => typeof v === "string" && ids.includes(v));
   if (!first) return ids;
   return [first, ...ids.filter((id) => id !== first)];

@@ -5,14 +5,18 @@ export function GamePicker({
   onPick,
   disabled,
   playerCount,
+  implementedOnly = false,
 }: {
   onPick?: (id: GameId) => void;
   disabled?: boolean;
   playerCount?: number;
+  implementedOnly?: boolean;
 }) {
+  const games = implementedOnly ? GAME_CATALOG.filter((g) => g.implemented) : GAME_CATALOG;
+
   return (
     <div className="stack">
-      {GAME_CATALOG.map((game) => {
+      {games.map((game) => {
         const enough = playerCount === undefined || playerCount >= game.minPlayers;
         const clickable = game.implemented && onPick && !disabled && enough;
         const inner = (
@@ -26,8 +30,6 @@ export function GamePicker({
               <small>
                 {game.minPlayers}+ jugadores
                 {playerCount !== undefined && playerCount < game.minPlayers ? " · faltan pibes" : ""}
-                {" · "}
-                {game.howTo}
               </small>
             )}
           </>

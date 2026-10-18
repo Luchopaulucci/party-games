@@ -27,6 +27,23 @@ export interface LiePrivateView {
   myVote: string | null;
 }
 
+function parseWrite(payload: unknown): { statements: string[]; lieIndex: number } | null {
+  if (payload == null || typeof payload !== "object") return null;
+  const raw = payload as { statements?: unknown; lieIndex?: unknown };
+  if (!Array.isArray(raw.statements)) return null;
+  const statements = raw.statements.map((s) => (typeof s === "string" ? s.trim() : "")).filter(Boolean);
+  const lieIndex = typeof raw.lieIndex === "number" ? raw.lieIndex : Number(raw.lieIndex);
+  if (statements.length !== 3 || ![0, 1, 2].includes(lieIndex)) return null;
+  return { statements, lieIndex };
+}
+
+function parseVoteIndex(payload: unknown): string | null {
+  if (payload == null || typeof payload !== "object") return null;
+  const raw = (payload as { index?: unknown }).index;
+  const index = String(raw ?? "");
+  return ["0", "1", "2"].includes(index) ? index : null;
+}
+
 export const lieEngine: GameEngine<LieState> = {
   id: "mentira",
 
@@ -43,23 +60,22 @@ export const lieEngine: GameEngine<LieState> = {
 
     if (action.type === "write" && state.phase === "write") {
       if (playerId !== state.storytellerId) return state;
-      const payload = action.payload as { statements?: unknown; lieIndex?: unknown } | undefined;
-      const statements = Array.isArray(payload?.statements)
-        ? payload.statements.map((s) => String(s).trim()).filter(Boolean)
-        : [];
-      const lieIndex = Number(payload?.lieIndex);
-      if (statements.length !== 3 || ![0, 1, 2].includes(lieIndex)) return state;
+      const parsed = parseWrite(action.payload);
+      if (!parsed) return state;
       if (ctx.seed?.lieIndex !== undefined && ctx.seed.answers) {
         return { ...state, statements: ctx.seed.answers, lieIndex: ctx.seed.lieIndex, phase: "vote" };
       }
-      return { ...state, statements, lieIndex, phase: "vote" };
+      return { ...state, statements: parsed.statements, lieIndex: parsed.lieIndex, phase: "vote" };
     }
 
     if (action.type === "vote" && state.phase === "vote") {
       if (playerId === state.storytellerId) return state;
-      const index = String((action.payload as { index?: unknown })?.index ?? "");
-      if (!["0", "1", "2"].includes(index)) return state;
-      return { ...state, votes: { ...state.votes, [playerId]: index } };
+      const index = parseVoteIndex(action.payload);
+      if (!index) return state;
+      const votes = { ...state.votes, [playerId]: index };
+      const needed = ctx.playerIds.filter((id) => id !== state.storytellerId);
+      const allIn = needed.every((id) => votes[id]);
+      return { ...state, votes, phase: allIn ? "reveal" : "vote" };
     }
 
     if ((action.type === "reveal" || action.type === "timeout") && state.phase === "vote") {

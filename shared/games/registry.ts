@@ -5,22 +5,14 @@ import { impostorEngine } from "./impostor/logic";
 import { higherLowerEngine } from "./higherlower/logic";
 import { spyEngine } from "./spy/logic";
 import { voteEngine } from "./vote/logic";
-import { auctionEngine } from "./auction/logic";
 import { phraseEngine } from "./phrase/logic";
 import { lieEngine } from "./lie/logic";
-import { drawEngine } from "./draw/logic";
 import { reflexEngine } from "./reflex/logic";
-import { waveEngine } from "./wave/logic";
-import { tabooEngine } from "./taboo/logic";
 import { neverEngine } from "./never/logic";
 import { stopEngine } from "./stop/logic";
-import { bombEngine } from "./bomb/logic";
-import { mimicEngine } from "./charades/logic";
-import { dareEngine } from "./dare/logic";
 import { triviaEngine } from "./trivia/logic";
 import { chainEngine } from "./chain/logic";
 import { emojiEngine } from "./emoji/logic";
-import { phoneEngine } from "./phone/logic";
 import { wouldEngine } from "./would/logic";
 
 const IMPLEMENTED: GameMeta[] = [
@@ -44,7 +36,7 @@ const IMPLEMENTED: GameMeta[] = [
     minPlayers: 3,
     maxPlayers: 12,
     implemented: true,
-    howTo: "Preguntá sí/no. El resto contesta. Cuando te late, tirá el nombre.",
+    howTo: "Filtros: futbolistas, famosos argentinos y políticos. Preguntá sí/no. El resto contesta. Cuando te late, tirá el nombre.",
   },
   {
     id: "impostor",
@@ -55,7 +47,7 @@ const IMPLEMENTED: GameMeta[] = [
     minPlayers: 3,
     maxPlayers: 12,
     implemented: true,
-    howTo: "Si ves la palabra, charlá sin decirla. Si no, fingí. Después se vota. Solo se ven totales.",
+    howTo: "Cada uno mira si es impostor o no. Cuando todos dan OK arranca el reloj. Local: señalan y la app revela. Red: votan y se revela.",
   },
   {
     id: "mas-o-menos",
@@ -77,29 +69,18 @@ const IMPLEMENTED: GameMeta[] = [
     minPlayers: 4,
     maxPlayers: 12,
     implemented: true,
-    howTo: "Si no sos espía, ves el lugar. Preguntá para pescarlo. El espía puede adivinar el lugar.",
+    howTo: "Hay un escenario y un rol. El rol se actúa con mímica. El espía no ve el lugar. Pregunten y voten.",
   },
   {
     id: "votacion",
-    name: "Votación",
+    name: "¿Quién es más probable?",
     emoji: "🗳️",
     tagline: "¿Quién de este grupo…? Sin filtro, con consecuencias.",
     description: "Votos secretos. Solo totales.",
     minPlayers: 3,
     maxPlayers: 12,
     implemented: true,
-    howTo: "Leé la pregunta. Votá en secreto. Se revelan totales, nunca quién votó a quién.",
-  },
-  {
-    id: "subasta",
-    name: "Subasta de números",
-    emoji: "🔨",
-    tagline: "Ofertá como si fuera Mercado Libre a las 3 AM.",
-    description: "The Price is Right: más cerca sin pasarse, o modo más cercano.",
-    minPlayers: 3,
-    maxPlayers: 10,
-    implemented: true,
-    howTo: "Pujá tapado. En modo sin pasarse, gana el más alto que no se pasó.",
+    howTo: "Local: se pasa el celu y cada uno vota. Red: una persona lee y los demás votan. Solo totales.",
   },
   {
     id: "completa-frase",
@@ -110,7 +91,7 @@ const IMPLEMENTED: GameMeta[] = [
     minPlayers: 3,
     maxPlayers: 12,
     implemented: true,
-    howTo: "Completá la frase. Después votá la más graciosa, menos la tuya. Si copian, JINX.",
+    howTo: "Local: cada uno completa y pasa el celu. Al final las respuestas salen de a una y eligen la mejor. Red: alguien al azar las lee y votan.",
   },
   {
     id: "mentira",
@@ -121,106 +102,40 @@ const IMPLEMENTED: GameMeta[] = [
     minPlayers: 3,
     maxPlayers: 10,
     implemented: true,
-    howTo: "El narrador tira 3 frases. El resto vota cuál es mentira. No se ve el mapa de votos.",
-  },
-  {
-    id: "dibuja",
-    name: "Dibujá y adiviná",
-    emoji: "✏️",
-    tagline: "El Pictionary de la previa. El arte es opcional.",
-    description: "Uno dibuja, el resto adivina. La palabra solo la ve el artista.",
-    minPlayers: 3,
-    maxPlayers: 12,
-    implemented: true,
-    howTo: "Si te toca dibujar, ves la palabra. El resto adivina. El arte es opcional, el chamuyo no.",
+    howTo: "Una persona escribe 3 frases y marca la mentira. Se pasa el celu, votan, y el último voto revela.",
   },
   {
     id: "reflejos",
     name: "Reflejos",
     emoji: "⚡",
     tagline: "El más lento paga el fernet.",
-    description: "Consigna relámpago. El primero que toca bien suma. El que erra, resta.",
+    description: "Objetivo aleatorio entre 2 y 6 s. Arrancás y frenás lo más cerca posible.",
     minPlayers: 2,
     maxPlayers: 12,
     implemented: true,
-    howTo: "Leé y tocá. El primero que acierta suma. El que erra, resta.",
-  },
-  {
-    id: "onda",
-    name: "La onda",
-    emoji: "📡",
-    tagline: "Una pista. Un espectro. Un número escondido.",
-    description: "Wavelength: el psíquico ve 0–100 y tira una pista. El resto apunta.",
-    minPlayers: 3,
-    maxPlayers: 12,
-    implemented: true,
-    howTo: "El psíquico ve un número y tira una pista. El resto apunta en la escala.",
-  },
-  {
-    id: "taboo",
-    name: "Palabra prohibida",
-    emoji: "🚫",
-    tagline: "Describí sin decir lo obvio. Imposible para tu cuñado.",
-    description: "Taboo: palabra + prohibidas solo para quien habla.",
-    minPlayers: 3,
-    maxPlayers: 10,
-    implemented: true,
-    howTo: "Describí la palabra sin usar las prohibidas. Si las decís, te pitan.",
+    howTo: "Sale un objetivo entre 2 y 6 segundos. Apretá para arrancar y otra vez para frenar lo más cerca posible.",
   },
   {
     id: "yo-nunca",
     name: "Yo nunca",
     emoji: "🖐️",
     tagline: "Levantá la mano… en secreto.",
-    description: "Never Have I Ever. Solo se ven totales, nunca quién dijo yo sí.",
+    description: "Mazo de cartas en un solo teléfono. Solo local.",
     minPlayers: 3,
     maxPlayers: 12,
     implemented: true,
-    howTo: "Leé el 'yo nunca'. Tocá yo sí / yo no. Solo se ven totales.",
+    howTo: "Un solo celu, un mazo de cartas. Leen, levantan si aplica, siguiente carta.",
   },
   {
     id: "tutti",
     name: "Tutti frutti",
     emoji: "✏️",
     tagline: "Una letra. Cinco categorías. Pánico colectivo.",
-    description: "Stop / Scattergories. Únicas valen más. Respuestas tapadas hasta el alto.",
+    description: "Stop online. Corta el tiempo o un lleno. Después votan ortografía y recién ahí hay puntos.",
     minPlayers: 2,
     maxPlayers: 12,
     implemented: true,
-    howTo: "Una letra, cinco categorías. Únicas valen 2, repetidas 1. Nadie ve lo tuyo hasta el alto.",
-  },
-  {
-    id: "bombita",
-    name: "Bombita",
-    emoji: "💣",
-    tagline: "Pasala. El timer es secreto.",
-    description: "Papa caliente. Nadie ve cuándo explota. Al que le queda, -1.",
-    minPlayers: 2,
-    maxPlayers: 12,
-    implemented: true,
-    howTo: "Pasala rápido. Nadie ve cuándo explota. Al que le queda, menos un punto.",
-  },
-  {
-    id: "mimica",
-    name: "Mímica",
-    emoji: "🙈",
-    tagline: "Actuá. Si hablás, te silban.",
-    description: "Charadas / Heads Up. La palabra solo la ve quien actúa.",
-    minPlayers: 3,
-    maxPlayers: 12,
-    implemented: true,
-    howTo: "Si actuás, ves la palabra. El resto adivina. Sin hablar.",
-  },
-  {
-    id: "verdad-reto",
-    name: "Verdad o reto",
-    emoji: "😈",
-    tagline: "La previa clásica. El juez es la mesa.",
-    description: "Como las apps de previas AR: una carta, la mesa vota si cumplió.",
-    minPlayers: 3,
-    maxPlayers: 12,
-    implemented: true,
-    howTo: "Uno elige verdad o reto. Hace la carta. El resto vota si cumplió. Solo totales.",
+    howTo: "Corta el tiempo o cuando alguien completa todo. Después votan si cada respuesta vale (ortografía) y ahí se dan los puntos.",
   },
   {
     id: "trivia",
@@ -242,7 +157,7 @@ const IMPLEMENTED: GameMeta[] = [
     minPlayers: 2,
     maxPlayers: 12,
     implemented: true,
-    howTo: "Ves la última palabra. Tirá otra que pegue. Al final se ve toda la cadena.",
+    howTo: "Una o dos palabras por persona, una vuelta. Al final se ve la frase. En red le llega a cada uno por turno.",
   },
   {
     id: "emoji",
@@ -253,57 +168,38 @@ const IMPLEMENTED: GameMeta[] = [
     minPlayers: 2,
     maxPlayers: 12,
     implemented: true,
-    howTo: "Mirá los emojis. Escribí qué es. El primero que clava, suma 3.",
-  },
-  {
-    id: "telefono",
-    name: "Teléfono descompuesto",
-    emoji: "📞",
-    tagline: "Lo que entendiste no es lo que dijeron.",
-    description: "Cada uno reescribe lo anterior. Solo el que escribe ve el texto previo.",
-    minPlayers: 3,
-    maxPlayers: 12,
-    implemented: true,
-    howTo: "Te toca, ves solo la frase anterior y la reescribís. Al final se muestra el desastre.",
+    howTo: "Mirá los emojis, adivinen en voz alta y pasá el teléfono. La respuesta se revela al final de la ronda.",
   },
   {
     id: "preferis",
     name: "¿Qué preferís?",
     emoji: "🤷",
     tagline: "A o B. Sin término medio. Como en la vida.",
-    description: "This or that. Solo totales, votos anónimos.",
+    description: "This or that. Solo online, sin puntaje. Una persona lee.",
     minPlayers: 2,
     maxPlayers: 12,
     implemented: true,
-    howTo: "Elegí A o B. Se revelan totales, nunca quién votó qué.",
+    howTo: "Solo online y sin puntaje. Una persona lee las dos opciones. El resto vota. Solo totales.",
   },
 ];
 
 export const GAME_CATALOG: GameMeta[] = IMPLEMENTED;
 
-const ENGINES: Record<string, GameEngine> = {
+const ENGINES: Record<GameId, GameEngine> = {
   closest: closestEngine as GameEngine,
   whoami: whoamiEngine as GameEngine,
   impostor: impostorEngine as GameEngine,
   "mas-o-menos": higherLowerEngine as GameEngine,
   espia: spyEngine as GameEngine,
   votacion: voteEngine as GameEngine,
-  subasta: auctionEngine as GameEngine,
   "completa-frase": phraseEngine as GameEngine,
   mentira: lieEngine as GameEngine,
-  dibuja: drawEngine as GameEngine,
   reflejos: reflexEngine as GameEngine,
-  onda: waveEngine as GameEngine,
-  taboo: tabooEngine as GameEngine,
   "yo-nunca": neverEngine as GameEngine,
   tutti: stopEngine as GameEngine,
-  bombita: bombEngine as GameEngine,
-  mimica: mimicEngine as GameEngine,
-  "verdad-reto": dareEngine as GameEngine,
   trivia: triviaEngine as GameEngine,
   cadena: chainEngine as GameEngine,
   emoji: emojiEngine as GameEngine,
-  telefono: phoneEngine as GameEngine,
   preferis: wouldEngine as GameEngine,
 };
 

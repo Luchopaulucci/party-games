@@ -88,7 +88,8 @@ export const higherLowerEngine: GameEngine<HigherLowerState> = {
 
     if (action.type === "guess") {
       if (playerId !== state.currentPlayerId) return state;
-      const value = Number((action.payload as { value?: unknown })?.value);
+      const raw = action.payload && typeof action.payload === "object" ? (action.payload as { value?: unknown }).value : action.payload;
+      const value = typeof raw === "number" ? raw : typeof raw === "string" ? Number(String(raw).replace(",", ".")) : Number.NaN;
       if (!Number.isFinite(value)) return state;
       const result = evaluateGuess(value, state.secret, state.min, state.max);
       const guesses = [...state.guesses, { playerId, value, result }];
