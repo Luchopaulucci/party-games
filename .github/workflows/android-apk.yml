@@ -37,7 +37,7 @@ jobs:
 
       - name: Export estático + sync Capacitor
         env:
-          NEXT_PUBLIC_SOCKET_URL: ${{ vars.NEXT_PUBLIC_SOCKET_URL }}
+          NEXT_PUBLIC_SOCKET_URL: ${{ vars.SOCKET_URL }}
           NEXT_PUBLIC_WEB_ORIGIN: ${{ vars.NEXT_PUBLIC_WEB_ORIGIN }}
         run: |
           npm run build:mobile
@@ -109,7 +109,7 @@ jobs:
       - name: Export estático + sync Capacitor
         if: steps.signing.outputs.ready == 'true'
         env:
-          NEXT_PUBLIC_SOCKET_URL: ${{ vars.NEXT_PUBLIC_SOCKET_URL }}
+          NEXT_PUBLIC_SOCKET_URL: ${{ vars.SOCKET_URL }}
           NEXT_PUBLIC_WEB_ORIGIN: ${{ vars.NEXT_PUBLIC_WEB_ORIGIN }}
         run: |
           npm run build:mobile

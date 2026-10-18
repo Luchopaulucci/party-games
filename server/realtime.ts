@@ -14,8 +14,11 @@ import {
 } from "../shared/protocol";
 import { MAX_HTTP_BUFFER_SIZE } from "../shared/types";
 import { RoomManager, type Room, type RoomManagerOptions } from "./room-manager";
+import { resolveAllowedOrigins, socketIoCors } from "./origins";
 
-export type CreateRealtimeOptions = RoomManagerOptions;
+export type CreateRealtimeOptions = RoomManagerOptions & {
+  allowedOrigins?: string[] | true;
+};
 
 interface SocketData {
   code?: string;
@@ -25,7 +28,7 @@ interface SocketData {
 
 export function createRealtimeServer(httpServer: HttpServer, opts: CreateRealtimeOptions = {}) {
   const io = new Server(httpServer, {
-    cors: { origin: true, credentials: true },
+    cors: socketIoCors(opts.allowedOrigins ?? resolveAllowedOrigins()),
     maxHttpBufferSize: MAX_HTTP_BUFFER_SIZE,
   });
   const rooms = new RoomManager({
