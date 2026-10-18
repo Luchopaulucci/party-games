@@ -78,9 +78,18 @@ export const startGamePayloadSchema = z
   })
   .strict();
 
+/** Config de partida (reloj, rondas, etc.) se elige en el lobby, nunca como action. */
+export const LOBBY_ONLY_ACTIONS = ["set-clock"] as const;
+
 export const actionPayloadSchema = z
   .object({
-    type: z.string().min(1).max(40),
+    type: z
+      .string()
+      .min(1)
+      .max(40)
+      .refine((type) => !(LOBBY_ONLY_ACTIONS as readonly string[]).includes(type), {
+        message: "Esa opción se elige en el lobby.",
+      }),
     payload: z.unknown().optional(),
   })
   .strict();

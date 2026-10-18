@@ -45,7 +45,7 @@ export default function JuegoPage() {
       <h1>{meta.name}</h1>
       <p className="lead">{meta.tagline}</p>
       <HowToPlay text={meta.howTo} />
-      <div className="stack home-modes">
+      <div className="stack home-modes" data-testid="home-modes">
         {local ? (
           <Link className="tile tile-hero" href={`/juego/${gameId}/local`}>
             <b>Pasando el celu</b>

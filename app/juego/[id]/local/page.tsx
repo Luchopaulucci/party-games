@@ -24,7 +24,7 @@ export default function LocalGamePage() {
   return (
     <Shell
       backHref={`/juego/${gameId}`}
-      kicker="compartiendo"
+      kicker="Pasando el celu"
       exitBody="Volvés al lobby de este juego. La partida anterior se borra."
       onExit={() => {
         window.dispatchEvent(new Event("previa:local-exit"));

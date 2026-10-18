@@ -2,7 +2,7 @@
 
 import { PlayClock } from "@/components/play/PlayClock";
 import { RoundReveal } from "@/components/play/RoundReveal";
-import type { ClockPreset } from "@/shared/play/clock";
+import { clockLabel } from "@/shared/play/clock";
 import type { ImpostorPrivateView, ImpostorPublicView } from "@/shared/games/impostor/logic";
 
 export function ImpostorView({
@@ -65,16 +65,9 @@ export function ImpostorView({
             </>
           )}
         </div>
-        {isHost ? (
-          <PlayClock
-            seconds={publicView.discussSec}
-            onChange={(next: ClockPreset) => onAction("set-clock", { seconds: next })}
-          />
-        ) : (
-          <p className="lead">
-            Reloj al final: {publicView.discussSec ? `${publicView.discussSec}s` : "sin reloj"}.
-          </p>
-        )}
+        <p className="lead">
+          Reloj de charla: {clockLabel(publicView.discussSec)}. Se elige en el lobby, antes de arrancar.
+        </p>
         {privateView.ready ? (
           <div className="notice">Ya diste OK. Esperá al resto.</div>
         ) : (

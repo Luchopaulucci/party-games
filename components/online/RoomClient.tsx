@@ -198,7 +198,7 @@ export function RoomClient({
           {joinUrl ? (
             <>
               <QrCard value={joinUrl} code={state.code} />
-              <p className="lead" style={{ textAlign: "center", margin: 0 }}>
+              <p className="lead join-url" style={{ textAlign: "center", margin: 0 }}>
                 Link: {joinUrl}
               </p>
             </>

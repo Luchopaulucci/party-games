@@ -265,7 +265,10 @@ export function LocalMatchApp({ gameId }: { gameId: GameId }) {
   return (
     <div className="stack">
       <p className="pill">
-        {playingMeta?.emoji} {playingMeta?.name} · pass-and-play
+        <span className="pill-name">
+          {playingMeta?.emoji} {playingMeta?.name}
+        </span>
+        <span className="pill-mode">Pasando el celu</span>
       </p>
 
       <div className="card stack">
