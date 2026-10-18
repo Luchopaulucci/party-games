@@ -36,6 +36,7 @@ export interface PhrasePublicView {
 
 export interface PhrasePrivateView {
   myAnswer: string | null;
+  myAnswerId: string | null;
   myVote: string | null;
   isReader: boolean;
 }
@@ -141,8 +142,10 @@ export const phraseEngine: GameEngine<PhraseState> = {
   },
 
   privateView(state, playerId): PhrasePrivateView {
+    const mine = state.answers.find((a) => a.playerId === playerId);
     return {
-      myAnswer: state.answers.find((a) => a.playerId === playerId)?.text ?? null,
+      myAnswer: mine?.text ?? null,
+      myAnswerId: mine?.id ?? null,
       myVote: state.votes[playerId] ?? null,
       isReader: state.readerId === playerId,
     };

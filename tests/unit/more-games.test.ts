@@ -38,6 +38,9 @@ describe("completa-frase", () => {
     s = phraseEngine.reduce(s, { type: "next" }, "a", c);
     s = phraseEngine.reduce(s, { type: "next" }, "a", c);
     expect(s.phase).toBe("vote");
+    expect(view<{ myAnswerId: string | null }>(phraseEngine.privateView(s, "a")).myAnswerId).toBe("a-a");
+    s = phraseEngine.reduce(s, { type: "vote", payload: { answerId: "a-a" } }, "a", c);
+    expect(s.votes.a).toBeUndefined();
     s = phraseEngine.reduce(s, { type: "vote", payload: { answerId: "a-b" } }, "a", c);
     const pub = JSON.stringify(phraseEngine.publicView(s));
     expect(pub).not.toContain('"votes"');

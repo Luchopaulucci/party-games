@@ -154,7 +154,7 @@ export function nextLocalRound(match: LocalMatch): LocalMatch | string {
 function revealQueueFor(_gameId: GameId, state: unknown, ids: string[]): string[] {
   if (!state || typeof state !== "object") return ids;
   const rec = state as Record<string, unknown>;
-  const keys = ["storytellerId", "chooserId", "currentId"];
+  const keys = ["storytellerId", "chooserId", "currentId", "targetId"];
   const first = keys.map((k) => rec[k]).find((v): v is string => typeof v === "string" && ids.includes(v));
   if (!first) return ids;
   return [first, ...ids.filter((id) => id !== first)];
@@ -169,7 +169,16 @@ const PASS_AFTER: Partial<Record<GameId, string[]>> = {
   cadena: ["word"],
   votacion: ["vote"],
   reflejos: ["stop"],
+  trivia: ["answer"],
+  espia: ["vote"],
 };
+
+function gamePhase(match: LocalMatch): string | undefined {
+  const state = match.gameState;
+  if (!state || typeof state !== "object") return undefined;
+  const phase = (state as { phase?: unknown }).phase;
+  return typeof phase === "string" ? phase : undefined;
+}
 
 export function currentPassId(match: LocalMatch): string | undefined {
   const pub = localView(match, match.players[0]?.id ?? "").public as Record<string, unknown> | null;
@@ -185,6 +194,16 @@ export function gameProgressed(before: LocalMatch, after: LocalMatch): boolean {
 export function advancePass(match: LocalMatch, applied: LocalMatch, type: string): LocalMatch {
   if (applied.status !== "playing" || !applied.gameId) return applied;
   if (!gameProgressed(match, applied)) return applied;
+  const beforePhase = gamePhase(match);
+  const afterPhase = gamePhase(applied);
+  if (beforePhase && afterPhase && beforePhase !== afterPhase && afterPhase === "vote") {
+    if (applied.gameId === "mentira") {
+      const storyteller = (applied.gameState as { storytellerId?: string }).storytellerId;
+      const idx = applied.revealQueue.findIndex((id) => id !== storyteller);
+      return { ...applied, passIndex: idx >= 0 ? idx : 0 };
+    }
+    return { ...applied, passIndex: 0 };
+  }
   const current = currentPassId(applied);
   if (current) {
     const idx = applied.revealQueue.indexOf(current);

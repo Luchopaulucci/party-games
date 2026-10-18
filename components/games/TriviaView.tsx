@@ -6,11 +6,13 @@ export function TriviaView({
   publicView,
   privateView,
   isHost,
+  local,
   onAction,
 }: {
   publicView: TriviaPublicView;
   privateView: TriviaPrivateView;
   isHost: boolean;
+  local?: boolean;
   players: { id: string }[];
   onAction: (type: string, payload?: unknown) => void;
 }) {
@@ -32,6 +34,7 @@ export function TriviaView({
           key={opt}
           className="btn btn-ghost"
           type="button"
+          data-testid="trivia-option"
           disabled={privateView.myAnswer !== null}
           onClick={() => onAction("answer", { index: i })}
         >
@@ -39,9 +42,9 @@ export function TriviaView({
           {privateView.myAnswer === i ? " · tu palo" : ""}
         </button>
       ))}
-      <p className="lead">
-        Ya contestaron {publicView.submittedIds.length}
-      </p>
+      {local ? null : (
+        <p className="lead">Ya contestaron {publicView.submittedIds.length}</p>
+      )}
       {isHost ? (
         <button className="btn btn-gold" type="button" onClick={() => onAction("reveal")}>
           Revelar

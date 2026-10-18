@@ -297,6 +297,12 @@ export function LocalMatchApp({ gameId }: { gameId: GameId }) {
             timerSec={match.options.timerSec}
             local
             onAction={(type, payload) => {
+              if (type === "pass-phone") {
+                const nextIndex = (match.passIndex + 1) % Math.max(1, match.revealQueue.length);
+                setUnlocked(null);
+                persist({ ...match, passIndex: nextIndex });
+                return;
+              }
               const applied = localAction(match, viewer.id, { type, payload });
               if (applied.status === "finished" && match.status !== "finished") playFx("reveal");
               const next = advancePass(match, applied, type);
@@ -308,7 +314,9 @@ export function LocalMatchApp({ gameId }: { gameId: GameId }) {
         {match.status === "playing" &&
         match.revealQueue.length > 1 &&
         match.gameId &&
-        !["mentira", "impostor", "emoji", "completa-frase"].includes(match.gameId) ? (
+        !["mentira", "impostor", "emoji", "completa-frase", "votacion", "trivia", "espia"].includes(
+          match.gameId,
+        ) ? (
           <button
             className="btn btn-ghost"
             type="button"

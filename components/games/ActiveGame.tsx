@@ -74,7 +74,13 @@ export function ActiveGame({
       ) : gameId === "mas-o-menos" ? (
         <HigherLowerView publicView={publicView as HigherLowerPublicView} privateView={privateView as HigherLowerPrivateView} {...common} />
       ) : gameId === "espia" ? (
-        <SpyView publicView={publicView as SpyPublicView} privateView={privateView as SpyPrivateView} youId={youId} {...common} />
+        <SpyView
+          publicView={publicView as SpyPublicView}
+          privateView={privateView as SpyPrivateView}
+          youId={youId}
+          local={local}
+          {...common}
+        />
       ) : gameId === "votacion" ? (
         <VoteView
           publicView={publicView as VotePublicView}
@@ -104,7 +110,12 @@ export function ActiveGame({
       ) : gameId === "tutti" ? (
         <StopView publicView={publicView as StopPublicView} privateView={privateView as StopPrivateView} {...common} />
       ) : gameId === "trivia" ? (
-        <TriviaView publicView={publicView as TriviaPublicView} privateView={privateView as TriviaPrivateView} {...common} />
+        <TriviaView
+          publicView={publicView as TriviaPublicView}
+          privateView={privateView as TriviaPrivateView}
+          local={local}
+          {...common}
+        />
       ) : gameId === "cadena" ? (
         <ChainView publicView={publicView as ChainPublicView} privateView={privateView as ChainPrivateView} {...common} />
       ) : gameId === "emoji" ? (

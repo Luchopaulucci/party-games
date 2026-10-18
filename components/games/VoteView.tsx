@@ -60,9 +60,11 @@ export function VoteView({
           </button>
         ))}
       </div>
-      <p className="lead">
-        Mandaron voto: {publicView.votedIds.length}/{players.length}
-      </p>
+      {local ? null : (
+        <p className="lead">
+          Mandaron voto: {publicView.votedIds.length}/{players.length}
+        </p>
+      )}
     </div>
   );
 }

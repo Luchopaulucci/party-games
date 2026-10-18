@@ -5,6 +5,65 @@ import { RandomReader } from "@/components/play/RandomReader";
 import { RoundReveal } from "@/components/play/RoundReveal";
 import type { PhrasePrivateView, PhrasePublicView } from "@/shared/games/phrase/logic";
 
+function PhraseVote({
+  prompt,
+  answers,
+  myAnswerId,
+  myVote,
+  local,
+  onAction,
+}: {
+  prompt: string;
+  answers: { id: string; text: string }[];
+  myAnswerId: string | null;
+  myVote: string | null;
+  local: boolean;
+  onAction: (type: string, payload?: unknown) => void;
+}) {
+  const [pick, setPick] = useState<string | null>(myVote);
+  return (
+    <div className="stack">
+      <p className="prompt">{prompt}</p>
+      <p className="lead">
+        {local ? "Votá la más graciosa. No mires lo que eligió el de antes." : "Votá la más graciosa. El último voto revela."}
+      </p>
+      {answers.map((a) => {
+        const mine = a.id === myAnswerId;
+        const selected = pick === a.id && !mine;
+        return (
+          <button
+            key={a.id}
+            className={`btn ${selected ? "btn-primary" : "btn-ghost"}`}
+            type="button"
+            data-testid="phrase-answer"
+            data-own={mine ? "1" : "0"}
+            disabled={mine || (!local && myVote != null)}
+            onClick={() => {
+              if (mine) return;
+              if (local) setPick(a.id);
+              else onAction("vote", { answerId: a.id });
+            }}
+          >
+            {a.text}
+            {mine ? " · tu frase" : ""}
+          </button>
+        );
+      })}
+      {local ? (
+        <button
+          className="btn btn-primary"
+          type="button"
+          data-testid="phrase-cast-vote"
+          disabled={!pick || pick === myAnswerId}
+          onClick={() => onAction("vote", { answerId: pick })}
+        >
+          Listo, pasá el celu
+        </button>
+      ) : null}
+    </div>
+  );
+}
+
 export function PhraseView({
   publicView,
   privateView,
@@ -67,22 +126,14 @@ export function PhraseView({
 
   if (publicView.phase === "vote") {
     return (
-      <div className="stack">
-        <p className="prompt">{publicView.prompt}</p>
-        <p className="lead">Votá la más graciosa. El último voto revela.</p>
-        {(publicView.answers ?? []).map((a) => (
-          <button
-            key={a.id}
-            className="btn btn-ghost"
-            type="button"
-            disabled={privateView.myVote != null}
-            onClick={() => onAction("vote", { answerId: a.id })}
-          >
-            {a.text}
-            {privateView.myVote === a.id ? " · tu voto" : ""}
-          </button>
-        ))}
-      </div>
+      <PhraseVote
+        prompt={publicView.prompt}
+        answers={publicView.answers ?? []}
+        myAnswerId={privateView.myAnswerId}
+        myVote={privateView.myVote}
+        local={Boolean(local)}
+        onAction={onAction}
+      />
     );
   }
 
