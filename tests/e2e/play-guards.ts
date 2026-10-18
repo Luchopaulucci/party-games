@@ -28,7 +28,6 @@ export async function assertSingleLocalPassButton(page: Page) {
     name: /listo, pasá el celu|pasar celu|pasar el teléfono|pasá el teléfono/i,
   });
   expect(await pass.count(), "botón de pasar duplicado").toBeLessThanOrEqual(1);
-  await expect(page.getByRole("button", { name: "Pasar celu" })).toHaveCount(0);
 }
 
 export async function dismissHandoff(page: Page) {

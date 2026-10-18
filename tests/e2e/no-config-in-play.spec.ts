@@ -35,6 +35,7 @@ test.describe("en la partida no se configura nada", () => {
       await assertSingleLocalPassButton(page);
       if (id === "impostor") {
         await expect(page.getByRole("button", { name: "Listo, pasá el celu" })).toBeVisible();
+        await expect(page.getByRole("button", { name: "Pasar celu" })).toHaveCount(0);
         await expect(page.getByText(/Listos:/)).toHaveCount(0);
         await expect(page.getByRole("button", { name: "OK, ya vi" })).toHaveCount(0);
       }
