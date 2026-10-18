@@ -18,7 +18,6 @@ export function RoomOptions({
 }) {
   const showImpostors = !gameId || gameId === "impostor";
   const showSpies = !gameId || gameId === "espia";
-  const showAuction = !gameId || gameId === "subasta";
 
   return (
     <div className="stack">
@@ -72,18 +71,6 @@ export function RoomOptions({
             <option value={0}>Automático</option>
             <option value={1}>1</option>
             <option value={2}>2</option>
-          </select>
-        </label>
-      ) : null}
-      {showAuction ? (
-        <label>
-          Modo Subasta
-          <select
-            value={value.mode ?? "no-pasarse"}
-            onChange={(e) => onChange({ ...value, mode: e.target.value })}
-          >
-            <option value="no-pasarse">The Price is Right: sin pasarse</option>
-            <option value="cerca">El más cercano (aunque se pase)</option>
           </select>
         </label>
       ) : null}

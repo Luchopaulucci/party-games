@@ -67,7 +67,7 @@ export function LocalMatchApp() {
   const [draft, setDraft] = useState("");
   const [categories, setCategories] = useState<string[]>([...CATEGORIES]);
   const [picante, setPicante] = useState(false);
-  const [options, setOptions] = useState<GameOptions>({ timerSec: 0, rounds: 1, mode: "no-pasarse" });
+  const [options, setOptions] = useState<GameOptions>({ timerSec: 0, rounds: 1 });
   const [match, setMatch] = useState<LocalMatch | null>(null);
   const [unlocked, setUnlocked] = useState<string | null>(null);
   const [hydrated, setHydrated] = useState(false);

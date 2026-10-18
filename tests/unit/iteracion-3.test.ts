@@ -1,11 +1,9 @@
 import { describe, expect, it } from "vitest";
 import { mulberry32 } from "@/shared/rng";
 import type { GameContext, TestSeed } from "@/shared/types";
-import { dareEngine } from "@/shared/games/dare/logic";
 import { triviaEngine } from "@/shared/games/trivia/logic";
 import { chainEngine } from "@/shared/games/chain/logic";
 import { emojiEngine } from "@/shared/games/emoji/logic";
-import { phoneEngine } from "@/shared/games/phone/logic";
 import { wouldEngine } from "@/shared/games/would/logic";
 
 const ids = ["a", "b", "c", "d"];
@@ -19,20 +17,6 @@ const ctx = (seed: TestSeed = {}): GameContext => ({
 function view<T>(value: unknown): T {
   return value as T;
 }
-
-describe("verdad-reto", () => {
-  it("la mesa vota cumplió sin mapa de votos", () => {
-    const c = ctx({ targetId: "a", prompt: "Contá un secreto boludo" });
-    let s = dareEngine.createState(c);
-    s = dareEngine.reduce(s, { type: "pick", payload: { choice: "verdad" } }, "a", c);
-    expect(view<{ card: { text: string } | null }>(dareEngine.publicView(s)).card?.text).toContain("secreto");
-    s = dareEngine.reduce(s, { type: "vote", payload: { value: "cumplio" } }, "b", c);
-    s = dareEngine.reduce(s, { type: "vote", payload: { value: "cumplio" } }, "c", c);
-    expect(JSON.stringify(dareEngine.publicView(s))).not.toMatch(/"votes":\{/);
-    s = dareEngine.reduce(s, { type: "reveal" }, "a", c);
-    expect(dareEngine.scores(s).a).toBe(2);
-  });
-});
 
 describe("trivia", () => {
   it("esconde el índice correcto hasta revelar", () => {
@@ -70,19 +54,6 @@ describe("emoji", () => {
     expect(JSON.stringify(emojiEngine.publicView(s))).not.toContain("el rey leon");
     s = emojiEngine.reduce(s, { type: "guess", payload: { text: "El Rey León" } }, "c", c);
     expect(emojiEngine.scores(s).c).toBe(3);
-  });
-});
-
-describe("telefono", () => {
-  it("solo el escritor ve el texto anterior", () => {
-    const c = ctx({ prompt: "frase secreta de la mesa" });
-    let s = phoneEngine.createState(c);
-    expect(view<{ previous: string | null }>(phoneEngine.privateView(s, "a")).previous).toBe("frase secreta de la mesa");
-    expect(view<{ previous: string | null }>(phoneEngine.privateView(s, "b")).previous).toBeNull();
-    expect(JSON.stringify(phoneEngine.publicView(s))).not.toContain("frase secreta de la mesa");
-    s = phoneEngine.reduce(s, { type: "write", payload: { text: "version de a" } }, "a", c);
-    expect(view<{ previous: string | null }>(phoneEngine.privateView(s, "b")).previous).toBe("version de a");
-    expect(view<{ previous: string | null }>(phoneEngine.privateView(s, "c")).previous).toBeNull();
   });
 });
 

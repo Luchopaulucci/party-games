@@ -143,7 +143,7 @@ export function nextLocalRound(match: LocalMatch): LocalMatch | string {
 function revealQueueFor(_gameId: GameId, state: unknown, ids: string[]): string[] {
   if (!state || typeof state !== "object") return ids;
   const rec = state as Record<string, unknown>;
-  const keys = ["drawerId", "psychicId", "actorId", "storytellerId", "speakerId", "holderId", "chooserId", "currentId"];
+  const keys = ["storytellerId", "chooserId", "currentId"];
   const first = keys.map((k) => rec[k]).find((v): v is string => typeof v === "string" && ids.includes(v));
   if (!first) return ids;
   return [first, ...ids.filter((id) => id !== first)];

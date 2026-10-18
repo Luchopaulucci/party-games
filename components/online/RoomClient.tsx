@@ -35,7 +35,7 @@ export function RoomClient({
   const [selectedGame, setSelectedGame] = useState<GameId | null>(preferredGame);
   const [categories, setCategories] = useState<string[]>([...CATEGORIES]);
   const [picante, setPicante] = useState(false);
-  const [options, setOptions] = useState<GameOptions>({ timerSec: 0, rounds: 1, mode: "no-pasarse" });
+  const [options, setOptions] = useState<GameOptions>({ timerSec: 0, rounds: 1 });
 
   useEffect(() => {
     setSelectedGame(preferredGame);
