@@ -1,12 +1,11 @@
 "use client";
 
-import { useState } from "react";
+import { RoundReveal } from "@/components/play/RoundReveal";
 import type { EmojiPrivateView, EmojiPublicView } from "@/shared/games/emoji/logic";
 
 export function EmojiView({
   publicView,
   privateView,
-  isHost,
   players,
   onAction,
 }: {
@@ -16,42 +15,32 @@ export function EmojiView({
   players: { id: string; name: string }[];
   onAction: (type: string, payload?: unknown) => void;
 }) {
-  const [text, setText] = useState("");
-
   if (publicView.phase === "reveal") {
-    const winner = players.find((p) => p.id === publicView.winnerId)?.name;
     return (
-      <div className="stack">
-        <p className="prompt" style={{ fontSize: "2.4rem" }}>{publicView.puzzle}</p>
-        <p className="lead">Era {publicView.answer}.{winner ? ` La clavó ${winner}.` : " Nadie la vio."}</p>
-      </div>
+      <RoundReveal
+        title="Era"
+        headline={publicView.answer ?? "se fue al pasto"}
+        lines={[publicView.puzzle]}
+      />
     );
   }
 
   return (
     <div className="stack">
-      <p className="prompt" style={{ fontSize: "2.4rem" }}>{publicView.puzzle}</p>
-      {publicView.hint ? <p className="lead">Pista: {publicView.hint}</p> : null}
-      <form
-        className="stack"
-        onSubmit={(e) => {
-          e.preventDefault();
-          onAction("guess", { text });
-          setText("");
-        }}
-      >
-        <input value={text} onChange={(e) => setText(e.target.value)} placeholder="¿Qué es?" />
-        <button className="btn btn-primary" type="submit">
-          Adivinar
+      <p className="prompt" style={{ fontSize: "2.8rem", lineHeight: 1.2 }}>
+        {publicView.puzzle}
+      </p>
+      <p className="lead">Adivinen en voz alta. La respuesta sale al final de la ronda.</p>
+      {privateView.seen ? (
+        <div className="notice">Ya la viste. Pasá el celu.</div>
+      ) : (
+        <button className="btn btn-primary" type="button" onClick={() => onAction("pass")}>
+          Pasar el teléfono
         </button>
-      </form>
-      {privateView.myGuesses.length ? <p className="lead">Ya tiraste: {privateView.myGuesses.join(", ")}</p> : null}
-      <p className="lead">Intentos: {publicView.guessCount}</p>
-      {isHost ? (
-        <button className="btn btn-ghost" type="button" onClick={() => onAction("reveal")}>
-          Rendirse
-        </button>
-      ) : null}
+      )}
+      <p className="lead">
+        Vieron: {publicView.seenIds.length}/{players.length}
+      </p>
     </div>
   );
 }

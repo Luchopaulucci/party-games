@@ -1,29 +1,25 @@
 import type { GameEngine, ScoreMap } from "../../types";
 import { pickRandom } from "../../rng";
-import { sameText } from "../helpers";
 import { filterByPack } from "../packs";
 import { EMOJI_PUZZLES, type EmojiPuzzle } from "./puzzles";
 
-export type EmojiPhase = "guess" | "reveal";
+export type EmojiPhase = "show" | "reveal";
 
 export interface EmojiState {
   phase: EmojiPhase;
   puzzle: EmojiPuzzle;
-  guesses: { playerId: string; text: string; correct: boolean }[];
-  winnerId: string | null;
+  seenIds: string[];
 }
 
 export interface EmojiPublicView {
   phase: EmojiPhase;
   puzzle: string;
-  hint?: string;
-  guessCount: number;
-  winnerId: string | null;
+  seenIds: string[];
   answer?: string;
 }
 
 export interface EmojiPrivateView {
-  myGuesses: string[];
+  seen: boolean;
 }
 
 function pickPuzzle(ctx: Parameters<GameEngine<EmojiState>["createState"]>[0]): EmojiPuzzle {
@@ -43,18 +39,18 @@ export const emojiEngine: GameEngine<EmojiState> = {
   id: "emoji",
 
   createState(ctx) {
-    return { phase: "guess", puzzle: pickPuzzle(ctx), guesses: [], winnerId: null };
+    return { phase: "show", puzzle: pickPuzzle(ctx), seenIds: [] };
   },
 
-  reduce(state, action, playerId) {
+  reduce(state, action, playerId, ctx) {
     if (state.phase === "reveal") return state;
-    if (action.type === "guess") {
-      const text = String((action.payload as { text?: unknown })?.text ?? "").trim();
-      if (text.length < 2) return state;
-      const correct = sameText(text, state.puzzle.answer);
-      const guesses = [...state.guesses, { playerId, text, correct }];
-      if (correct) return { ...state, guesses, phase: "reveal", winnerId: playerId };
-      return { ...state, guesses };
+    if (action.type === "pass" || action.type === "ready") {
+      if (state.seenIds.includes(playerId)) return state;
+      const seenIds = [...state.seenIds, playerId];
+      if (ctx.playerIds.every((id) => seenIds.includes(id))) {
+        return { ...state, seenIds, phase: "reveal" };
+      }
+      return { ...state, seenIds };
     }
     if (action.type === "timeout" || action.type === "reveal") {
       return { ...state, phase: "reveal" };
@@ -66,25 +62,22 @@ export const emojiEngine: GameEngine<EmojiState> = {
     const view: EmojiPublicView = {
       phase: state.phase,
       puzzle: state.puzzle.puzzle,
-      guessCount: state.guesses.length,
-      winnerId: state.winnerId,
+      seenIds: state.seenIds,
     };
-    if (state.phase === "guess") view.hint = state.puzzle.hint;
     if (state.phase === "reveal") view.answer = state.puzzle.answer;
     return view;
   },
 
   privateView(state, playerId): EmojiPrivateView {
-    return { myGuesses: state.guesses.filter((g) => g.playerId === playerId).map((g) => g.text) };
+    return { seen: state.seenIds.includes(playerId) };
   },
 
   isFinished(state) {
     return state.phase === "reveal";
   },
 
-  scores(state): ScoreMap {
-    if (state.phase !== "reveal" || !state.winnerId) return {};
-    return { [state.winnerId]: 3 };
+  scores(): ScoreMap {
+    return {};
   },
 
   usedContentId(state) {

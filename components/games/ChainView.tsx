@@ -1,12 +1,12 @@
 "use client";
 
 import { useState } from "react";
+import { RoundReveal } from "@/components/play/RoundReveal";
 import type { ChainPrivateView, ChainPublicView } from "@/shared/games/chain/logic";
 
 export function ChainView({
   publicView,
   privateView,
-  isHost,
   players,
   onAction,
 }: {
@@ -21,22 +21,22 @@ export function ChainView({
 
   if (publicView.phase === "reveal") {
     return (
-      <div className="stack">
-        <p className="prompt">La cadena quedó así</p>
-        {(publicView.chain ?? []).map((row, i) => (
-          <p key={`${row.playerId}-${i}`} className="lead" style={{ margin: 0 }}>
-            {i === 0 ? "Mesa" : players.find((p) => p.id === row.playerId)?.name}: <b>{row.text}</b>
-          </p>
-        ))}
-      </div>
+      <RoundReveal
+        title="La frase quedó"
+        headline={publicView.phrase ?? ""}
+        lines={(publicView.chain ?? []).map((row, i) =>
+          `${i === 0 ? "Mesa" : players.find((p) => p.id === row.playerId)?.name}: ${row.text}`,
+        )}
+      />
     );
   }
 
   return (
     <div className="stack">
-      <p className="prompt">Última: {publicView.lastWord}</p>
       <p className="lead">
-        {privateView.isTurn ? "Tu turno. Tirá una palabra que pegue." : `Esperá a ${current}.`}
+        {privateView.isTurn
+          ? "Tu turno. Una o dos palabras, no más."
+          : `Se lo mandamos a ${current}. Esperá.`}
       </p>
       {privateView.isTurn ? (
         <form
@@ -47,18 +47,23 @@ export function ChainView({
             setText("");
           }}
         >
-          <input value={text} onChange={(e) => setText(e.target.value)} placeholder="Asociación, no copia" maxLength={32} />
+          <p className="prompt">Anterior: {privateView.lastWord}</p>
+          <input
+            value={text}
+            onChange={(e) => setText(e.target.value)}
+            placeholder="Una o dos palabras"
+            maxLength={48}
+          />
           <button className="btn btn-primary" type="submit">
             Mandar
           </button>
         </form>
-      ) : null}
-      <p className="lead">Palabras: {publicView.count}</p>
-      {isHost ? (
-        <button className="btn btn-ghost" type="button" onClick={() => onAction("reveal")}>
-          Cortar cadena
-        </button>
-      ) : null}
+      ) : (
+        <div className="notice">Cuando sea tu turno te llega la última palabra. No mires el celu ajeno.</div>
+      )}
+      <p className="lead">
+        Palabras: {publicView.count} · una vuelta
+      </p>
     </div>
   );
 }

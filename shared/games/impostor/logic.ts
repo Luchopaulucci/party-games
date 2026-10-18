@@ -1,9 +1,10 @@
-import type { GameContext, GameEngine, ScoreMap } from "../../types";
+import type { GameAction, GameContext, GameEngine, ScoreMap } from "../../types";
+import { isClockPreset } from "../../play/clock";
 import { pickRandom, shuffle } from "../../rng";
 import { optionNumber } from "../helpers";
 import { IMPOSTOR_WORDS } from "./words";
 
-export type ImpostorPhase = "discuss" | "vote" | "reveal";
+export type ImpostorPhase = "role" | "discuss" | "vote" | "reveal";
 
 export interface ImpostorState {
   phase: ImpostorPhase;
@@ -11,7 +12,10 @@ export interface ImpostorState {
   word: string;
   category: string;
   impostorIds: string[];
+  readyIds: string[];
+  discussSec: number;
   votes: Record<string, string>;
+  accusedId: string | null;
   wordGuess: { by: string; text: string; correct: boolean } | null;
   scores: ScoreMap;
 }
@@ -19,10 +23,13 @@ export interface ImpostorState {
 export interface ImpostorPublicView {
   phase: ImpostorPhase;
   category: string;
-  votedIds: string[];
   impostorCount: number;
+  readyIds: string[];
+  votedIds: string[];
+  discussSec: number;
   word?: string;
   impostorIds?: string[];
+  accusedId?: string;
   totals?: { playerId: string; count: number }[];
   wordGuess?: ImpostorState["wordGuess"];
   scores?: ScoreMap;
@@ -30,13 +37,22 @@ export interface ImpostorPublicView {
 
 export interface ImpostorPrivateView {
   role: "crew" | "impostor";
+  isImpostor: boolean;
   word: string | null;
   category: string;
+  ready: boolean;
 }
 
-function impostorCountFor(size: number): number {
-  if (size >= 8) return 2;
-  return 1;
+/** Always a minority: impostors < the rest. 2 players is the only 1–1 exception. */
+export function maxImpostorCount(playerCount: number): number {
+  return Math.max(1, Math.floor((playerCount - 1) / 2));
+}
+
+export function clampImpostorCount(requested: number | undefined, playerCount: number): number {
+  const max = maxImpostorCount(playerCount);
+  const fallback = playerCount >= 8 ? Math.min(2, max) : 1;
+  const n = requested && requested > 0 ? requested : fallback;
+  return Math.min(Math.max(1, Math.floor(n)), max);
 }
 
 function pickWord(ctx: GameContext) {
@@ -54,11 +70,7 @@ function pickImpostors(ctx: GameContext): string[] {
   if (ctx.seed?.impostorIds?.length) {
     return ctx.seed.impostorIds.filter((id) => ctx.playerIds.includes(id));
   }
-  const requested = optionNumber(ctx.options?.impostorCount, 0, 0, 2);
-  const count = Math.min(
-    requested || impostorCountFor(ctx.playerIds.length),
-    Math.max(1, ctx.playerIds.length - 1),
-  );
+  const count = clampImpostorCount(optionNumber(ctx.options?.impostorCount, 0, 0, 8), ctx.playerIds.length);
   return shuffle(ctx.playerIds, ctx.rng).slice(0, count);
 }
 
@@ -81,9 +93,10 @@ export function tallyVotes(votes: Record<string, string>): { accused: string | n
   return { accused: leaders.length === 1 ? leaders[0]! : null, counts };
 }
 
-export function scoreImpostorRound(state: Pick<ImpostorState, "impostorIds" | "votes" | "wordGuess">): ScoreMap {
+export function scoreImpostorRound(state: Pick<ImpostorState, "impostorIds" | "votes" | "wordGuess" | "accusedId">): ScoreMap {
   const scores: ScoreMap = {};
-  const { accused } = tallyVotes(state.votes);
+  const fromVotes = tallyVotes(state.votes);
+  const accused = state.accusedId ?? fromVotes.accused;
   const caught = accused !== null && state.impostorIds.includes(accused);
 
   if (caught) {
@@ -110,39 +123,72 @@ export function scoreImpostorRound(state: Pick<ImpostorState, "impostorIds" | "v
   return scores;
 }
 
+function textFrom(payload: unknown): string {
+  if (payload == null || typeof payload !== "object") return "";
+  const text = (payload as { text?: unknown }).text;
+  return typeof text === "string" ? text.trim() : "";
+}
+
+function targetFrom(payload: unknown): string {
+  if (payload == null || typeof payload !== "object") return "";
+  const raw = (payload as { targetId?: unknown }).targetId;
+  return typeof raw === "string" ? raw : "";
+}
+
+function finish(state: ImpostorState, extra: Partial<ImpostorState> = {}): ImpostorState {
+  const next = { ...state, ...extra, phase: "reveal" as const };
+  return { ...next, scores: scoreImpostorRound(next) };
+}
+
 export const impostorEngine: GameEngine<ImpostorState> = {
   id: "impostor",
 
   createState(ctx) {
     const word = pickWord(ctx);
+    const timer = ctx.options?.timerSec;
     return {
-      phase: "discuss",
+      phase: "role",
       wordId: word.id,
       word: word.word,
       category: word.category,
       impostorIds: pickImpostors(ctx),
+      readyIds: [],
+      discussSec: isClockPreset(timer) ? timer : 0,
       votes: {},
+      accusedId: null,
       wordGuess: null,
       scores: {},
     };
   },
 
-  reduce(state, action, playerId) {
+  reduce(state, action, playerId, ctx) {
     if (state.phase === "reveal") return state;
 
-    if (action.type === "guess-word" && state.phase === "discuss") {
+    if (action.type === "set-clock" && state.phase === "role") {
+      const seconds = Number((action.payload as { seconds?: unknown } | undefined)?.seconds);
+      if (!isClockPreset(seconds)) return state;
+      return { ...state, discussSec: seconds };
+    }
+
+    if (action.type === "ready" && state.phase === "role") {
+      if (state.readyIds.includes(playerId)) return state;
+      const readyIds = [...state.readyIds, playerId];
+      if (ctx.playerIds.every((id) => readyIds.includes(id))) {
+        return { ...state, readyIds, phase: "discuss" };
+      }
+      return { ...state, readyIds };
+    }
+
+    if (action.type === "guess-word" && (state.phase === "role" || state.phase === "discuss")) {
       if (!state.impostorIds.includes(playerId)) return state;
       if (state.wordGuess) return state;
-      const text = String((action.payload as { text?: unknown })?.text ?? "").trim();
+      const text = textFrom(action.payload);
       if (text.length < 2) return state;
       const correct =
         text.toLowerCase().normalize("NFD").replace(/\p{Diacritic}/gu, "") ===
         state.word.toLowerCase().normalize("NFD").replace(/\p{Diacritic}/gu, "");
       const wordGuess = { by: playerId, text, correct };
-      if (correct) {
-        const next = { ...state, wordGuess, phase: "reveal" as const };
-        return { ...next, scores: scoreImpostorRound(next) };
-      }
+      if (correct) return finish(state, { wordGuess });
       return { ...state, wordGuess };
     }
 
@@ -150,18 +196,28 @@ export const impostorEngine: GameEngine<ImpostorState> = {
       return { ...state, phase: "vote" };
     }
 
+    if (action.type === "accuse" && (state.phase === "discuss" || state.phase === "vote")) {
+      const target = targetFrom(action.payload);
+      if (!target || target === playerId || !ctx.playerIds.includes(target)) return state;
+      return finish(state, { accusedId: target, votes: { ...state.votes, [playerId]: target } });
+    }
+
     if (action.type === "vote" && state.phase === "vote") {
-      const target = String((action.payload as { targetId?: unknown })?.targetId ?? "");
-      if (!target || target === playerId) return state;
-      return { ...state, votes: { ...state.votes, [playerId]: target } };
+      const target = targetFrom(action.payload);
+      if (!target || target === playerId || !ctx.playerIds.includes(target)) return state;
+      const votes = { ...state.votes, [playerId]: target };
+      if (ctx.playerIds.every((id) => votes[id])) return finish(state, { votes });
+      return { ...state, votes };
     }
 
     if ((action.type === "reveal" || action.type === "timeout") && state.phase === "vote") {
-      const next = { ...state, phase: "reveal" as const };
-      return { ...next, scores: scoreImpostorRound(next) };
+      return finish(state);
     }
     if (action.type === "timeout" && state.phase === "discuss") {
       return { ...state, phase: "vote" };
+    }
+    if (action.type === "reveal" && state.phase === "discuss") {
+      return finish(state);
     }
 
     return state;
@@ -171,12 +227,15 @@ export const impostorEngine: GameEngine<ImpostorState> = {
     const view: ImpostorPublicView = {
       phase: state.phase,
       category: state.category,
-      votedIds: Object.keys(state.votes),
       impostorCount: state.impostorIds.length,
+      readyIds: state.readyIds,
+      votedIds: Object.keys(state.votes),
+      discussSec: state.discussSec,
     };
     if (state.phase === "reveal") {
       view.word = state.word;
       view.impostorIds = state.impostorIds;
+      view.accusedId = state.accusedId ?? undefined;
       view.wordGuess = state.wordGuess;
       view.scores = state.scores;
       const { counts } = tallyVotes(state.votes);
@@ -187,13 +246,12 @@ export const impostorEngine: GameEngine<ImpostorState> = {
 
   privateView(state, playerId): ImpostorPrivateView {
     const isImpostor = state.impostorIds.includes(playerId);
-    if (isImpostor && state.phase !== "reveal") {
-      return { role: "impostor", word: null, category: state.category };
-    }
     return {
       role: isImpostor ? "impostor" : "crew",
-      word: state.word,
+      isImpostor,
+      word: isImpostor && state.phase !== "reveal" ? null : state.word,
       category: state.category,
+      ready: state.readyIds.includes(playerId),
     };
   },
 
@@ -209,3 +267,7 @@ export const impostorEngine: GameEngine<ImpostorState> = {
     return state.wordId;
   },
 };
+
+export function isImpostorAction(action: GameAction): boolean {
+  return ["ready", "set-clock", "guess-word", "open-vote", "vote", "accuse", "reveal"].includes(action.type);
+}

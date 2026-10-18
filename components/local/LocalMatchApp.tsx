@@ -30,6 +30,33 @@ import {
 
 const MIN_PLAYERS = 2;
 
+const PASS_AFTER: Partial<Record<GameId, string[]>> = {
+  closest: ["guess"],
+  impostor: ["ready"],
+  emoji: ["pass"],
+  mentira: ["write", "vote"],
+  "completa-frase": ["write", "vote"],
+  cadena: ["word"],
+  votacion: ["vote"],
+  reflejos: ["stop"],
+};
+
+function advancePass(match: LocalMatch, applied: LocalMatch, type: string): LocalMatch {
+  if (applied.status !== "playing" || !applied.gameId) return applied;
+  const pub = localView(applied, applied.players[0]?.id ?? "").public as Record<string, unknown> | null;
+  const current = [pub?.currentId, pub?.currentPlayerId, pub?.currentWriterId].find(
+    (v): v is string => typeof v === "string",
+  );
+  if (current) {
+    const idx = applied.revealQueue.indexOf(current);
+    if (idx >= 0 && idx !== match.passIndex) return { ...applied, passIndex: idx };
+  }
+  if (!PASS_AFTER[applied.gameId]?.includes(type)) return applied;
+  const nextIndex = match.passIndex + 1;
+  if (nextIndex < applied.revealQueue.length) return { ...applied, passIndex: nextIndex };
+  return applied;
+}
+
 type DraftPlayer = { id: string; name: string; color: string };
 
 const DEFAULT_PLAYERS: DraftPlayer[] = [
@@ -292,17 +319,13 @@ export function LocalMatchApp({ gameId }: { gameId: GameId }) {
             youId={viewer.id}
             players={match.players}
             timerSec={match.options.timerSec}
+            local
             onAction={(type, payload) => {
               const applied = localAction(match, viewer.id, { type, payload });
-              const shouldPass = match.gameId === "closest" && type === "guess";
-              const nextIndex = match.passIndex + 1;
-              if (shouldPass && nextIndex < match.revealQueue.length && applied.status === "playing") {
-                setUnlocked(null);
-                persist({ ...applied, passIndex: nextIndex });
-                return;
-              }
               if (applied.status === "finished" && match.status !== "finished") playFx("reveal");
-              persist(applied);
+              const next = advancePass(match, applied, type);
+              if (next.passIndex !== match.passIndex) setUnlocked(null);
+              persist(next);
             }}
           />
         ) : null}

@@ -1,12 +1,12 @@
 "use client";
 
 import { useState } from "react";
+import { RoundReveal } from "@/components/play/RoundReveal";
 import type { StopPrivateView, StopPublicView } from "@/shared/games/stop/logic";
 
 export function StopView({
   publicView,
   privateView,
-  isHost,
   players,
   onAction,
 }: {
@@ -17,30 +17,61 @@ export function StopView({
   onAction: (type: string, payload?: unknown) => void;
 }) {
   const [answers, setAnswers] = useState<Record<string, string>>(privateView.myAnswers);
+  const nameOf = (id: string) => players.find((p) => p.id === id)?.name ?? "alguien";
 
   if (publicView.phase === "reveal") {
     return (
+      <RoundReveal
+        title={`Letra ${publicView.letter}`}
+        headline="Puntos después del voto"
+        lines={players.map((p) => `${p.name}: ${publicView.points?.[p.id] ?? 0}`)}
+      />
+    );
+  }
+
+  if (publicView.phase === "review" && publicView.review) {
+    const item = publicView.review;
+    return (
       <div className="stack">
-        <p className="kicker">Letra {publicView.letter}</p>
-        {players.map((p) => (
-          <div className="card stack" key={p.id}>
-            <strong>{p.name}</strong>
-            {publicView.categories.map((c) => (
-              <small key={c}>
-                {c}: {publicView.answers?.[p.id]?.[c] || "—"}
-              </small>
-            ))}
-            <div className="score">{publicView.points?.[p.id] ?? 0}</div>
-          </div>
-        ))}
+        <p className="kicker">
+          Ortografía {item.index + 1}/{item.total}
+        </p>
+        <p className="lead">
+          {nameOf(item.playerId)} · {item.category}
+        </p>
+        <p className="prompt">{item.text}</p>
+        <p className="lead">¿La aceptan? Voten. Después se dan los puntos.</p>
+        <div className="grid-2">
+          <button
+            className="btn btn-primary"
+            type="button"
+            disabled={privateView.myReviewVote != null}
+            onClick={() => onAction("review", { value: "ok" })}
+          >
+            Aceptar
+          </button>
+          <button
+            className="btn btn-ghost"
+            type="button"
+            disabled={privateView.myReviewVote != null}
+            onClick={() => onAction("review", { value: "no" })}
+          >
+            Rechazar
+          </button>
+        </div>
+        <p className="lead">
+          Votos: {item.votedIds.length}/{players.length}
+          {privateView.myReviewVote ? ` · tu voto: ${privateView.myReviewVote === "ok" ? "ok" : "afuera"}` : ""}
+        </p>
       </div>
     );
   }
 
   return (
     <div className="stack">
-      <p className="kicker">Tutti frutti / Alto el lápiz</p>
+      <p className="kicker">Tutti frutti</p>
       <div className="big">{publicView.letter}</div>
+      <p className="lead">Termina cuando se acaba el tiempo o cuando alguien completa todo.</p>
       {publicView.categories.map((c) => (
         <label key={c}>
           {c}
@@ -51,17 +82,12 @@ export function StopView({
         </label>
       ))}
       {Object.keys(privateView.myAnswers).length ? (
-        <div className="notice">Ya mandaste. A esperar el “¡Alto!”.</div>
+        <div className="notice">Ya mandaste. Si alguien completa todo o corta el reloj, pasan a votar ortografía.</div>
       ) : (
         <button className="btn btn-primary" type="button" onClick={() => onAction("write", { answers })}>
-          ¡Alto!
+          Mandar
         </button>
       )}
-      {isHost ? (
-        <button className="btn btn-ghost" type="button" onClick={() => onAction("reveal")}>
-          Cerrar ronda
-        </button>
-      ) : null}
     </div>
   );
 }
