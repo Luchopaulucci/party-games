@@ -204,7 +204,7 @@ export function LocalMatchApp({ gameId }: { gameId: GameId }) {
               <input
                 value={draft}
                 onChange={(e) => setDraft(e.target.value)}
-                placeholder="Nombre, apodo, trauma"
+                placeholder="Nombre o apodo"
                 disabled={players.length >= MAX_LOCAL_PLAYERS}
               />
             </label>

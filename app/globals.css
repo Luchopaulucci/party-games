@@ -482,8 +482,11 @@ select:focus-visible {
 
 .btn-fuiste {
   width: auto;
+  flex-shrink: 0;
   min-height: 44px;
-  padding: 6px 10px;
+  padding: 6px 16px;
+  overflow: visible;
+  letter-spacing: 0.02em;
 }
 
 .color-picker {

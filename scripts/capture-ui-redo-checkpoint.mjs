@@ -3,9 +3,11 @@ import { mkdir } from "node:fs/promises";
 
 const arg = process.argv[2] ?? "antes";
 const outDir =
-  arg === "checkpoint2"
-    ? "/opt/cursor/artifacts/ui-redo/checkpoint2"
-    : `/opt/cursor/artifacts/ui-redo/checkpoint/${arg === "despues" ? "despues" : "antes"}`;
+  arg === "checkpoint2b"
+    ? "/opt/cursor/artifacts/ui-redo/checkpoint2b"
+    : arg === "checkpoint2"
+      ? "/opt/cursor/artifacts/ui-redo/checkpoint2"
+      : `/opt/cursor/artifacts/ui-redo/checkpoint/${arg === "despues" ? "despues" : "antes"}`;
 const base = process.env.CAPTURE_URL ?? "http://127.0.0.1:3010";
 
 const roster = [
