@@ -1,0 +1,24 @@
+# Un solo web service: Next (UI) + Socket.IO en el mismo proceso.
+# Es lo más simple en Render free: un cold start, same-origin para la web,
+# y la APK apunta al mismo host con SOCKET_URL.
+services:
+  - type: web
+    name: la-previa
+    runtime: node
+    plan: free
+    buildCommand: npm ci && npm run build
+    startCommand: npm start
+    healthCheckPath: /healthz
+    envVars:
+      - key: NODE_VERSION
+        value: "22"
+      - key: NODE_ENV
+        value: production
+      - key: NODE_OPTIONS
+        value: --max-old-space-size=460
+      - key: ALLOW_TEST_SEEDS
+        value: ""
+      - key: HOST_GRACE_MS
+        value: "12000"
+      - key: ALLOWED_ORIGINS
+        sync: false

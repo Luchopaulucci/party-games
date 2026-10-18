@@ -72,23 +72,34 @@ Scripts:
 
 ## Deploy
 
-Hay un `Dockerfile`. El proceso único escucha `$PORT` (default 3000) y atiende HTTP + Socket.IO.
+Hay un `Dockerfile` y un Blueprint de Render (`render.yaml`). El proceso único escucha `$PORT` y atiende HTTP + Socket.IO. Health: `GET /healthz` (también `/health`).
 
 ```bash
 docker build -t la-previa .
 docker run -p 3000:3000 la-previa
 ```
 
-En Railway / Render / Fly:
+## Publicar en Render
 
-1. Repo público, branch `master` (o el que elijas).
-2. Build: el Dockerfile, o `npm ci && npm run build`.
-3. Start: `npm start`.
-4. Healthcheck: `GET /health`.
-5. Variables: `PORT` (lo pone la plataforma), `HOST_GRACE_MS` (opcional, default 12000). **No** setees `ALLOW_TEST_SEEDS` en prod.
-6. Dejá `NEXT_PUBLIC_SOCKET_URL` vacío para que el browser use el mismo origen.
+Un solo web service (plan **free**) sirve la **web + Socket.IO**. No hay un segundo servicio de sockets: el `npm start` de producción ya es Next y realtime en el mismo proceso. En el free eso es más robusto (un solo cold start; la web es same-origin). La APK apunta a esa misma URL.
 
-WebSockets tienen que estar habilitados en el proxy (en estos PaaS suele venir de fábrica).
+Render free **duerme** el servicio si nadie entra. La web/APK muestran “Despertando el servidor…” y reintentan ~60 s.
+
+### Qué hace Luciano
+
+1. Creá una cuenta en [render.com](https://render.com) (no hace falta tarjeta para el free).
+2. **New → Blueprint**.
+3. Conectá el repo **Luchopaulucci/party-games**. Rama: **`develop`** (o la que quieras; no uses `master` para esto).
+4. Render lee `render.yaml` y arma el servicio `la-previa` (Node 22, `npm ci && npm run build`, `npm start`, health `/healthz`).
+5. Completá **ALLOWED_ORIGINS** (separados por coma, sin `*`). Poné la URL pública de la web cuando la tengas, por ejemplo `https://la-previa.onrender.com`. Si más adelante la web vive en otro dominio, sumalo acá. Los orígenes de la APK (`capacitor://localhost`, `https://localhost`, `http://localhost`) y `RENDER_EXTERNAL_URL` se agregan solos.
+6. **No** setees `ALLOW_TEST_SEEDS`. `PORT` lo pone Render. `HOST_GRACE_MS` ya viene en 12000.
+7. Deploy. Cuando esté Live, copiá la URL (tipo `https://la-previa.onrender.com`).
+8. En GitHub → el repo → **Settings → Secrets and variables → Actions → Variables**:
+   - `SOCKET_URL` = esa URL de Render (sin slash final).
+   - `NEXT_PUBLIC_WEB_ORIGIN` = la misma URL (para el QR/link de la APK).
+9. Regenerá la APK: **Actions → Android APK → Run workflow** (branch `develop`). Bajá `la-previa-debug.apk`. El workflow inyecta `SOCKET_URL` como `NEXT_PUBLIC_SOCKET_URL` en el export. Si `SOCKET_URL` no está, la APK sigue: modo en red avisa y el local anda.
+
+La web en Render no necesita `NEXT_PUBLIC_SOCKET_URL`: usa el mismo origen. WebSockets vienen habilitados en Render.
 
 ## APK de Android
 
@@ -121,7 +132,7 @@ La APK queda en `android/app/build/outputs/apk/debug/app-debug.apk`.
 | `NEXT_PUBLIC_SOCKET_URL` | URL del server Socket.IO. En la **web** vacía = mismo origen. En la **APK** vacía = el modo en red avisa y el local sigue. |
 | `NEXT_PUBLIC_WEB_ORIGIN` | Origen público de la web para el QR/link (ej. `https://tu-dominio.com`). Si falta, el código de sala se muestra igual. |
 
-En Actions se pueden setear como variables de repo (`NEXT_PUBLIC_SOCKET_URL`, `NEXT_PUBLIC_WEB_ORIGIN`).
+En Actions: variable de repo `SOCKET_URL` (la URL de Render). Si no está, la APK avisa que el modo en red no está disponible. `NEXT_PUBLIC_WEB_ORIGIN` sigue siendo el origen público para el QR.
 
 ### Firma de release
 

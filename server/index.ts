@@ -1,4 +1,5 @@
 import { createServer, type IncomingMessage, type ServerResponse } from "node:http";
+import { handleHttp } from "./health";
 import { createRealtimeServer } from "./realtime";
 
 const isProd = process.env.NODE_ENV === "production";
@@ -16,17 +17,7 @@ async function main() {
   }
 
   const httpServer = createServer((req, res) => {
-    if (req.url === "/health") {
-      res.writeHead(200, { "content-type": "text/plain; charset=utf-8" });
-      res.end("ok");
-      return;
-    }
-    if (nextHandler) {
-      void nextHandler(req, res);
-      return;
-    }
-    res.writeHead(404);
-    res.end();
+    handleHttp(req, res, nextHandler);
   });
 
   createRealtimeServer(httpServer);

@@ -19,6 +19,7 @@ import type { ClientRoomState, GameId, GameOptions } from "@/shared/types";
 import { currentShareOrigin } from "@/lib/online-access";
 import { roomPagePath, roomShareUrl } from "@/lib/room-url";
 import { socketUrl, writeSession } from "@/lib/session";
+import { WAKE_FAIL_MESSAGE, WAKE_MESSAGE, WAKE_WINDOW_MS, wakeStatus } from "@/lib/wake";
 
 export function RoomClient({
   code,
@@ -36,6 +37,7 @@ export function RoomClient({
   onRoomClosed?: (text?: string) => void;
 }) {
   const [error, setError] = useState<string | null>(null);
+  const [waking, setWaking] = useState(false);
   const [state, setState] = useState<ClientRoomState | null>(null);
   const [socket, setSocket] = useState<Socket | null>(null);
   const [categories, setCategories] = useState<string[]>([...CATEGORIES]);
@@ -45,7 +47,15 @@ export function RoomClient({
   closedRef.current = onRoomClosed;
 
   useEffect(() => {
-    const s = io(socketUrl(), { transports: ["websocket", "polling"] });
+    const startedAt = Date.now();
+    const s = io(socketUrl(), {
+      transports: ["websocket", "polling"],
+      reconnection: true,
+      reconnectionAttempts: Infinity,
+      reconnectionDelay: 1500,
+      reconnectionDelayMax: 4000,
+      timeout: 10_000,
+    });
     setSocket(s);
 
     const hello = {
@@ -65,9 +75,23 @@ export function RoomClient({
       closedRef.current?.(payload?.text);
     });
     s.on("connect_error", () => {
-      setError("No se pudo hablar con el server de salas. Revisá la red o NEXT_PUBLIC_SOCKET_URL.");
+      const status = wakeStatus(Date.now() - startedAt);
+      if (status.kind === "waking") {
+        setWaking(true);
+        setError(null);
+        return;
+      }
+      setWaking(false);
+      setError(status.message);
     });
+    const failTimer = window.setTimeout(() => {
+      if (s.connected) return;
+      setWaking(false);
+      setError(WAKE_FAIL_MESSAGE);
+    }, WAKE_WINDOW_MS);
     s.on("connect", () => {
+      setWaking(false);
+      setError(null);
       s.emit("hello", hello, (res: { ok: boolean; error?: string; code?: string; playerId?: string; token?: string }) => {
         if (!res.ok) {
           setError(res.error ?? "No se pudo entrar.");
@@ -86,6 +110,7 @@ export function RoomClient({
     });
 
     return () => {
+      window.clearTimeout(failTimer);
       s.disconnect();
     };
   }, [code, name, token, preferredGame]);
@@ -140,6 +165,10 @@ export function RoomClient({
             <b>Se pudrió</b>
             <p>{error}</p>
           </div>
+        ) : waking ? (
+          <p className="lead">
+            {WAKE_MESSAGE} Render free se duerme. Aguantá un toque, tipo un minuto.
+          </p>
         ) : (
           <p className="lead">Conectando… si tarda, no es el WiFi de tu casa. Juro.</p>
         )}
