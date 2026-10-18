@@ -17,6 +17,7 @@ import {
 } from "../shared/types";
 import {
   cleanName,
+  LOBBY_ONLY_ACTIONS,
   normalizeRoomCode,
   sanitizeCategories,
   sanitizeGameOptions,
@@ -357,6 +358,9 @@ export class RoomManager {
     if (!engine) return "Juego desconocido.";
     if (typeof action?.type !== "string" || action.type.length < 1 || action.type.length > 40) {
       return "Jugada inválida.";
+    }
+    if ((LOBBY_ONLY_ACTIONS as readonly string[]).includes(action.type)) {
+      return "Esa opción se elige en el lobby.";
     }
     if (action.type === "reveal" || action.type === "open-vote") {
       if (room.hostId !== playerId) return "Eso lo aprieta el anfitrión.";

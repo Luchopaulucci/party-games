@@ -14,6 +14,15 @@
   --font: var(--font-sans), system-ui, sans-serif;
   --display: var(--font-display), Georgia, serif;
   --radius: 22px;
+  --space-1: 6px;
+  --space-2: 10px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 20px;
+  --space-6: 24px;
+  --page-gutter: 16px;
+  --safe-top: env(safe-area-inset-top, 0px);
+  --safe-bottom: env(safe-area-inset-bottom, 0px);
 }
 
 * {
@@ -27,6 +36,8 @@ body {
   padding: 0;
   min-height: 100vh;
   min-height: 100dvh;
+  max-width: 100%;
+  overflow-x: clip;
   background: var(--color-ink);
   color: var(--color-cream);
   font-family: var(--font);
@@ -50,10 +61,16 @@ button {
 }
 
 .shell {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
   width: min(430px, 100%);
+  max-width: 100%;
   margin: 0 auto;
   min-height: 100dvh;
-  padding: calc(2rem + env(safe-area-inset-top, 0px)) 16px calc(2rem + env(safe-area-inset-bottom, 0px));
+  min-width: 0;
+  overflow-x: clip;
+  padding: 0 var(--page-gutter) calc(var(--space-5) + var(--safe-bottom));
   animation: rise 0.4s ease;
 }
 
@@ -86,16 +103,19 @@ button {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 12px;
-  margin-bottom: 18px;
-  padding-top: 4px;
+  gap: var(--space-3);
+  margin: 0 calc(-1 * var(--page-gutter));
+  padding: calc(10px + var(--safe-top)) var(--page-gutter) 12px;
   background: var(--color-ink);
+  border-bottom: 1px solid rgba(255, 248, 240, 0.18);
+  box-shadow: 0 10px 18px rgba(20, 12, 51, 0.45);
 }
 
 .brand {
   display: flex;
   flex-direction: column;
   gap: 2px;
+  min-width: 0;
 }
 
 button.brand {
@@ -110,6 +130,9 @@ button.brand {
   font-family: var(--display);
   font-size: 1.45rem;
   font-weight: 600;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .brand span {
@@ -118,6 +141,9 @@ button.brand {
   font-weight: 700;
   letter-spacing: 0.18em;
   text-transform: uppercase;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .badge {
@@ -136,19 +162,20 @@ h2,
 h3 {
   font-family: var(--display);
   letter-spacing: -0.02em;
-  margin: 0 0 8px;
+  margin: 0;
   font-weight: 600;
+  overflow-wrap: anywhere;
 }
 
 h1 {
-  font-size: 2.6rem;
-  line-height: 0.95;
+  font-size: clamp(1.7rem, 8vw, 2.6rem);
+  line-height: 1.05;
 }
 
 .lead {
   color: #f3e6d4;
   line-height: 1.45;
-  margin: 0 0 18px;
+  margin: 0;
   font-size: 1.05rem;
 }
 
@@ -156,17 +183,25 @@ h1 {
   background: var(--card);
   border-radius: var(--radius);
   padding: 16px;
+  min-width: 0;
   animation: rise 0.35s ease;
 }
 
 .stack {
   display: grid;
-  gap: 12px;
+  gap: var(--space-3);
+  min-width: 0;
+}
+
+.stack > * {
+  min-width: 0;
 }
 
 .row {
   display: flex;
-  gap: 10px;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  min-width: 0;
 }
 
 .row > * {
@@ -264,6 +299,8 @@ select:focus-visible {
   border-radius: 18px;
   padding: 14px;
   color: inherit;
+  min-width: 0;
+  overflow-wrap: anywhere;
   animation: rise 0.3s ease;
 }
 
@@ -283,6 +320,14 @@ select:focus-visible {
 .tile-hero b {
   font-size: 1.55rem;
   line-height: 1.05;
+}
+
+.home-modes {
+  margin-top: var(--space-3);
+}
+
+.home-games-title {
+  margin-top: var(--space-3);
 }
 
 .home-modes .tile p {
@@ -308,6 +353,7 @@ select:focus-visible {
   border-radius: 16px;
   padding: 10px 12px;
   gap: 10px;
+  min-width: 0;
 }
 
 .player .meta {
@@ -339,17 +385,31 @@ select:focus-visible {
 }
 
 .pill {
-  display: inline-flex;
+  display: flex;
   align-items: center;
-  gap: 6px;
+  max-width: 100%;
+  min-width: 0;
+  gap: 8px;
   background: rgba(255, 255, 255, 0.1);
   border-radius: 999px;
-  padding: 4px 8px;
+  padding: 4px 10px;
   font-size: 0.72rem;
   font-weight: 700;
-  letter-spacing: 0.14em;
+  letter-spacing: 0.08em;
   text-transform: uppercase;
   color: var(--color-gold);
+}
+
+.pill-name {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.pill-mode {
+  flex-shrink: 0;
+  white-space: nowrap;
 }
 
 .notice {
@@ -373,13 +433,20 @@ select:focus-visible {
   background: white;
   border-radius: 18px;
   padding: 10px;
+  max-width: 100%;
+}
+
+.qr img {
+  max-width: 100%;
+  height: auto;
 }
 
 .code {
   font-family: var(--display);
-  font-size: 2.6rem;
-  letter-spacing: 0.16em;
+  font-size: clamp(1.8rem, 10vw, 2.6rem);
+  letter-spacing: 0.12em;
   text-align: center;
+  overflow-wrap: anywhere;
 }
 
 .prompt {
@@ -391,9 +458,10 @@ select:focus-visible {
 
 .big {
   font-family: var(--display);
-  font-size: 3.4rem;
+  font-size: clamp(2.2rem, 12vw, 3.4rem);
   text-align: center;
   font-variant-numeric: tabular-nums;
+  overflow-wrap: anywhere;
   animation: pop 0.45s cubic-bezier(0.2, 0.8, 0.2, 1);
 }
 
@@ -416,7 +484,7 @@ select:focus-visible {
   align-items: center;
   justify-content: space-between;
   text-align: center;
-  padding: calc(2.5rem + env(safe-area-inset-top, 0px)) 24px calc(2.5rem + env(safe-area-inset-bottom, 0px));
+  padding: calc(4.75rem + var(--safe-top)) var(--space-5) calc(var(--space-5) + var(--safe-bottom));
   animation: rise 0.35s ease;
 }
 
@@ -477,11 +545,16 @@ select:focus-visible {
   text-align: center;
 }
 
+.join-url {
+  overflow-wrap: anywhere;
+  word-break: break-word;
+}
+
 .footer-note {
   color: var(--color-mist);
   font-size: 0.8rem;
   text-align: center;
-  margin-top: 18px;
+  margin: 0;
 }
 
 .list-plain {
@@ -606,10 +679,10 @@ select:focus-visible {
 .confirm-exit {
   position: fixed;
   inset: 0;
-  z-index: 50;
+  z-index: 80;
   display: grid;
   place-items: center;
-  padding: 24px;
+  padding: calc(var(--space-5) + var(--safe-top)) var(--page-gutter) calc(var(--space-5) + var(--safe-bottom));
   background: rgba(20, 12, 51, 0.72);
 }
 
@@ -626,7 +699,7 @@ select:focus-visible {
 
 .guess-slider-value {
   font-family: var(--display);
-  font-size: 4.2rem;
+  font-size: clamp(2.4rem, 16vw, 4.2rem);
   line-height: 0.9;
   margin: 12px 0 0;
   font-variant-numeric: tabular-nums;

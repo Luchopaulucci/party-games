@@ -91,7 +91,12 @@ export function ActiveGame({
           {...common}
         />
       ) : gameId === "mentira" ? (
-        <LieView publicView={publicView as LiePublicView} privateView={privateView as LiePrivateView} {...common} />
+        <LieView
+          publicView={publicView as LiePublicView}
+          privateView={privateView as LiePrivateView}
+          local={local}
+          {...common}
+        />
       ) : gameId === "reflejos" ? (
         <ReflexView publicView={publicView as ReflexPublicView} privateView={privateView as ReflexPrivateView} {...common} />
       ) : gameId === "yo-nunca" ? (
@@ -103,7 +108,12 @@ export function ActiveGame({
       ) : gameId === "cadena" ? (
         <ChainView publicView={publicView as ChainPublicView} privateView={privateView as ChainPrivateView} {...common} />
       ) : gameId === "emoji" ? (
-        <EmojiView publicView={publicView as EmojiPublicView} privateView={privateView as EmojiPrivateView} {...common} />
+        <EmojiView
+          publicView={publicView as EmojiPublicView}
+          privateView={privateView as EmojiPrivateView}
+          local={local}
+          {...common}
+        />
       ) : gameId === "preferis" ? (
         <WouldView publicView={publicView as WouldPublicView} privateView={privateView as WouldPrivateView} {...common} />
       ) : (

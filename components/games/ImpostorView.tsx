@@ -2,7 +2,7 @@
 
 import { PlayClock } from "@/components/play/PlayClock";
 import { RoundReveal } from "@/components/play/RoundReveal";
-import type { ClockPreset } from "@/shared/play/clock";
+import { clockLabel } from "@/shared/play/clock";
 import type { ImpostorPrivateView, ImpostorPublicView } from "@/shared/games/impostor/logic";
 
 export function ImpostorView({
@@ -65,26 +65,19 @@ export function ImpostorView({
             </>
           )}
         </div>
-        {isHost ? (
-          <PlayClock
-            seconds={publicView.discussSec}
-            onChange={(next: ClockPreset) => onAction("set-clock", { seconds: next })}
-          />
-        ) : (
-          <p className="lead">
-            Reloj al final: {publicView.discussSec ? `${publicView.discussSec}s` : "sin reloj"}.
-          </p>
-        )}
+        <p className="lead">Reloj de charla: {clockLabel(publicView.discussSec)}.</p>
         {privateView.ready ? (
-          <div className="notice">Ya diste OK. Esperá al resto.</div>
+          <div className="notice">{local ? "Listo. Pasá el celu." : "Ya diste OK. Esperá al resto."}</div>
         ) : (
           <button className="btn btn-primary" type="button" onClick={() => onAction("ready")}>
-            OK, ya vi
+            {local ? "Listo, pasá el celu" : "OK, ya vi"}
           </button>
         )}
-        <p className="lead">
-          Listos: {publicView.readyIds.length}/{players.length}
-        </p>
+        {local ? null : (
+          <p className="lead">
+            Listos: {publicView.readyIds.length}/{players.length}
+          </p>
+        )}
       </div>
     );
   }

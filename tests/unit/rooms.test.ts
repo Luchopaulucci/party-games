@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { RoomManager } from "@/server/room-manager";
 import { ONLINE_MODE_ERROR, supportsMode } from "@/shared/games/browse";
-import { UNKNOWN_GAME_ERROR } from "@/shared/protocol";
+import { actionPayloadSchema, UNKNOWN_GAME_ERROR } from "@/shared/protocol";
 import { GAME_IDS } from "@/shared/types";
 
 describe("RoomManager", () => {
@@ -203,6 +203,25 @@ describe("RoomManager", () => {
     const never = mgr.startGame(host.code, host.playerId, "yo-nunca");
     expect(never).toBe(ONLINE_MODE_ERROR);
     expect(mgr.rooms.get(host.code)!.gameId).not.toBe("yo-nunca");
+    mgr.dispose();
+  });
+
+  it("rechaza set-clock: el reloj se elige en el lobby", () => {
+    expect(actionPayloadSchema.safeParse({ type: "set-clock", payload: { seconds: 90 } }).success).toBe(false);
+    expect(actionPayloadSchema.safeParse({ type: "ready" }).success).toBe(true);
+
+    const mgr = new RoomManager({ allowTestSeeds: true, sweepIntervalMs: 0 });
+    const host = mgr.createRoom("Lucho");
+    expect(host.ok).toBe(true);
+    if (!host.ok) return;
+    mgr.joinRoom(host.code, "Meli");
+    mgr.joinRoom(host.code, "Coco");
+    expect(mgr.startGame(host.code, host.playerId, "impostor", undefined, { options: { timerSec: 45 } })).toBeNull();
+    expect(mgr.applyAction(host.code, host.playerId, { type: "set-clock", payload: { seconds: 90 } })).toBe(
+      "Esa opción se elige en el lobby.",
+    );
+    const pub = mgr.project(mgr.rooms.get(host.code)!, host.playerId)?.public as { discussSec?: number };
+    expect(pub.discussSec).toBe(45);
     mgr.dispose();
   });
 });

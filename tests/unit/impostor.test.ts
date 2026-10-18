@@ -94,4 +94,9 @@ describe("impostor", () => {
     }
     expect(state.phase).toBe("discuss");
   });
+
+  it("el reloj de charla sale del Timer de ronda del lobby", () => {
+    const state = impostorEngine.createState({ ...ctx, options: { timerSec: 45 } });
+    expect(state.discussSec).toBe(45);
+  });
 });

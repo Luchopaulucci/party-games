@@ -8,12 +8,14 @@ export function LieView({
   publicView,
   privateView,
   players,
+  local,
   onAction,
 }: {
   publicView: LiePublicView;
   privateView: LiePrivateView;
   isHost: boolean;
   players: { id: string; name: string }[];
+  local?: boolean;
   onAction: (type: string, payload?: unknown) => void;
 }) {
   const [statements, setStatements] = useState(["", "", ""]);
@@ -88,7 +90,7 @@ export function LieView({
         </select>
       </label>
       <button className="btn btn-primary" type="button" onClick={() => onAction("write", { statements, lieIndex })}>
-        Listo, pasá el teléfono
+        {local ? "Listo, pasá el celu" : "Listo"}
       </button>
     </div>
   );

@@ -164,12 +164,6 @@ export const impostorEngine: GameEngine<ImpostorState> = {
   reduce(state, action, playerId, ctx) {
     if (state.phase === "reveal") return state;
 
-    if (action.type === "set-clock" && state.phase === "role") {
-      const seconds = Number((action.payload as { seconds?: unknown } | undefined)?.seconds);
-      if (!isClockPreset(seconds)) return state;
-      return { ...state, discussSec: seconds };
-    }
-
     if (action.type === "ready" && state.phase === "role") {
       if (state.readyIds.includes(playerId)) return state;
       const readyIds = [...state.readyIds, playerId];
@@ -269,5 +263,5 @@ export const impostorEngine: GameEngine<ImpostorState> = {
 };
 
 export function isImpostorAction(action: GameAction): boolean {
-  return ["ready", "set-clock", "guess-word", "open-vote", "vote", "accuse", "reveal"].includes(action.type);
+  return ["ready", "guess-word", "open-vote", "vote", "accuse", "reveal"].includes(action.type);
 }
