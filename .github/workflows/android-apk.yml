@@ -1,8 +1,8 @@
 name: Android APK
 
+# Pausado hasta tener una versión estable. No se genera APK en push/PR;
+# solo a mano con workflow_dispatch.
 on:
-  push:
-    branches: [develop, master]
   workflow_dispatch:
 
 jobs:
