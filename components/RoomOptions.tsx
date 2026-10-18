@@ -50,7 +50,7 @@ export function RoomOptions({
       </label>
       {showImpostors ? (
         <label>
-          Impostores
+          Impostores (siempre menos que el resto)
           <select
             value={value.impostorCount ?? 0}
             onChange={(e) => onChange({ ...value, impostorCount: Number(e.target.value) })}

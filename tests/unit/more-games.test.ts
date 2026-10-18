@@ -20,33 +20,55 @@ function view<T>(value: unknown): T {
 }
 
 describe("completa-frase", () => {
-  it("esconde textos ajenos y no manda el mapa de votos", () => {
+  it("esconde textos ajenos, presenta de a una y no manda el mapa de votos", () => {
     const c = ctx({ prompt: "hola ___" });
     let s = phraseEngine.createState(c);
     s = phraseEngine.reduce(s, { type: "write", payload: { text: "mundo" } }, "a", c);
+    s = phraseEngine.reduce(s, { type: "write", payload: null }, "b", c);
+    s = phraseEngine.reduce(s, { type: "write", payload: { text: 4 } }, "b", c);
+    expect(s.answers).toHaveLength(1);
     s = phraseEngine.reduce(s, { type: "write", payload: { text: "fernet" } }, "b", c);
     s = phraseEngine.reduce(s, { type: "write", payload: { text: "mate" } }, "c", c);
     s = phraseEngine.reduce(s, { type: "write", payload: { text: "birra" } }, "d", c);
+    expect(s.phase).toBe("present");
+    expect(s.readerId).toBeTruthy();
+    expect(view<{ currentAnswer?: { text: string } }>(phraseEngine.publicView(s)).currentAnswer?.text).toBeTruthy();
+    s = phraseEngine.reduce(s, { type: "next" }, "a", c);
+    s = phraseEngine.reduce(s, { type: "next" }, "a", c);
+    s = phraseEngine.reduce(s, { type: "next" }, "a", c);
+    s = phraseEngine.reduce(s, { type: "next" }, "a", c);
+    expect(s.phase).toBe("vote");
     s = phraseEngine.reduce(s, { type: "vote", payload: { answerId: "a-b" } }, "a", c);
     const pub = JSON.stringify(phraseEngine.publicView(s));
     expect(pub).not.toContain('"votes"');
     expect(view<{ myVote: string | null }>(phraseEngine.privateView(s, "c")).myVote).toBeNull();
-    s = phraseEngine.reduce(s, { type: "reveal" }, "a", c);
+    s = phraseEngine.reduce(s, { type: "vote", payload: { answerId: "a-a" } }, "b", c);
+    s = phraseEngine.reduce(s, { type: "vote", payload: { answerId: "a-a" } }, "c", c);
+    s = phraseEngine.reduce(s, { type: "vote", payload: { answerId: "a-a" } }, "d", c);
+    expect(phraseEngine.isFinished(s)).toBe(true);
     expect(JSON.stringify(phraseEngine.publicView(s))).not.toMatch(/"votes":\{/);
   });
 });
 
 describe("mentira", () => {
-  it("el resto no ve cuál es la mentira", () => {
+  it("el resto no ve cuál es la mentira y el último voto revela", () => {
     const c = ctx({ targetId: "a", answers: ["uno", "dos", "tres"], lieIndex: 2 });
     let s = lieEngine.createState(c);
+    s = lieEngine.reduce(s, { type: "write", payload: { nope: true } }, "a", c);
+    s = lieEngine.reduce(s, { type: "write", payload: { statements: ["uno", "dos"], lieIndex: 2 } }, "a", c);
+    expect(s.phase).toBe("write");
     s = lieEngine.reduce(s, { type: "write", payload: { statements: ["uno", "dos", "tres"], lieIndex: 2 } }, "a", c);
     expect(view<{ lieIndex: number | null }>(lieEngine.privateView(s, "b")).lieIndex).toBeNull();
     expect(view<{ lieIndex?: number }>(lieEngine.publicView(s)).lieIndex).toBeUndefined();
     s = lieEngine.reduce(s, { type: "vote", payload: { index: 1 } }, "b", c);
-    s = lieEngine.reduce(s, { type: "reveal" }, "a", c);
+    s = lieEngine.reduce(s, { type: "vote", payload: { index: 0 } }, "c", c);
+    expect(lieEngine.isFinished(s)).toBe(false);
+    s = lieEngine.reduce(s, { type: "vote", payload: null }, "d", c);
+    expect(lieEngine.isFinished(s)).toBe(false);
+    s = lieEngine.reduce(s, { type: "vote", payload: { index: 2 } }, "d", c);
+    expect(lieEngine.isFinished(s)).toBe(true);
     expect(JSON.stringify(lieEngine.publicView(s))).not.toMatch(/"votes":\{/);
-    expect(lieEngine.scores(s).a).toBe(1);
+    expect(lieEngine.scores(s).d).toBe(2);
   });
 });
 

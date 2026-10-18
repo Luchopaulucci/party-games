@@ -47,7 +47,7 @@ const IMPLEMENTED: GameMeta[] = [
     minPlayers: 3,
     maxPlayers: 12,
     implemented: true,
-    howTo: "Si ves la palabra, charlá sin decirla. Si no, fingí. Después se vota. Solo se ven totales.",
+    howTo: "Cada uno mira si es impostor o no. Cuando todos dan OK arranca el reloj. Local: señalan y la app revela. Red: votan y se revela.",
   },
   {
     id: "mas-o-menos",
@@ -91,7 +91,7 @@ const IMPLEMENTED: GameMeta[] = [
     minPlayers: 3,
     maxPlayers: 12,
     implemented: true,
-    howTo: "Completá la frase. Después votá la más graciosa, menos la tuya. Si copian, JINX.",
+    howTo: "Local: cada uno completa y pasa el celu. Al final las respuestas salen de a una y eligen la mejor. Red: alguien al azar las lee y votan.",
   },
   {
     id: "mentira",
@@ -102,7 +102,7 @@ const IMPLEMENTED: GameMeta[] = [
     minPlayers: 3,
     maxPlayers: 10,
     implemented: true,
-    howTo: "El narrador tira 3 frases. El resto vota cuál es mentira. No se ve el mapa de votos.",
+    howTo: "Una persona escribe 3 frases y marca la mentira. Se pasa el celu, votan, y el último voto revela.",
   },
   {
     id: "reflejos",
@@ -157,7 +157,7 @@ const IMPLEMENTED: GameMeta[] = [
     minPlayers: 2,
     maxPlayers: 12,
     implemented: true,
-    howTo: "Ves la última palabra. Tirá otra que pegue. Al final se ve toda la cadena.",
+    howTo: "Una o dos palabras por persona, una vuelta. Al final se ve la frase. En red le llega a cada uno por turno.",
   },
   {
     id: "emoji",
@@ -168,7 +168,7 @@ const IMPLEMENTED: GameMeta[] = [
     minPlayers: 2,
     maxPlayers: 12,
     implemented: true,
-    howTo: "Mirá los emojis. Escribí qué es. El primero que clava, suma 3.",
+    howTo: "Mirá los emojis, adivinen en voz alta y pasá el teléfono. La respuesta se revela al final de la ronda.",
   },
   {
     id: "preferis",
