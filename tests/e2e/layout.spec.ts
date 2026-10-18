@@ -126,6 +126,18 @@ test.describe("layout márgenes", () => {
         await assertLayout(page);
       }
 
+      await page.goto("/juego/reflejos/local");
+      await page.getByRole("button", { name: /Empezar/ }).click();
+      const reflexHandoff = page.getByTestId("handoff-screen");
+      if (await reflexHandoff.isVisible()) {
+        await page.getByTestId("handoff-continue").click();
+      }
+      const hint = page.getByTestId("reflex-hint");
+      await expect(hint).toBeVisible();
+      const wraps = await hint.evaluate((el) => el.scrollHeight > el.clientHeight + 2);
+      expect(wraps, "Frená lo más cerca posible se parte").toBe(false);
+      await assertLayout(page);
+
       await page.getByTestId("exit-button").click();
       await expect(page.getByTestId("confirm-exit")).toBeVisible();
       await assertLayout(page);

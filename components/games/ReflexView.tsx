@@ -52,7 +52,9 @@ export function ReflexView({
 
   return (
     <div className="stack" style={{ minHeight: "52vh" }}>
-      <p className="kicker">Frená lo más cerca posible</p>
+      <p className="kicker kicker-single" data-testid="reflex-hint">
+        Frená lo más cerca posible
+      </p>
       <p className="big" data-testid="reflex-target">
         {publicView.target.toFixed(2)}s
       </p>

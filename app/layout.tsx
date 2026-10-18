@@ -7,6 +7,9 @@ const mono = Source_Code_Pro({
   subsets: ["latin"],
   weight: ["400", "600", "700"],
   variable: "--font-mono",
+  display: "swap",
+  preload: true,
+  adjustFontFallback: true,
 });
 
 export const metadata: Metadata = {
@@ -27,7 +30,7 @@ export const viewport: Viewport = {
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="es-AR">
-      <body className={mono.variable}>
+      <body className={`${mono.variable} ${mono.className}`}>
         <RegisterSW />
         {children}
       </body>

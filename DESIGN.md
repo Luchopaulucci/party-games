@@ -56,7 +56,7 @@ Density comfortable.
 
 ## Components
 
-- **Primary CTA Button:** bg `#ee1f66`, text `#fff`, Source Code Pro 12px 700, ls 0.1em, uppercase, padding 10px 15px, radius 10px, no border. **Only filled button.**
+- **Primary CTA Button:** bg `#ee1f66`, text `#000` (blanco sobre rosa no llega a AA 4.5), Source Code Pro 12px 700, ls 0.1em, uppercase, padding 10px 15px, radius 10px, no border. **Only filled button.** Rosa en texto chico solo si pasa 4.5:1; si no, solo fondo de CTA o display.
 - **Ghost Outline Button:** transparent, border 1px `#fff`, text `#fff`, 12px 700 uppercase ls 0.1em, padding 10px 15px, radius 10px. Secondary actions.
 - **Navigation Link:** `#fff` 12px 700 uppercase ls 0.1em, bottom border 1px transparent, on hover/active `#ee1f66`.
 - **Outlined Card:** bg `#000` or `#29292a`, border 1px `#fff`, radius 15px, padding 30px (20px on 360px), **no shadow, no gradient** — the border IS the card. Dominant pattern.

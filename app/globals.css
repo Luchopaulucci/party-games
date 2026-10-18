@@ -188,7 +188,7 @@ button.brand {
 
 .badge {
   background: var(--color-kippo-pink);
-  color: var(--color-ghost-white);
+  color: var(--color-void-black);
   font-weight: 700;
   font-size: var(--text-caption);
   letter-spacing: 0.14em;
@@ -312,7 +312,7 @@ select:focus {
 
 .btn-primary {
   background: var(--color-kippo-pink);
-  color: var(--color-ghost-white);
+  color: var(--color-void-black);
   border-color: var(--color-kippo-pink);
 }
 
@@ -440,7 +440,7 @@ select:focus-visible {
 }
 
 .score.is-lead {
-  color: var(--color-kippo-pink);
+  color: var(--color-ghost-white);
 }
 
 .pill {
@@ -470,7 +470,6 @@ select:focus-visible {
 .pill-mode {
   flex-shrink: 0;
   white-space: nowrap;
-  color: var(--color-kippo-pink);
 }
 
 .notice {
@@ -484,7 +483,7 @@ select:focus-visible {
 
 .error {
   background: var(--color-void-black);
-  color: var(--color-kippo-pink);
+  color: var(--color-ghost-white);
   border: 1px solid var(--color-kippo-pink);
   border-radius: var(--radius-card);
   padding: 10px 12px;
@@ -670,7 +669,7 @@ select:focus-visible {
 .chip.on {
   background: transparent;
   border-color: var(--color-kippo-pink);
-  color: var(--color-kippo-pink);
+  color: var(--color-ghost-white);
 }
 
 .kicker {
@@ -679,6 +678,14 @@ select:focus-visible {
   letter-spacing: 0.18em;
   text-transform: uppercase;
   color: var(--color-ghost-white);
+}
+
+.kicker-single {
+  letter-spacing: 0.04em;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 100%;
 }
 
 .category-filters {
@@ -740,8 +747,8 @@ select:focus-visible {
   text-transform: uppercase;
 }
 
-.picante-toggle.on strong {
-  color: var(--color-kippo-pink);
+.picante-toggle.on {
+  border-color: var(--color-kippo-pink);
 }
 
 .picante-toggle small {
@@ -872,8 +879,15 @@ select:focus-visible {
   *,
   *::before,
   *::after {
-    animation-duration: 0.01ms !important;
+    animation: none !important;
+    animation-duration: 0s !important;
     animation-iteration-count: 1 !important;
-    transition-duration: 0.01ms !important;
+    transition: none !important;
+    transition-duration: 0s !important;
+    scroll-behavior: auto !important;
+  }
+
+  .btn:active:not(:disabled) {
+    transform: none;
   }
 }

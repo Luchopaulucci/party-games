@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { PLAYER_COLORS, contrastText, nextPlayerColor } from "@/shared/ui/colors";
+import { PLAYER_COLORS, contrastRatio, contrastText, nextPlayerColor } from "@/shared/ui/colors";
 import { formatReveal, formatRevealUnit, winnerHeadline } from "@/shared/ui/format";
 import { formatGuess } from "@/shared/play/slider";
 
@@ -18,6 +18,13 @@ describe("tokens de ¿Cuánto es?", () => {
   it("elige tinta clara u oscura según el color", () => {
     expect(contrastText("#C42B54")).toBe("#ffffff");
     expect(contrastText("#f5d56a")).toBe("#000000");
+  });
+
+  it("blanco y rosa Kippo cumplen AA sobre negro; el CTA usa tinta negra", () => {
+    expect(contrastRatio("#ffffff", "#000000")).toBeGreaterThanOrEqual(4.5);
+    expect(contrastRatio("#ee1f66", "#000000")).toBeGreaterThanOrEqual(4.5);
+    expect(contrastRatio("#000000", "#ee1f66")).toBeGreaterThanOrEqual(4.5);
+    expect(contrastRatio("#ffffff", "#ee1f66")).toBeLessThan(4.5);
   });
 
   it("arma el titular del reveal", () => {

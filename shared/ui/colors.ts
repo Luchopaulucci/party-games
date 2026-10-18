@@ -29,6 +29,27 @@ export function nextPlayerColor(used: string[]): string {
   return free ?? PLAYER_COLORS[used.length % PLAYER_COLORS.length]!;
 }
 
+function channel(hex: string, start: number): number {
+  return Number.parseInt(hex.replace("#", "").slice(start, start + 2), 16) / 255;
+}
+
+function linearize(channelValue: number): number {
+  return channelValue <= 0.04045 ? channelValue / 12.92 : ((channelValue + 0.055) / 1.055) ** 2.4;
+}
+
+export function relativeLuminance(hex: string): number {
+  const r = linearize(channel(hex, 0));
+  const g = linearize(channel(hex, 2));
+  const b = linearize(channel(hex, 4));
+  return 0.2126 * r + 0.7152 * g + 0.0722 * b;
+}
+
+export function contrastRatio(a: string, b: string): number {
+  const light = Math.max(relativeLuminance(a), relativeLuminance(b));
+  const dark = Math.min(relativeLuminance(a), relativeLuminance(b));
+  return (light + 0.05) / (dark + 0.05);
+}
+
 export function contrastText(hex: string): "#ffffff" | "#000000" {
   const raw = hex.replace("#", "");
   if (raw.length < 6) return "#ffffff";
