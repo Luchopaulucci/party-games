@@ -30,8 +30,4 @@ export function clearSession(code: string) {
   localStorage.removeItem(sessionKey(code));
 }
 
-export function socketUrl(): string | undefined {
-  const raw = process.env.NEXT_PUBLIC_SOCKET_URL;
-  if (!raw) return undefined;
-  return raw.replace(/\/$/, "");
-}
+export { configuredSocketUrl as socketUrl } from "@/lib/online";

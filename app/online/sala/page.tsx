@@ -1,18 +1,21 @@
 "use client";
 
-import { useParams, useRouter, useSearchParams } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { Suspense, useRef } from "react";
+import { OnlineUnavailable } from "@/components/online/OnlineUnavailable";
 import { RoomClient } from "@/components/online/RoomClient";
 import { Shell } from "@/components/Shell";
+import { useOnlineAccess } from "@/lib/online-access";
+import { parseRoomCode } from "@/lib/room-url";
 import { clearSession, readSession } from "@/lib/session";
 import { parseGameId } from "@/shared/games/browse";
 
 function RoomInner() {
-  const params = useParams<{ code: string }>();
   const search = useSearchParams();
   const router = useRouter();
   const leaveRef = useRef<null | (() => void)>(null);
-  const rawCode = params.code === "nueva" ? undefined : String(params.code).toUpperCase();
+  const access = useOnlineAccess();
+  const rawCode = parseRoomCode(search.get("code"));
   const nameFromQuery = search.get("name")?.trim();
   const stored = rawCode ? readSession(rawCode) : null;
   const name = nameFromQuery || stored?.name || "Invitado";
@@ -34,19 +37,23 @@ function RoomInner() {
         router.replace("/");
       }}
     >
-      <RoomClient
-        code={rawCode}
-        name={name}
-        token={token}
-        preferredGame={preferredGame}
-        registerLeave={(fn) => {
-          leaveRef.current = fn;
-        }}
-        onRoomClosed={() => {
-          if (rawCode) clearSession(rawCode);
-          router.replace("/");
-        }}
-      />
+      {access.ok ? (
+        <RoomClient
+          code={rawCode}
+          name={name}
+          token={token}
+          preferredGame={preferredGame}
+          registerLeave={(fn) => {
+            leaveRef.current = fn;
+          }}
+          onRoomClosed={() => {
+            if (rawCode) clearSession(rawCode);
+            router.replace("/");
+          }}
+        />
+      ) : (
+        <OnlineUnavailable message={access.message} />
+      )}
     </Shell>
   );
 }

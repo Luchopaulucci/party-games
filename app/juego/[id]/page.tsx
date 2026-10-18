@@ -4,7 +4,10 @@ import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 import { useState } from "react";
 import { HowToPlay } from "@/components/HowToPlay";
+import { OnlineUnavailable } from "@/components/online/OnlineUnavailable";
 import { Shell } from "@/components/Shell";
+import { useOnlineAccess } from "@/lib/online-access";
+import { roomPagePath } from "@/lib/room-url";
 import { parseGameId, supportsMode } from "@/shared/games/browse";
 import { getGameMeta } from "@/shared/games/registry";
 
@@ -14,6 +17,7 @@ export default function JuegoPage() {
   const gameId = parseGameId(params.id);
   const meta = gameId ? getGameMeta(gameId) : undefined;
   const [name, setName] = useState("");
+  const access = useOnlineAccess();
 
   if (!gameId || !meta) {
     return (
@@ -30,8 +34,7 @@ export default function JuegoPage() {
   function goOnline() {
     const clean = name.trim();
     if (clean.length < 2) return;
-    const q = new URLSearchParams({ name: clean, game: gameId! });
-    router.push(`/online/sala/nueva?${q.toString()}`);
+    router.push(roomPagePath({ name: clean, game: gameId }));
   }
 
   return (
@@ -57,19 +60,25 @@ export default function JuegoPage() {
         {online ? (
           <div className="tile tile-hero" style={{ display: "grid", gap: 10 }}>
             <b>En red</b>
-            <p>Primero se crea la sala (código, link y QR). Después los ajustes y arranca.</p>
-            <label>
-              ¿Cómo te llamás?
-              <input
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-                placeholder="Tu nombre de previa"
-                maxLength={18}
-              />
-            </label>
-            <button className="btn btn-primary" type="button" disabled={name.trim().length < 2} onClick={goOnline}>
-              Crear sala
-            </button>
+            {access.ok ? (
+              <>
+                <p>Primero se crea la sala (código, link y QR). Después los ajustes y arranca.</p>
+                <label>
+                  ¿Cómo te llamás?
+                  <input
+                    value={name}
+                    onChange={(e) => setName(e.target.value)}
+                    placeholder="Tu nombre de previa"
+                    maxLength={18}
+                  />
+                </label>
+                <button className="btn btn-primary" type="button" disabled={name.trim().length < 2} onClick={goOnline}>
+                  Crear sala
+                </button>
+              </>
+            ) : (
+              <OnlineUnavailable message={access.message} />
+            )}
           </div>
         ) : (
           <div className="tile soon">

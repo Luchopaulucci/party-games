@@ -16,6 +16,8 @@ import { CATEGORIES, type Category } from "@/shared/games/closest/premise-types"
 import { supportsMode } from "@/shared/games/browse";
 import { getGameMeta } from "@/shared/games/registry";
 import type { ClientRoomState, GameId, GameOptions } from "@/shared/types";
+import { currentShareOrigin } from "@/lib/online-access";
+import { roomPagePath, roomShareUrl } from "@/lib/room-url";
 import { socketUrl, writeSession } from "@/lib/session";
 
 export function RoomClient({
@@ -62,6 +64,9 @@ export function RoomClient({
     s.on("roomClosed", (payload: { text?: string }) => {
       closedRef.current?.(payload?.text);
     });
+    s.on("connect_error", () => {
+      setError("No se pudo hablar con el server de salas. Revisá la red o NEXT_PUBLIC_SOCKET_URL.");
+    });
     s.on("connect", () => {
       s.emit("hello", hello, (res: { ok: boolean; error?: string; code?: string; playerId?: string; token?: string }) => {
         if (!res.ok) {
@@ -75,8 +80,7 @@ export function RoomClient({
           name,
         });
         if (!code && res.code) {
-          const q = preferredGame ? `?game=${preferredGame}` : "";
-          window.history.replaceState(null, "", `/online/sala/${res.code}${q}`);
+          window.history.replaceState(null, "", roomPagePath({ code: res.code, game: preferredGame }));
         }
       });
     });
@@ -94,8 +98,8 @@ export function RoomClient({
 
   const joinUrl = useMemo(() => {
     if (!state) return "";
-    const origin = typeof window === "undefined" ? "" : window.location.origin;
-    return `${origin}/online?code=${state.code}`;
+    const origin = currentShareOrigin();
+    return origin ? roomShareUrl(state.code, origin) : "";
   }, [state]);
 
   function send(type: "startGame" | "action" | "nextRound" | "toLobby" | "react" | "leaveRoom", payload?: unknown) {
@@ -162,10 +166,21 @@ export function RoomClient({
 
       {state.status === "lobby" ? (
         <>
-          <QrCard value={joinUrl} code={state.code} />
-          <p className="lead" style={{ textAlign: "center", margin: 0 }}>
-            Link: {joinUrl}
-          </p>
+          {joinUrl ? (
+            <>
+              <QrCard value={joinUrl} code={state.code} />
+              <p className="lead" style={{ textAlign: "center", margin: 0 }}>
+                Link: {joinUrl}
+              </p>
+            </>
+          ) : (
+            <div className="card stack">
+              <div className="code">{state.code}</div>
+              <p className="lead" style={{ margin: 0, textAlign: "center" }}>
+                Mandales el código. Esta build no tiene web pública para armar el QR.
+              </p>
+            </div>
+          )}
           <div className="card stack">
             <h2>La barra</h2>
             <PlayerList players={state.players} youId={state.you.id} />

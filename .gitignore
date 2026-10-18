@@ -9,3 +9,20 @@ out
 coverage
 *.log
 tsconfig.tsbuildinfo
+
+# Android / Capacitor (la carpeta android/ sí se commitea)
+android/app/build
+android/app/release
+android/build
+android/.gradle
+android/local.properties
+android/captures
+android/.idea
+android/*.iml
+android/app/src/main/assets/public
+android/capacitor-cordova-android-plugins
+
+# Nunca un keystore
+*.jks
+*.keystore
+*.p12
