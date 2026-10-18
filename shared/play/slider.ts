@@ -1,3 +1,5 @@
+import { formatNumberEs, isCalendarYear, isYearUnit } from "../ui/format";
+
 export function clampGuess(value: number, min: number, max: number): number {
   return Math.min(max, Math.max(min, value));
 }
@@ -17,6 +19,9 @@ export function nudgeGuess(value: number, direction: 1 | -1, min: number, max: n
   return snapGuess(value + direction * step, min, max, step);
 }
 
-export function formatGuess(value: number): string {
-  return new Intl.NumberFormat("es-AR", { maximumFractionDigits: 2 }).format(value);
+export function formatGuess(value: number, unit?: string): string {
+  const year = isYearUnit(unit) || isCalendarYear(Math.round(value), unit);
+  const decimals = year || Number.isInteger(value) ? 0 : 2;
+  const shown = decimals === 0 ? Math.round(value) : value;
+  return formatNumberEs(shown, !year, decimals);
 }

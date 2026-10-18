@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { PLAYER_COLORS, contrastText, nextPlayerColor } from "@/shared/ui/colors";
-import { winnerHeadline } from "@/shared/ui/format";
+import { formatReveal, formatRevealUnit, winnerHeadline } from "@/shared/ui/format";
+import { formatGuess } from "@/shared/play/slider";
 
 describe("tokens de ¿Cuánto es?", () => {
   it("reparte la paleta de jugadores sin repetir", () => {
@@ -22,5 +23,20 @@ describe("tokens de ¿Cuánto es?", () => {
   it("arma el titular del reveal", () => {
     expect(winnerHeadline(["Meli"])).toBe("¡Meli se quedó más cerca!");
     expect(winnerHeadline(["Meli", "Coco"])).toContain("Empate");
+  });
+
+  it("muestra años de calendario sin separador de miles ni unidad colgada", () => {
+    expect(formatReveal(2000, 2000, "año")).toBe("2000");
+    expect(formatRevealUnit(2000, "año")).toBeUndefined();
+    expect(formatGuess(2000, "año")).toBe("2000");
+    expect(formatReveal(1810, 1810, "años")).toBe("1810");
+    expect(formatReveal(25000, 25000)).toBe("25.000");
+  });
+
+  it("pluraliza cantidades de años que no son un año calendario", () => {
+    expect(formatReveal(13, 13, "año")).toBe("13");
+    expect(formatRevealUnit(13, "año")).toBe("años");
+    expect(formatRevealUnit(1, "años")).toBe("año");
+    expect(formatReveal(9_460_730_472_580.8, 9_460_730_472_580.8, "km")).toContain(".");
   });
 });

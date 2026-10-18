@@ -9,6 +9,8 @@ out
 coverage
 *.log
 tsconfig.tsbuildinfo
+playwright-report
+test-results
 
 # Android / Capacitor (la carpeta android/ sí se commitea)
 android/app/build

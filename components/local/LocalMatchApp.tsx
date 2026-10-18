@@ -16,6 +16,7 @@ import { getGameMeta } from "@/shared/games/registry";
 import type { GameId, GameOptions } from "@/shared/types";
 import { MAX_LOCAL_PLAYERS, nextPlayerColor } from "@/shared/ui/colors";
 import {
+  advancePass,
   createLocalMatch,
   hydrateMatch,
   localAction,
@@ -30,33 +31,6 @@ import {
 import { loadRoster, saveRoster, type RosterPlayer } from "@/lib/local-roster";
 
 const MIN_PLAYERS = 2;
-
-const PASS_AFTER: Partial<Record<GameId, string[]>> = {
-  closest: ["guess"],
-  impostor: ["ready"],
-  emoji: ["pass"],
-  mentira: ["write", "vote"],
-  "completa-frase": ["write", "vote"],
-  cadena: ["word"],
-  votacion: ["vote"],
-  reflejos: ["stop"],
-};
-
-function advancePass(match: LocalMatch, applied: LocalMatch, type: string): LocalMatch {
-  if (applied.status !== "playing" || !applied.gameId) return applied;
-  const pub = localView(applied, applied.players[0]?.id ?? "").public as Record<string, unknown> | null;
-  const current = [pub?.currentId, pub?.currentPlayerId, pub?.currentWriterId].find(
-    (v): v is string => typeof v === "string",
-  );
-  if (current) {
-    const idx = applied.revealQueue.indexOf(current);
-    if (idx >= 0 && idx !== match.passIndex) return { ...applied, passIndex: idx };
-  }
-  if (!PASS_AFTER[applied.gameId]?.includes(type)) return applied;
-  const nextIndex = match.passIndex + 1;
-  if (nextIndex < applied.revealQueue.length) return { ...applied, passIndex: nextIndex };
-  return applied;
-}
 
 type DraftPlayer = RosterPlayer;
 
@@ -328,7 +302,7 @@ export function LocalMatchApp({ gameId }: { gameId: GameId }) {
             }}
           />
         ) : null}
-        {match.status === "playing" && match.revealQueue.length > 1 ? (
+        {match.status === "playing" && match.revealQueue.length > 1 && match.gameId !== "mentira" ? (
           <button
             className="btn btn-ghost"
             type="button"

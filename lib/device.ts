@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 
 export type DeviceKind = "phone" | "tablet" | "desktop";
 
-export function detectDevice(width = typeof window === "undefined" ? 390 : window.innerWidth): DeviceKind {
+export function detectDevice(width = 390): DeviceKind {
   if (width < 768) return "phone";
   if (width < 1024) return "tablet";
   return "desktop";
