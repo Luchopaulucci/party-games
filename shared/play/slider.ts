@@ -1,4 +1,4 @@
-import { formatNumberEs, isCalendarYear, isYearUnit } from "@/shared/ui/format";
+import { formatNumberEs, isCalendarYear, isYearUnit } from "../ui/format";
 
 export function clampGuess(value: number, min: number, max: number): number {
   return Math.min(max, Math.max(min, value));

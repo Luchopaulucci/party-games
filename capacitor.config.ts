@@ -1,6 +1,6 @@
 import type { CapacitorConfig } from "@capacitor/cli";
 
-export function createCapacitorConfig(env: NodeJS.ProcessEnv = process.env): CapacitorConfig {
+export function createCapacitorConfig(env: NodeJS.Dict<string> = process.env): CapacitorConfig {
   const dev = env.CAP_DEV === "1";
   return {
     appId: "com.luchopaulucci.laprevia",
