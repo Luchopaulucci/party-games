@@ -11,7 +11,7 @@ export default defineConfig({
   webServer: {
     command: "npx next start --port 3010",
     url: "http://127.0.0.1:3010",
-    reuseExistingServer: !process.env.CI,
+    reuseExistingServer: false,
     timeout: 60_000,
   },
 });

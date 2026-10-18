@@ -44,6 +44,7 @@ export default function JuegoPage() {
       </p>
       <h1>{meta.name}</h1>
       <p className="lead">{meta.tagline}</p>
+      <div className="stack">
       <HowToPlay text={meta.howTo} />
       <div className="stack home-modes" data-testid="home-modes">
         {local ? (
@@ -86,6 +87,7 @@ export default function JuegoPage() {
             <p>Este se juega solo pasándose el celu.</p>
           </div>
         )}
+      </div>
       </div>
     </Shell>
   );

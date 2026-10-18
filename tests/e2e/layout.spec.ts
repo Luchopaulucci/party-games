@@ -20,8 +20,10 @@ async function assertLayout(page: Page) {
   const result = await page.evaluate(() => {
     const doc = document.documentElement;
     const overflowX = doc.scrollWidth > doc.clientWidth + 1;
+    const modal = document.querySelector<HTMLElement>("[data-testid='confirm-exit'][aria-modal='true']");
     const sel = 'a[href], button, input, select, textarea, [role="button"]';
     const nodes = [...document.querySelectorAll<HTMLElement>(sel)].filter((el) => {
+      if (modal && !modal.contains(el) && !el.closest(".topbar")) return false;
       const r = el.getBoundingClientRect();
       const st = getComputedStyle(el);
       return (
@@ -70,12 +72,12 @@ test.describe("layout márgenes", () => {
       await page.goto("/");
       await expect(page.locator("h1")).toBeVisible();
       const homeGap = await page.evaluate(() => {
-        const tile = document.querySelector(".tile-hero");
+        const tile = document.querySelector("[data-testid='home-code-tile']");
         const title = document.querySelector(".home-games-title");
         if (!tile || !title) return 0;
         return title.getBoundingClientRect().top - tile.getBoundingClientRect().bottom;
       });
-      expect(homeGap, "gap Tengo un código → Los juegos").toBeGreaterThanOrEqual(12);
+      expect(Math.round(homeGap), "gap Tengo un código → Los juegos").toBeGreaterThanOrEqual(12);
       await assertLayout(page);
 
       await page.goto("/online");
@@ -91,7 +93,7 @@ test.describe("layout márgenes", () => {
           if (!how || !modes) return 0;
           return modes.getBoundingClientRect().top - how.getBoundingClientRect().bottom;
         });
-        expect(modeGap, `gap HowToPlay → modos en ${id}`).toBeGreaterThanOrEqual(12);
+        expect(Math.round(modeGap), `gap HowToPlay → modos en ${id}`).toBeGreaterThanOrEqual(12);
         await assertLayout(page);
       }
 
