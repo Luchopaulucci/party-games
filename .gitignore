@@ -11,6 +11,7 @@ coverage
 tsconfig.tsbuildinfo
 playwright-report
 test-results
+.taste-skill
 
 # Android / Capacitor (la carpeta android/ sí se commitea)
 android/app/build

@@ -19,5 +19,15 @@
     }
   },
   "include": ["next-env.d.ts", "**/*.ts", "**/*.tsx", ".next/types/**/*.ts"],
-  "exclude": ["node_modules", "dist", "out", "android", "playwright-report", "test-results"]
+  "exclude": [
+    "node_modules",
+    "dist",
+    "out",
+    "android",
+    "playwright-report",
+    "test-results",
+    ".agents",
+    ".cursor",
+    ".taste-skill"
+  ]
 }
