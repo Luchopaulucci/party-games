@@ -51,6 +51,17 @@ describe("closest engine privacy", () => {
     expect((closestEngine.publicView(state) as { trueAnswer: number }).trueAnswer).toBe(4);
   });
 
+  it("un guess podrido no crashea ni filtra el secreto", () => {
+    let state = closestEngine.createState(ctx);
+    state = closestEngine.reduce(state, { type: "guess", payload: { value: "no" } }, "a", ctx);
+    state = closestEngine.reduce(state, { type: "guess", payload: null }, "a", ctx);
+    state = closestEngine.reduce(state, { type: "guess", payload: { value: Number.NaN } }, "b", ctx);
+    expect(closestEngine.isFinished(state)).toBe(false);
+    expect((closestEngine.publicView(state) as { trueAnswer?: number }).trueAnswer).toBeUndefined();
+    expect((closestEngine.publicView(state) as { sliderMax: number }).sliderMax).toBeGreaterThan(0);
+    expect(closestEngine.privateView(state, "c")).toEqual({ guess: null });
+  });
+
   it("respeta categorías del mazo de ¿Cuánto es?", () => {
     const state = closestEngine.createState({
       playerIds: ["a", "b"],
