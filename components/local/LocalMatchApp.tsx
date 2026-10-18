@@ -176,7 +176,7 @@ export function LocalMatchApp({ gameId }: { gameId: GameId }) {
                       setPlayers(players.map((x) => (x.id === p.id ? { ...x, name: e.target.value } : x)))
                     }
                     aria-label={`Nombre de ${p.name}`}
-                    style={{ minHeight: 40, background: "transparent", padding: "4px 0" }}
+                    style={{ minHeight: 48, background: "transparent", padding: "4px 0" }}
                   />
                   <ColorDots
                     value={p.color}
@@ -187,7 +187,7 @@ export function LocalMatchApp({ gameId }: { gameId: GameId }) {
                 </div>
                 <button
                   className="btn btn-ghost"
-                  style={{ width: "auto", padding: "6px 10px", minHeight: 40 }}
+                  style={{ width: "auto", padding: "6px 10px", minHeight: 48 }}
                   type="button"
                   onClick={() => setPlayers(players.filter((x) => x.id !== p.id))}
                 >

@@ -1,12 +1,14 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, type CSSProperties, type ReactNode } from "react";
 import { ConfirmExit } from "@/components/ConfirmExit";
 import { ScreenMotion } from "@/components/motion/ScreenMotion";
 import { gsap, useGSAP } from "@/components/motion/register";
 import { brandUsesConfirm, shouldGuardNavigation } from "@/lib/exit-guard";
 import { prefersReducedMotion } from "@/lib/motion";
+import type { GameId } from "@/shared/types";
+import { gameSticker } from "@/shared/ui/stickers";
 
 export function Shell({
   children,
@@ -14,17 +16,20 @@ export function Shell({
   kicker,
   onExit,
   exitBody,
+  gameId,
 }: {
-  children: React.ReactNode;
+  children: ReactNode;
   backHref?: string;
   kicker?: string;
   onExit?: () => void;
   exitBody?: string;
+  gameId?: GameId;
 }) {
   const [ask, setAsk] = useState(false);
   const leaving = useRef(false);
   const confirmExit = brandUsesConfirm(onExit);
   const brandRef = useRef<HTMLSpanElement>(null);
+  const skin = gameId ? gameSticker(gameId) : null;
 
   useGSAP(
     () => {
@@ -76,7 +81,18 @@ export function Shell({
   }
 
   return (
-    <div className="shell">
+    <div
+      className="shell"
+      data-game-skin={gameId}
+      style={
+        skin
+          ? ({
+              "--game-fill": skin.fill,
+              "--game-ink": skin.ink,
+            } as CSSProperties)
+          : undefined
+      }
+    >
       <div className="topbar">
         {confirmExit ? (
           <button type="button" className="brand" data-testid="brand-exit" onClick={requestExit}>

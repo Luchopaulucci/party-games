@@ -1,12 +1,21 @@
 import type { Metadata, Viewport } from "next";
-import { Source_Code_Pro } from "next/font/google";
+import { Bowlby_One, Inter } from "next/font/google";
 import { RegisterSW } from "@/components/RegisterSW";
 import "./globals.css";
 
-const mono = Source_Code_Pro({
+const display = Bowlby_One({
   subsets: ["latin"],
-  weight: ["400", "600", "700"],
-  variable: "--font-mono",
+  weight: "400",
+  variable: "--font-display",
+  display: "swap",
+  preload: true,
+  adjustFontFallback: true,
+});
+
+const sans = Inter({
+  subsets: ["latin"],
+  weight: ["500", "700"],
+  variable: "--font-sans",
   display: "swap",
   preload: true,
   adjustFontFallback: true,
@@ -24,13 +33,13 @@ export const viewport: Viewport = {
   width: "device-width",
   initialScale: 1,
   maximumScale: 1,
-  themeColor: "#000000",
+  themeColor: "#ffffff",
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="es-AR">
-      <body className={`${mono.variable} ${mono.className}`}>
+      <body className={`${display.variable} ${sans.variable} ${sans.className}`}>
         <RegisterSW />
         {children}
       </body>

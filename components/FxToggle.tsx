@@ -22,7 +22,7 @@ export function FxToggle() {
           setOn(next);
           setFxEnabled(next);
         }}
-        style={{ width: 22, height: 22, accentColor: "var(--color-kippo-pink)" }}
+        style={{ width: 22, height: 22, accentColor: "var(--color-carbon)" }}
       />
     </label>
   );
