@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import { localGameError } from "@/shared/games/browse";
 import { createLocalMatch, localAction, resetLocalToLobby, startLocalGame } from "@/lib/local-match";
 
 describe("salida local sin fantasmas", () => {
@@ -33,5 +34,11 @@ describe("salida local sin fantasmas", () => {
     expect(impostor.players.every((p) => p.score === 0)).toBe(true);
     expect(new Set(impostor.players.map((p) => p.id)).size).toBe(3);
     expect(impostor.players.some((p) => p.name === "Fantasma")).toBe(false);
+  });
+
+  it("tutti y preferís no arrancan en local", () => {
+    const match = createLocalMatch(["Lucho", "Meli", "Coco"]);
+    expect(startLocalGame(match, "tutti")).toBe(localGameError("tutti"));
+    expect(startLocalGame(match, "preferis")).toBe(localGameError("preferis"));
   });
 });

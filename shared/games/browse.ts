@@ -59,6 +59,17 @@ export function supportsMode(id: GameId, mode: PlayMode): boolean {
   return modesFor(id).includes(mode);
 }
 
+export const ONLINE_MODE_ERROR = "Ese juego es solo pasándose el celu.";
+export const LOCAL_MODE_ERROR = "Ese juego es solo en red.";
+
+export function onlineGameError(id: GameId): string | null {
+  return supportsMode(id, "online") ? null : ONLINE_MODE_ERROR;
+}
+
+export function localGameError(id: GameId): string | null {
+  return supportsMode(id, "local") ? null : LOCAL_MODE_ERROR;
+}
+
 export function groupedCatalog() {
   return GAME_GROUPS.map((group) => ({
     ...group,

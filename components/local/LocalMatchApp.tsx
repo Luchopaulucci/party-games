@@ -14,7 +14,7 @@ import { playFx } from "@/lib/fx";
 import { CATEGORIES, type Category } from "@/shared/games/closest/premise-types";
 import { getGameMeta } from "@/shared/games/registry";
 import type { GameId, GameOptions } from "@/shared/types";
-import { MAX_LOCAL_PLAYERS, PLAYER_COLORS, nextPlayerColor } from "@/shared/ui/colors";
+import { MAX_LOCAL_PLAYERS, nextPlayerColor } from "@/shared/ui/colors";
 import {
   createLocalMatch,
   hydrateMatch,
@@ -27,6 +27,7 @@ import {
   startLocalGame,
   type LocalMatch,
 } from "@/lib/local-match";
+import { loadRoster, saveRoster, type RosterPlayer } from "@/lib/local-roster";
 
 const MIN_PLAYERS = 2;
 
@@ -57,14 +58,7 @@ function advancePass(match: LocalMatch, applied: LocalMatch, type: string): Loca
   return applied;
 }
 
-type DraftPlayer = { id: string; name: string; color: string };
-
-const DEFAULT_PLAYERS: DraftPlayer[] = [
-  { id: "d1", name: "Luciano", color: PLAYER_COLORS[0]! },
-  { id: "d2", name: "Meli", color: PLAYER_COLORS[1]! },
-  { id: "d3", name: "Coco", color: PLAYER_COLORS[2]! },
-  { id: "d4", name: "Wanda", color: PLAYER_COLORS[3]! },
-];
+type DraftPlayer = RosterPlayer;
 
 function loadMatch(gameId: GameId): LocalMatch | null {
   if (typeof window === "undefined") return null;
@@ -89,7 +83,7 @@ function save(gameId: GameId, match: LocalMatch | null) {
 
 export function LocalMatchApp({ gameId }: { gameId: GameId }) {
   const meta = getGameMeta(gameId);
-  const [players, setPlayers] = useState<DraftPlayer[]>(DEFAULT_PLAYERS);
+  const [players, setPlayers] = useState<DraftPlayer[]>([]);
   const [draft, setDraft] = useState("");
   const [categories, setCategories] = useState<string[]>([...CATEGORIES]);
   const [picante, setPicante] = useState(false);
@@ -100,8 +94,14 @@ export function LocalMatchApp({ gameId }: { gameId: GameId }) {
 
   useEffect(() => {
     setMatch(loadMatch(gameId));
+    setPlayers(loadRoster(window.localStorage));
     setHydrated(true);
   }, [gameId]);
+
+  useEffect(() => {
+    if (!hydrated) return;
+    saveRoster(players, window.localStorage);
+  }, [hydrated, players]);
 
   useEffect(() => {
     const onExit = () => {
@@ -215,7 +215,6 @@ export function LocalMatchApp({ gameId }: { gameId: GameId }) {
                   className="btn btn-ghost"
                   style={{ width: "auto", padding: "6px 10px", minHeight: 40 }}
                   type="button"
-                  disabled={players.length <= MIN_PLAYERS}
                   onClick={() => setPlayers(players.filter((x) => x.id !== p.id))}
                 >
                   fuiste

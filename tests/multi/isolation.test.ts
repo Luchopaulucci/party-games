@@ -30,6 +30,13 @@ function hello(socket: Socket, payload: Record<string, unknown>) {
   return new Promise<Hello>((resolve) => socket.emit("hello", payload, resolve));
 }
 
+function ack(socket: Socket, event: string, payload?: unknown) {
+  return new Promise<Hello>((resolve) => {
+    if (payload === undefined) socket.emit(event, resolve);
+    else socket.emit(event, payload, resolve);
+  });
+}
+
 function assertNoBallotMap(events: unknown[]) {
   const walk = (node: unknown, path: string) => {
     if (!node || typeof node !== "object") return;
@@ -383,16 +390,10 @@ describe("multi-client rooms", () => {
 
     host.socket.emit("toLobby");
     await waitFor(host, (s) => s.status === "lobby", "lobby never");
-    const neverStart = clients.map((c) => c.events.length);
-    host.socket.emit("startGame", { gameId: "yo-nunca", seed: { prompt: "yo nunca mentí en test" } });
-    await dumpsAfter("yo-nunca");
-    host.socket.emit("action", { type: "choose", payload: { value: "si" } });
-    await new Promise((r) => setTimeout(r, 40));
-    for (const c of clients) {
-      const slice = c.events.slice(neverStart[clients.indexOf(c)]);
-      assertNoBallotMap(slice);
-      expect(JSON.stringify(slice)).not.toContain('"choices"');
-    }
+    const neverAck = await ack(host.socket, "startGame", { gameId: "yo-nunca", seed: { prompt: "yo nunca mentí en test" } });
+    expect(neverAck.ok).toBe(false);
+    expect(neverAck.error).toMatch(/celu/i);
+    expect((host.box.last as { gameId?: string } | undefined)?.gameId).not.toBe("yo-nunca");
 
     host.socket.emit("toLobby");
     await waitFor(host, (s) => s.status === "lobby", "lobby tutti");

@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { RoomManager } from "@/server/room-manager";
+import { ONLINE_MODE_ERROR, supportsMode } from "@/shared/games/browse";
 import { UNKNOWN_GAME_ERROR } from "@/shared/protocol";
 import { GAME_IDS } from "@/shared/types";
 
@@ -183,7 +184,7 @@ describe("RoomManager", () => {
     mgr.dispose();
   });
 
-  it("arranca cada uno de los 15 juegos restantes", () => {
+  it("arranca cada juego online y rechaza yo-nunca", () => {
     const mgr = new RoomManager({ allowTestSeeds: true, sweepIntervalMs: 0 });
     const host = mgr.createRoom("Lucho");
     expect(host.ok).toBe(true);
@@ -191,7 +192,7 @@ describe("RoomManager", () => {
     mgr.joinRoom(host.code, "Meli");
     mgr.joinRoom(host.code, "Coco");
     mgr.joinRoom(host.code, "Wanda");
-    for (const gameId of GAME_IDS) {
+    for (const gameId of GAME_IDS.filter((id) => supportsMode(id, "online"))) {
       const back = mgr.toLobby(host.code, host.playerId);
       expect(back, gameId).toBeNull();
       const error = mgr.startGame(host.code, host.playerId, gameId);
@@ -199,6 +200,9 @@ describe("RoomManager", () => {
       expect(mgr.rooms.get(host.code)!.gameId, gameId).toBe(gameId);
       expect(mgr.rooms.get(host.code)!.status, gameId).toBe("playing");
     }
+    const never = mgr.startGame(host.code, host.playerId, "yo-nunca");
+    expect(never).toBe(ONLINE_MODE_ERROR);
+    expect(mgr.rooms.get(host.code)!.gameId).not.toBe("yo-nunca");
     mgr.dispose();
   });
 });
