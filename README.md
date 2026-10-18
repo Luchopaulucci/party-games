@@ -56,6 +56,7 @@ npm run dev
 
 - Front: http://localhost:3000
 - Socket: http://localhost:3001 (`NEXT_PUBLIC_SOCKET_URL` en `.env.development`)
+- CORS en **dev** (`npm run dev`): cualquier origen. En **prod** (`npm start`) nunca es `*`: siempre entra el propio origen (`http://localhost:$PORT` / `127.0.0.1:$PORT`), Capacitor y `RENDER_EXTERNAL_URL`. Si `ALLOWED_ORIGINS` está vacío, también localhost / 127.0.0.1 / LAN privada en cualquier puerto (así `npm start` en `:3100` no da 400). `ALLOWED_ORIGINS` solo **suma** dominios extra. Un origen rechazado se loguea en el server.
 
 Scripts:
 
@@ -91,7 +92,7 @@ Render free **duerme** el servicio si nadie entra. La web/APK muestran “Desper
 2. **New → Blueprint**.
 3. Conectá el repo **Luchopaulucci/party-games**. Rama: **`develop`** (o la que quieras; no uses `master` para esto).
 4. Render lee `render.yaml` y arma el servicio `la-previa` (Node 22, `npm ci && npm run build`, `npm start`, health `/healthz`).
-5. Completá **ALLOWED_ORIGINS** (separados por coma, sin `*`). Poné la URL pública de la web cuando la tengas, por ejemplo `https://la-previa.onrender.com`. Si más adelante la web vive en otro dominio, sumalo acá. Los orígenes de la APK (`capacitor://localhost`, `https://localhost`, `http://localhost`) y `RENDER_EXTERNAL_URL` se agregan solos.
+5. **ALLOWED_ORIGINS** es opcional y solo **suma**. El propio origen, Capacitor (`capacitor://localhost`, `https://localhost`, `http://localhost`) y `RENDER_EXTERNAL_URL` ya entran. Si la web vive en otro dominio (o querés un custom domain), agregalo acá separados por coma, sin `*`. Si lo dejás vacío, en prod también se acepta localhost / 127.0.0.1 / LAN privada en cualquier puerto — sirve para `npm start` local sin armar env.
 6. **No** setees `ALLOW_TEST_SEEDS`. `PORT` lo pone Render. `HOST_GRACE_MS` ya viene en 12000.
 7. Deploy. Cuando esté Live, copiá la URL (tipo `https://la-previa.onrender.com`).
 8. En GitHub → el repo → **Settings → Secrets and variables → Actions → Variables**:

@@ -19,7 +19,13 @@ import type { ClientRoomState, GameId, GameOptions } from "@/shared/types";
 import { currentShareOrigin } from "@/lib/online-access";
 import { roomPagePath, roomShareUrl } from "@/lib/room-url";
 import { socketUrl, writeSession } from "@/lib/session";
-import { WAKE_FAIL_MESSAGE, WAKE_MESSAGE, WAKE_WINDOW_MS, wakeStatus } from "@/lib/wake";
+import {
+  ORIGIN_FAIL_MESSAGE,
+  WAKE_FAIL_MESSAGE,
+  WAKE_MESSAGE,
+  WAKE_WINDOW_MS,
+  connectFailureStatus,
+} from "@/lib/wake";
 
 export function RoomClient({
   code,
@@ -38,6 +44,7 @@ export function RoomClient({
 }) {
   const [error, setError] = useState<string | null>(null);
   const [waking, setWaking] = useState(false);
+  const [retry, setRetry] = useState(0);
   const [state, setState] = useState<ClientRoomState | null>(null);
   const [socket, setSocket] = useState<Socket | null>(null);
   const [categories, setCategories] = useState<string[]>([...CATEGORIES]);
@@ -51,7 +58,7 @@ export function RoomClient({
     const s = io(socketUrl(), {
       transports: ["websocket", "polling"],
       reconnection: true,
-      reconnectionAttempts: Infinity,
+      reconnectionAttempts: 8,
       reconnectionDelay: 1500,
       reconnectionDelayMax: 4000,
       timeout: 10_000,
@@ -74,18 +81,26 @@ export function RoomClient({
     s.on("roomClosed", (payload: { text?: string }) => {
       closedRef.current?.(payload?.text);
     });
-    s.on("connect_error", () => {
-      const status = wakeStatus(Date.now() - startedAt);
+    s.on("connect_error", (err) => {
+      const status = connectFailureStatus(Date.now() - startedAt, err);
+      if (status.kind === "origin") {
+        s.io.opts.reconnection = false;
+        setWaking(false);
+        setError(ORIGIN_FAIL_MESSAGE);
+        return;
+      }
       if (status.kind === "waking") {
         setWaking(true);
         setError(null);
         return;
       }
+      s.io.opts.reconnection = false;
       setWaking(false);
       setError(status.message);
     });
     const failTimer = window.setTimeout(() => {
       if (s.connected) return;
+      s.io.opts.reconnection = false;
       setWaking(false);
       setError(WAKE_FAIL_MESSAGE);
     }, WAKE_WINDOW_MS);
@@ -113,7 +128,7 @@ export function RoomClient({
       window.clearTimeout(failTimer);
       s.disconnect();
     };
-  }, [code, name, token, preferredGame]);
+  }, [code, name, token, preferredGame, retry]);
 
   useEffect(() => {
     registerLeave?.(() => {
@@ -161,9 +176,21 @@ export function RoomClient({
     return (
       <div className="stack">
         {error ? (
-          <div className="card error">
+          <div className="card error stack">
             <b>Se pudrió</b>
             <p>{error}</p>
+            <button
+              className="btn btn-primary"
+              type="button"
+              data-testid="socket-retry"
+              onClick={() => {
+                setError(null);
+                setWaking(false);
+                setRetry((n) => n + 1);
+              }}
+            >
+              Reintentar
+            </button>
           </div>
         ) : waking ? (
           <p className="lead">
@@ -186,9 +213,20 @@ export function RoomClient({
   return (
     <div className="stack">
       {error ? (
-        <div className="card error">
+        <div className="card error stack">
           <b>Se pudrió</b>
           <p>{error}</p>
+          <button
+            className="btn btn-primary"
+            type="button"
+            data-testid="socket-retry"
+            onClick={() => {
+              setError(null);
+              setRetry((n) => n + 1);
+            }}
+          >
+            Reintentar
+          </button>
         </div>
       ) : null}
       {state.notice ? <div className="notice">{state.notice.text}</div> : null}
