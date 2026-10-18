@@ -262,13 +262,15 @@ export function LocalMatchApp({ gameId }: { gameId: GameId }) {
     return <PassPhone name={currentPlayer.name} color={currentPlayer.color} onReady={() => setUnlocked(currentPlayer.id)} />;
   }
 
+  const impostorPlay = match.gameId === "impostor";
+
   return (
-    <div className="stack">
+    <div className={impostorPlay ? "stack play-fill" : "stack"}>
       <p className="pill">
         <span className="pill-name">
           {playingMeta?.emoji} {playingMeta?.name}
         </span>
-        <span className="pill-mode">Pasando el celu</span>
+        {impostorPlay ? null : <span className="pill-mode">Pasando el celu</span>}
       </p>
 
       <div className="card stack">

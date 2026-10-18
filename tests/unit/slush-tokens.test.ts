@@ -23,6 +23,7 @@ describe("sistema Slush / La Previa", () => {
       expect(css).toContain(token);
     }
     expect(css).toContain("line-height: 0.95");
+    expect(css).toContain("var(--font-display)");
     expect(css).not.toContain("#ee1f66");
   });
 

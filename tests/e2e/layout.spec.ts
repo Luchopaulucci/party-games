@@ -80,6 +80,26 @@ test.describe("layout márgenes", () => {
       expect(Math.round(homeGap), "gap Tengo un código → Los juegos").toBeGreaterThanOrEqual(12);
       const stickerPe = await page.locator("[data-testid='home-stickers']").evaluate((el) => getComputedStyle(el).pointerEvents);
       expect(stickerPe).toBe("none");
+      const displayFont = await page.locator("h1").evaluate((el) => getComputedStyle(el).fontFamily);
+      expect(displayFont.toLowerCase()).toMatch(/bowlby/);
+      const tileClash = await page.evaluate(() => {
+        const tile = document.querySelector(".game-tile");
+        const emoji = tile?.querySelector(".game-tile-emoji");
+        const title = tile?.querySelector("b");
+        if (!tile || !emoji || !title) return "missing";
+        const a = emoji.getBoundingClientRect();
+        const b = title.getBoundingClientRect();
+        const overlap = a.bottom > b.top + 1;
+        const titleCs = getComputedStyle(title);
+        const lh = parseFloat(titleCs.lineHeight);
+        const fs = parseFloat(titleCs.fontSize);
+        return { overlap, lhRatio: lh / fs, titleH: b.height, lines: b.height / lh };
+      });
+      expect(tileClash).not.toBe("missing");
+      if (typeof tileClash !== "string") {
+        expect(tileClash.overlap, "emoji pega al título").toBe(false);
+        expect(tileClash.lhRatio).toBeGreaterThanOrEqual(0.95);
+      }
       const whiteOnBright = await page.evaluate(() => {
         const parse = (c: string) => {
           const m = c.match(/rgba?\((\d+),\s*(\d+),\s*(\d+)/);
@@ -161,7 +181,11 @@ test.describe("layout márgenes", () => {
           await page.getByTestId("handoff-continue").click();
         }
         await expect(page.getByText("pass-and-play", { exact: false })).toHaveCount(0);
-        await expect(page.locator(".pill-mode")).toHaveText("Pasando el celu");
+        if (id === "impostor") {
+          await expect(page.locator(".pill-mode")).toHaveCount(0);
+        } else {
+          await expect(page.locator(".pill-mode")).toHaveText("Pasando el celu");
+        }
         const pillWraps = await page.locator(".pill").first().evaluate((el) => el.scrollHeight > el.clientHeight + 2);
         expect(pillWraps, `pill partida ${id}`).toBe(false);
         if (id === "impostor") {

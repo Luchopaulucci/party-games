@@ -119,6 +119,13 @@ button {
   padding: 0 var(--page-gutter) calc(16px + var(--safe-bottom));
 }
 
+.screen-motion {
+  flex: 1 1 auto;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
 .topbar {
   position: sticky;
   top: 0;
@@ -152,7 +159,7 @@ button.brand {
   display: flex;
   gap: 0.35em;
   min-width: 0;
-  font-family: var(--display);
+  font-family: var(--font-display), "Bowlby One", "Arial Black", Impact, sans-serif;
   font-size: 18px;
   font-weight: 400;
   letter-spacing: 0.02em;
@@ -208,7 +215,7 @@ button.brand {
 h1,
 h2,
 h3 {
-  font-family: var(--display);
+  font-family: var(--font-display), "Bowlby One", "Arial Black", Impact, sans-serif;
   letter-spacing: 0;
   margin: 0;
   font-weight: 400;
@@ -388,7 +395,7 @@ select:focus-visible {
 }
 
 .tile b {
-  font-family: var(--display);
+  font-family: var(--font-display), "Bowlby One", "Arial Black", Impact, sans-serif;
   font-size: 1rem;
   font-weight: 400;
   letter-spacing: 0;
@@ -558,7 +565,7 @@ select:focus-visible {
 }
 
 .code {
-  font-family: var(--display);
+  font-family: var(--font-display), "Bowlby One", "Arial Black", Impact, sans-serif;
   font-size: clamp(1.6rem, 9vw, 3rem);
   font-weight: 400;
   letter-spacing: 0.08em;
@@ -569,7 +576,7 @@ select:focus-visible {
 }
 
 .prompt {
-  font-family: var(--display);
+  font-family: var(--font-display), "Bowlby One", "Arial Black", Impact, sans-serif;
   font-size: clamp(1.35rem, 6vw, 2rem);
   line-height: 0.95;
   font-weight: 400;
@@ -578,7 +585,7 @@ select:focus-visible {
 }
 
 .big {
-  font-family: var(--display);
+  font-family: var(--font-display), "Bowlby One", "Arial Black", Impact, sans-serif;
   font-size: clamp(2rem, 12vw, 3.5rem);
   text-align: center;
   font-weight: 400;
@@ -838,7 +845,7 @@ select:focus-visible {
 }
 
 .guess-slider-value {
-  font-family: var(--display);
+  font-family: var(--font-display), "Bowlby One", "Arial Black", Impact, sans-serif;
   font-size: clamp(2.2rem, 16vw, 3.5rem);
   font-weight: 400;
   line-height: 0.95;
@@ -924,7 +931,7 @@ select:focus-visible {
 .home-wordmark {
   display: flex;
   flex-direction: column;
-  font-family: var(--display);
+  font-family: var(--font-display), "Bowlby One", "Arial Black", Impact, sans-serif;
   font-size: clamp(3rem, 18vw, 4.5rem);
   font-weight: 400;
   letter-spacing: 0;
@@ -991,19 +998,35 @@ select:focus-visible {
 }
 
 .game-tile {
-  min-height: 84px;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0;
+  min-height: 108px;
   padding: 12px;
-  align-content: start;
-}
-
-.game-tile b {
-  font-size: clamp(0.92rem, 3.7vw, 1.05rem);
-  line-height: 0.95;
 }
 
 .game-tile .game-tile-emoji {
-  font-size: 1.1rem;
+  display: block;
+  flex-shrink: 0;
+  font-size: 1.35rem;
   line-height: 1;
+  margin: 0 0 8px;
+}
+
+.game-tile b {
+  display: block;
+  font-size: clamp(0.86rem, 3.3vw, 0.98rem);
+  line-height: 1.05;
+}
+
+.play-fill {
+  flex: 1 1 auto;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 16px;
+  min-height: calc(100dvh - 7.25rem);
 }
 
 [data-game-skin] .pill {

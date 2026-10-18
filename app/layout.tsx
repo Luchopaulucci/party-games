@@ -38,8 +38,8 @@ export const viewport: Viewport = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="es-AR">
-      <body className={`${display.variable} ${sans.variable} ${sans.className}`}>
+    <html lang="es-AR" className={`${display.variable} ${sans.variable}`}>
+      <body className={sans.className}>
         <RegisterSW />
         {children}
       </body>

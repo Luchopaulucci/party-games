@@ -8,6 +8,8 @@ describe("fuente empaquetada", () => {
     expect(layout).toContain("Bowlby_One");
     expect(layout).toContain("Inter");
     expect(layout).toContain("preload: true");
+    expect(layout).toContain("display.variable");
+    expect(layout).toMatch(/<html[^>]*className=\{`\$\{display\.variable\}/);
     const app = readFileSync("app/layout.tsx", "utf8") + readFileSync("app/globals.css", "utf8");
     expect(app).not.toMatch(/fonts\.googleapis\.com|fonts\.gstatic\.com/);
     expect(layout).not.toContain("Source_Code_Pro");

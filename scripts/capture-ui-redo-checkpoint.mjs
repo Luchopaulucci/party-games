@@ -1,8 +1,11 @@
 import { chromium } from "@playwright/test";
 import { mkdir } from "node:fs/promises";
 
-const folder = process.argv[2] === "despues" ? "despues" : "antes";
-const outDir = `/opt/cursor/artifacts/ui-redo/checkpoint/${folder}`;
+const arg = process.argv[2] ?? "antes";
+const outDir =
+  arg === "checkpoint2"
+    ? "/opt/cursor/artifacts/ui-redo/checkpoint2"
+    : `/opt/cursor/artifacts/ui-redo/checkpoint/${arg === "despues" ? "despues" : "antes"}`;
 const base = process.env.CAPTURE_URL ?? "http://127.0.0.1:3010";
 
 const roster = [
@@ -18,7 +21,7 @@ async function shot(page, name) {
     fullPage: false,
     animations: "disabled",
   });
-  console.log(`${folder}/${name}.png`);
+  console.log(`${arg}/${name}.png`);
 }
 
 const browser = await chromium.launch();
