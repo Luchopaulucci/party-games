@@ -2,12 +2,16 @@
 
 import { useRouter, useSearchParams } from "next/navigation";
 import { Suspense, useEffect, useState } from "react";
+import { OnlineUnavailable } from "@/components/online/OnlineUnavailable";
 import { Shell } from "@/components/Shell";
+import { useOnlineAccess } from "@/lib/online-access";
+import { roomPagePath } from "@/lib/room-url";
 import { readSession } from "@/lib/session";
 
 function JoinForm() {
   const params = useSearchParams();
   const router = useRouter();
+  const access = useOnlineAccess();
   const preset = (params.get("code") ?? "").toUpperCase();
   const [name, setName] = useState("");
   const [code, setCode] = useState(preset);
@@ -24,16 +28,15 @@ function JoinForm() {
     if (clean.length < 2) return;
     if (code.trim().length < 4) return;
     const room = code.trim().toUpperCase();
-    const q = new URLSearchParams({ name: clean, code: room });
     const session = readSession(room);
-    if (session) q.set("resume", "1");
-    router.push(`/online/sala/${room}?${q.toString()}`);
+    router.push(roomPagePath({ code: room, name: clean, resume: Boolean(session) }));
   }
 
   return (
     <div className="stack">
       <h1>Entrá a la sala</h1>
       <p className="lead">Nombre + código. El juego ya lo eligió el anfitrión.</p>
+      {access.ok ? null : <OnlineUnavailable message={access.message} />}
       <div className="card stack">
         <label>
           ¿Cómo te llamás?
@@ -57,7 +60,7 @@ function JoinForm() {
           className="btn btn-gold"
           type="button"
           onClick={goJoin}
-          disabled={name.trim().length < 2 || code.trim().length < 4}
+          disabled={!access.ok || name.trim().length < 2 || code.trim().length < 4}
         >
           Entrá a la sala
         </button>

@@ -67,6 +67,7 @@ Scripts:
 | `npm run typecheck` | `tsc --noEmit` |
 | `npm run lint` | ESLint |
 | `npm run build` | Next + compile del server |
+| `npm run build:mobile` | Export estático (`out/`) para la APK. No toca el build web. |
 | `npm start` | Un solo proceso (UI + sockets) en `$PORT` |
 
 ## Deploy
@@ -88,6 +89,48 @@ En Railway / Render / Fly:
 6. Dejá `NEXT_PUBLIC_SOCKET_URL` vacío para que el browser use el mismo origen.
 
 WebSockets tienen que estar habilitados en el proxy (en estos PaaS suele venir de fábrica).
+
+## APK de Android
+
+La app va **empaquetada** adentro de la APK (export estático de Next + Capacitor). No es un wrapper de una URL. El modo local de los 15 juegos anda sin internet. El modo en red necesita un server Socket.IO.
+
+### Bajar e instalar el debug
+
+1. GitHub → **Actions** → workflow **Android APK**.
+2. Entrá al run de `develop` (o dispará **Run workflow**).
+3. Bajá el artifact `la-previa-debug.apk`.
+4. En el celu: permití instalar apps de origen desconocido y abrí el APK.
+
+### Build local
+
+```bash
+npm ci
+npm run build:mobile
+npx cap sync android
+cd android && ./gradlew assembleDebug
+```
+
+La APK queda en `android/app/build/outputs/apk/debug/app-debug.apk`.
+
+### Server y QR (opcional, al buildar la APK)
+
+| Variable | Para qué |
+| --- | --- |
+| `NEXT_PUBLIC_SOCKET_URL` | URL del server Socket.IO. En la **web** vacía = mismo origen. En la **APK** vacía = el modo en red avisa y el local sigue. |
+| `NEXT_PUBLIC_WEB_ORIGIN` | Origen público de la web para el QR/link (ej. `https://tu-dominio.com`). Si falta, el código de sala se muestra igual. |
+
+En Actions se pueden setear como variables de repo (`NEXT_PUBLIC_SOCKET_URL`, `NEXT_PUBLIC_WEB_ORIGIN`).
+
+### Firma de release
+
+El job de release firmado solo corre si existen los secrets (si no, el workflow queda verde igual):
+
+- `ANDROID_KEYSTORE_BASE64`
+- `ANDROID_KEYSTORE_PASSWORD`
+- `ANDROID_KEY_ALIAS`
+- `ANDROID_KEY_PASSWORD`
+
+Nunca commitees un `.jks` / `.keystore`.
 
 ## Privacidad
 

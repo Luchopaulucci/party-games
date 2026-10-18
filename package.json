@@ -8,6 +8,7 @@
     "dev:web": "next dev --port 3000",
     "dev:server": "tsx watch server/index.ts",
     "build": "next build && tsc -p tsconfig.server.json",
+    "build:mobile": "node scripts/build-mobile.mjs",
     "start": "NODE_ENV=production node dist/server/index.js",
     "test": "vitest run tests/unit",
     "test:multi": "ALLOW_TEST_SEEDS=1 vitest run tests/multi",
@@ -15,6 +16,9 @@
     "lint": "eslint ."
   },
   "dependencies": {
+    "@capacitor/android": "^7.6.9",
+    "@capacitor/cli": "^7.6.9",
+    "@capacitor/core": "^7.6.9",
     "next": "^15.5.4",
     "qrcode": "^1.5.4",
     "react": "^19.1.1",
