@@ -15,7 +15,13 @@ export type GameId =
   | "yo-nunca"
   | "tutti"
   | "bombita"
-  | "mimica";
+  | "mimica"
+  | "verdad-reto"
+  | "trivia"
+  | "cadena"
+  | "emoji"
+  | "telefono"
+  | "preferis";
 
 export interface GameOptions {
   timerSec?: number;
@@ -25,6 +31,7 @@ export interface GameOptions {
   impostorCount?: number;
   spyCount?: number;
   maxGuesses?: number;
+  night?: boolean;
 }
 
 export type RoomStatus = "lobby" | "playing" | "finished";
@@ -47,6 +54,7 @@ export interface GameMeta {
   maxPlayers: number;
   implemented: boolean;
   emoji: string;
+  howTo: string;
 }
 
 export interface GameContext {
@@ -112,6 +120,18 @@ export interface RoomNotice {
   text: string;
 }
 
+export interface RoomReaction {
+  id: string;
+  emoji: string;
+  playerId: string;
+  at: number;
+}
+
+export interface NightState {
+  queue: GameId[];
+  index: number;
+}
+
 export interface ClientRoomState {
   code: string;
   you: PlayerPublic;
@@ -122,6 +142,9 @@ export interface ClientRoomState {
   private: unknown;
   notice: RoomNotice | null;
   canHost: boolean;
+  reactions: RoomReaction[];
+  night: NightState | null;
+  options: GameOptions;
 }
 
 export const HOST_GRACE_DEFAULT_MS = 12_000;
