@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { GAME_GROUPS, groupedCatalog, modesFor, supportsMode } from "@/shared/games/browse";
+import { GAME_GROUPS, groupedCatalog, LOCAL_MODE_ERROR, modesFor, ONLINE_MODE_ERROR, supportsMode } from "@/shared/games/browse";
 import { GAME_IDS } from "@/shared/types";
 import { getGameMeta } from "@/shared/games/registry";
 
@@ -24,5 +24,15 @@ describe("catálogo de home", () => {
     expect(modesFor("preferis")).toEqual(["online"]);
     expect(modesFor("impostor")).toEqual(["local", "online"]);
     expect(getGameMeta("votacion")?.name).toBe("¿Quién es más probable?");
+  });
+});
+
+describe("modos", () => {
+  it("yo-nunca es solo local; tutti y preferís solo online", () => {
+    expect(ONLINE_MODE_ERROR.length).toBeGreaterThan(8);
+    expect(LOCAL_MODE_ERROR.length).toBeGreaterThan(8);
+    expect(supportsMode("yo-nunca", "online")).toBe(false);
+    expect(supportsMode("tutti", "local")).toBe(false);
+    expect(supportsMode("preferis", "local")).toBe(false);
   });
 });

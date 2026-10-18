@@ -1,3 +1,4 @@
+import { localGameError, supportsMode } from "@/shared/games/browse";
 import { orderNightQueue } from "@/shared/games/night";
 import { getEngine, getGameMeta } from "@/shared/games/registry";
 import { mulberry32 } from "@/shared/rng";
@@ -101,6 +102,8 @@ export function startLocalGame(
   gameId: GameId,
   pack?: { categories?: string[]; picante?: boolean; options?: GameOptions },
 ): LocalMatch | string {
+  const modeError = localGameError(gameId);
+  if (modeError) return modeError;
   const engine = getEngine(gameId);
   if (!engine) return "Ese juego todavía es vaporware.";
   const next: LocalMatch = {
@@ -116,7 +119,7 @@ export function startLocalGame(
     if (next.status === "lobby" || nightQueue.length === 0) {
       nightQueue = orderNightQueue(gameId).filter((id) => {
         const meta = getGameMeta(id);
-        return Boolean(meta?.implemented && next.players.length >= meta.minPlayers);
+        return Boolean(meta?.implemented && next.players.length >= meta.minPlayers && supportsMode(id, "local"));
       });
       nightIndex = Math.max(0, nightQueue.indexOf(gameId));
     }

@@ -26,6 +26,7 @@ import {
   REACTION_EMOJIS,
 } from "../shared/protocol";
 import { getEngine, getGameMeta } from "../shared/games/registry";
+import { onlineGameError, supportsMode } from "../shared/games/browse";
 import { orderNightQueue } from "../shared/games/night";
 import { mulberry32 } from "../shared/rng";
 import { nextPlayerColor } from "../shared/ui/colors";
@@ -309,6 +310,8 @@ export class RoomManager {
     if (!room) return "Sala introvable.";
     if (room.hostId !== hostId) return "Solo el anfitrión arranca la joda.";
     if (!isPlayableGameId(gameId)) return UNKNOWN_GAME_ERROR;
+    const modeError = onlineGameError(gameId);
+    if (modeError) return modeError;
     const meta = getGameMeta(gameId);
     const engine = getEngine(gameId);
     if (!meta?.implemented || !engine) return UNKNOWN_GAME_ERROR;
@@ -324,7 +327,7 @@ export class RoomManager {
         const connectedCount = connected.length;
         room.nightQueue = orderNightQueue(gameId).filter((id) => {
           const m = getGameMeta(id);
-          return Boolean(m?.implemented && connectedCount >= m.minPlayers);
+          return Boolean(m?.implemented && connectedCount >= m.minPlayers && supportsMode(id, "online"));
         });
         room.nightIndex = Math.max(0, room.nightQueue.indexOf(gameId));
       }
