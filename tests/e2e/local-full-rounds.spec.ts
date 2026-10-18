@@ -129,7 +129,7 @@ async function playFullRound(page: Page, gameId: GameId, players: number) {
     case "trivia":
       for (let i = 0; i < players; i++) {
         await dismissHandoff(page);
-        await page.locator("button.btn-ghost").first().click();
+        await page.getByTestId("trivia-option").first().click();
       }
       break;
     case "cadena":
@@ -168,14 +168,13 @@ test.describe("Completá la frase local hasta Otra ronda", () => {
 });
 
 test.describe("ronda local completa de cada juego", () => {
-  test("los 13 locales llegan a Otra ronda", async ({ page }) => {
-    test.setTimeout(300_000);
-    await seedRoster(page, ROSTER_4);
-
-    for (const id of localGames) {
+  for (const id of localGames) {
+    test(`${id} llega a Otra ronda`, async ({ page }) => {
+      test.setTimeout(90_000);
+      await seedRoster(page, ROSTER_4);
       await startLocal(page, id);
       await playFullRound(page, id, 4);
       await expect(page.getByRole("button", { name: "Otra ronda" }), id).toBeVisible();
-    }
-  });
+    });
+  }
 });

@@ -34,6 +34,7 @@ export function TriviaView({
           key={opt}
           className="btn btn-ghost"
           type="button"
+          data-testid="trivia-option"
           disabled={privateView.myAnswer !== null}
           onClick={() => onAction("answer", { index: i })}
         >
