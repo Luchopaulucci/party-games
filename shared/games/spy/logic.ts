@@ -122,7 +122,8 @@ export const spyEngine: GameEngine<SpyState> = {
 
     if (action.type === "guess-location" && state.phase === "discuss") {
       if (!state.spyIds.includes(playerId) || state.locationGuess) return state;
-      const text = String((action.payload as { text?: unknown })?.text ?? "").trim();
+      const raw = action.payload && typeof action.payload === "object" ? (action.payload as { text?: unknown }).text : null;
+      const text = typeof raw === "string" ? raw.trim() : "";
       if (text.length < 3) return state;
       const correct = normalize(text).length >= 4 && normalize(state.location).includes(normalize(text));
       const locationGuess = { by: playerId, text, correct };
@@ -138,7 +139,10 @@ export const spyEngine: GameEngine<SpyState> = {
     }
 
     if (action.type === "vote" && state.phase === "vote") {
-      const target = String((action.payload as { targetId?: unknown })?.targetId ?? "");
+      const target =
+        action.payload && typeof action.payload === "object"
+          ? String((action.payload as { targetId?: unknown }).targetId ?? "")
+          : "";
       if (!target || target === playerId) return state;
       return { ...state, votes: { ...state.votes, [playerId]: target } };
     }

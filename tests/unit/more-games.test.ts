@@ -73,36 +73,54 @@ describe("mentira", () => {
 });
 
 describe("reflejos", () => {
-  it("no publica el índice correcto hasta terminar", () => {
-    const c = ctx({ prompt: "x", options: ["a", "b", "c", "d"], correct: 2 });
+  it("objetivo entre 2 y 6 y no publica el tiempo ajeno hasta el final", () => {
+    const c = ctx({ target: 5.56 });
     let s = reflexEngine.createState(c);
-    expect(view<{ correct?: number }>(reflexEngine.publicView(s)).correct).toBeUndefined();
-    s = reflexEngine.reduce(s, { type: "tap", payload: { index: 2 } }, "b", c);
+    expect(s.target).toBe(5.56);
+    s = reflexEngine.reduce(s, { type: "start" }, "b", c);
+    s = reflexEngine.reduce(s, { type: "stop", payload: { elapsed: "x" } }, "b", c);
+    s = reflexEngine.reduce(s, { type: "stop", payload: { elapsed: 5.5 } }, "b", c);
+    expect(view<{ results?: unknown }>(reflexEngine.publicView(s)).results).toBeUndefined();
+    expect(view<{ myElapsed: number | null }>(reflexEngine.privateView(s, "a")).myElapsed).toBeNull();
+    for (const id of ["a", "c", "d"]) {
+      s = reflexEngine.reduce(s, { type: "start" }, id, c);
+      s = reflexEngine.reduce(s, { type: "stop", payload: { elapsed: 3 } }, id, c);
+    }
+    expect(reflexEngine.isFinished(s)).toBe(true);
     expect(reflexEngine.scores(s).b).toBe(3);
   });
 });
 
 describe("yo nunca", () => {
-  it("solo totales, nunca quién dijo sí", () => {
+  it("es un mazo de cartas, sin boleta ni roles ajenos", () => {
     const c = ctx({ prompt: "yo nunca mentí" });
     let s = neverEngine.createState(c);
-    s = neverEngine.reduce(s, { type: "choose", payload: { value: "si" } }, "a", c);
-    s = neverEngine.reduce(s, { type: "choose", payload: { value: "no" } }, "b", c);
-    s = neverEngine.reduce(s, { type: "choose", payload: { value: "si" } }, "c", c);
-    s = neverEngine.reduce(s, { type: "choose", payload: { value: "no" } }, "d", c);
+    expect(view<{ prompt: string }>(neverEngine.publicView(s)).prompt).toBe("yo nunca mentí");
+    s = neverEngine.reduce(s, { type: "next" }, "a", c);
     const pub = JSON.stringify(neverEngine.publicView(s));
     expect(pub).not.toContain('"choices"');
-    expect(view<{ yesCount?: number }>(neverEngine.publicView(s)).yesCount).toBe(2);
-    expect(view<{ myChoice: string | null }>(neverEngine.privateView(s, "b")).myChoice).toBe("no");
+    expect(neverEngine.privateView(s, "b")).toEqual({ myChoice: null });
+    expect(view<{ index: number }>(neverEngine.publicView(s)).index).toBe(1);
   });
 });
 
 describe("tutti", () => {
-  it("esconde respuestas ajenas y puntúa únicas", () => {
+  it("esconde respuestas ajenas, revisa ortografía y después puntúa", () => {
     const c = ctx({ letter: "M" });
     let s = stopEngine.createState(c);
-    s = stopEngine.reduce(s, { type: "write", payload: { answers: { nombre: "Meli", ciudad: "Mendoza", comida: "milanesa", famoso: "Messi", cosa: "mate" } } }, "a", c);
+    s = stopEngine.reduce(s, { type: "write", payload: { answers: { nombre: "Meli" } } }, "a", c);
+    expect(s.phase).toBe("write");
     expect(JSON.stringify(stopEngine.publicView(s))).not.toContain("Mendoza");
+    s = stopEngine.reduce(s, { type: "write", payload: null }, "a", c);
+    const full = { nombre: "Meli", ciudad: "Mendoza", comida: "milanesa", famoso: "Messi", cosa: "mate" };
+    s = stopEngine.reduce(s, { type: "write", payload: { answers: full } }, "a", c);
+    expect(s.phase).toBe("review");
+    expect(view<{ review?: { text: string } }>(stopEngine.publicView(s)).review?.text).toBeTruthy();
+    expect(JSON.stringify(stopEngine.privateView(s, "b"))).not.toContain("impostor");
+    for (const id of ids) {
+      s = stopEngine.reduce(s, { type: "review", payload: { value: "ok" } }, id, c);
+    }
+    expect(s.reviewIndex).toBeGreaterThan(0);
     const pts = scoreStop(
       {
         a: { nombre: "Meli", ciudad: "Mendoza", comida: "x", famoso: "y", cosa: "z" },

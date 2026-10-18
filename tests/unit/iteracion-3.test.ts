@@ -106,10 +106,13 @@ describe("preferis", () => {
     s = wouldEngine.reduce(s, { type: "vote", payload: { side: "left" } }, "a", c);
     s = wouldEngine.reduce(s, { type: "vote", payload: { side: "right" } }, "b", c);
     expect(JSON.stringify(wouldEngine.publicView(s))).not.toMatch(/"votes":\{/);
+    s = wouldEngine.reduce(s, { type: "vote", payload: { side: "nope" } }, "c", c);
     s = wouldEngine.reduce(s, { type: "reveal" }, "a", c);
     expect(view<{ totals?: { left: number; right: number } }>(wouldEngine.publicView(s)).totals).toEqual({
       left: 1,
       right: 1,
     });
+    expect(wouldEngine.scores(s)).toEqual({});
+    expect(view<{ readerId?: string }>(wouldEngine.publicView(s)).readerId).toBeTruthy();
   });
 });

@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import { filterWhoAmI, WHOAMI_CHARACTERS } from "@/shared/games/whoami/characters";
 import { guessMatches, whoamiEngine } from "@/shared/games/whoami/logic";
 import { mulberry32 } from "@/shared/rng";
 
@@ -32,6 +33,22 @@ describe("whoami", () => {
     expect(whoamiEngine.isFinished(state)).toBe(true);
     expect(whoamiEngine.scores(state)).toEqual({ t: 3 });
     expect((whoamiEngine.publicView(state) as { character: string }).character).toBe("Zlatan Testosterone");
+  });
+
+  it("filtra packs reales y un ask podrido no crashea", () => {
+    expect(filterWhoAmI(["futbolistas"]).every((c) => c.pack === "futbolistas")).toBe(true);
+    expect(WHOAMI_CHARACTERS.every((c) => ["futbolistas", "famosos", "politicos"].includes(c.pack))).toBe(true);
+    const filtered = whoamiEngine.createState({
+      playerIds: ["t", "p2", "p3"],
+      rng: mulberry32(8),
+      options: { packs: ["futbolistas"] },
+    });
+    expect(WHOAMI_CHARACTERS.find((c) => c.id === filtered.characterId)?.pack).toBe("futbolistas");
+    let state = whoamiEngine.createState(ctx);
+    state = whoamiEngine.reduce(state, { type: "ask", payload: null }, "t", ctx);
+    state = whoamiEngine.reduce(state, { type: "answer", payload: 4 }, "p2", ctx);
+    expect(state.questions).toHaveLength(0);
+    expect((whoamiEngine.privateView(state, "t") as { character: string | null }).character).toBeNull();
   });
 
   it("no deja que el target conteste sus propias preguntas", () => {

@@ -76,7 +76,13 @@ export function ActiveGame({
       ) : gameId === "espia" ? (
         <SpyView publicView={publicView as SpyPublicView} privateView={privateView as SpyPrivateView} youId={youId} {...common} />
       ) : gameId === "votacion" ? (
-        <VoteView publicView={publicView as VotePublicView} privateView={privateView as VotePrivateView} youId={youId} {...common} />
+        <VoteView
+          publicView={publicView as VotePublicView}
+          privateView={privateView as VotePrivateView}
+          youId={youId}
+          local={local}
+          {...common}
+        />
       ) : gameId === "completa-frase" ? (
         <PhraseView
           publicView={publicView as PhrasePublicView}

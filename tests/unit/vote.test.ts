@@ -32,12 +32,21 @@ describe("votación", () => {
     expect(pub.votedIds).toEqual(["a", "b"]);
   });
 
+  it("un voto podrido no crashea y hay un lector", () => {
+    let state = voteEngine.createState(ctx);
+    expect(state.readerId).toBeTruthy();
+    state = voteEngine.reduce(state, { type: "vote", payload: null }, "a", ctx);
+    state = voteEngine.reduce(state, { type: "vote", payload: { targetId: 1 } }, "a", ctx);
+    expect(state.phase).toBe("voting");
+    expect((voteEngine.publicView(state) as { totals?: unknown }).totals).toBeUndefined();
+    expect((voteEngine.privateView(state, "b") as { myVote: string | null }).myVote).toBeNull();
+  });
+
   it("al revelar solo hay totales y +1 al más votado", () => {
     let state = voteEngine.createState(ctx);
     state = voteEngine.reduce(state, { type: "vote", payload: { targetId: "c" } }, "a", ctx);
     state = voteEngine.reduce(state, { type: "vote", payload: { targetId: "c" } }, "b", ctx);
     state = voteEngine.reduce(state, { type: "vote", payload: { targetId: "a" } }, "c", ctx);
-    state = voteEngine.reduce(state, { type: "reveal" }, "a", ctx);
     const pub = voteEngine.publicView(state) as { totals?: { playerId: string; count: number }[]; votes?: unknown };
     expect(pub.votes).toBeUndefined();
     expect(pub.totals).toEqual([
