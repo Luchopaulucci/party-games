@@ -103,6 +103,8 @@ La app va **empaquetada** adentro de la APK (export estático de Next + Capacito
 
 ### Build local
 
+Hace falta Node 20+ y Java 21 (Capacitor 7).
+
 ```bash
 npm ci
 npm run build:mobile
