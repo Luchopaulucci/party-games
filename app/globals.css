@@ -133,7 +133,7 @@ h1 {
 }
 
 .lead {
-  color: var(--color-mist);
+  color: #f3e6d4;
   line-height: 1.45;
   margin: 0 0 18px;
   font-size: 1.05rem;
@@ -168,7 +168,8 @@ label {
 }
 
 input,
-textarea {
+textarea,
+select {
   width: 100%;
   border: 0;
   background: rgba(255, 255, 255, 0.1);
@@ -177,6 +178,10 @@ textarea {
   padding: 12px 14px;
   outline: none;
   min-height: 48px;
+}
+
+select option {
+  color: #1e1446;
 }
 
 input:focus,
@@ -225,6 +230,16 @@ textarea:focus {
 .btn:disabled {
   opacity: 0.4;
   cursor: not-allowed;
+}
+
+.btn:focus-visible,
+.chip:focus-visible,
+.tile:focus-visible,
+input:focus-visible,
+textarea:focus-visible,
+select:focus-visible {
+  outline: 3px solid var(--color-gold);
+  outline-offset: 2px;
 }
 
 .tile {
@@ -404,6 +419,15 @@ textarea:focus {
   outline-offset: 2px;
 }
 
+.draw-pad {
+  width: 100%;
+  aspect-ratio: 1;
+  border-radius: 18px;
+  background: #fff8f0;
+  touch-action: none;
+  display: block;
+}
+
 .secret {
   background: rgba(255, 255, 255, 0.08);
   border: 1px dashed var(--color-gold);
@@ -440,11 +464,12 @@ textarea:focus {
 .chip {
   border: 0;
   border-radius: 999px;
-  padding: 7px 12px;
+  padding: 10px 14px;
   font-size: 0.85rem;
   font-weight: 700;
   background: rgba(255, 255, 255, 0.1);
   color: var(--color-cream);
+  min-height: 44px;
 }
 
 .chip.on {

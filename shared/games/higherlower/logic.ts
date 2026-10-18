@@ -114,7 +114,7 @@ export const higherLowerEngine: GameEngine<HigherLowerState> = {
       return { ...state, guesses, min, max, currentPlayerId: nextPlayer };
     }
 
-    if (action.type === "reveal") {
+    if (action.type === "reveal" || action.type === "timeout") {
       return { ...state, phase: "done" };
     }
 

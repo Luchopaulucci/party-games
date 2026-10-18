@@ -1,0 +1,16 @@
+export const WAVE_POLES: { id: string; left: string; right: string }[] = [
+  { id: "frio", left: "Frío", right: "Caliente" },
+  { id: "malo", left: "Malo", right: "Bueno" },
+  { id: "barato", left: "Barato", right: "Caro" },
+  { id: "suave", left: "Suave", right: "Intenso" },
+  { id: "inn", left: "Inofensivo", right: "Ilegal en 3 provincias" },
+  { id: "ex", left: "Para el grupo de la facu", right: "Para el grupo del after" },
+  { id: "mate", left: "Mate lavado", right: "Mate que te despierta el alma" },
+  { id: "cine", left: "Película para llorar", right: "Película para no pensar" },
+  { id: "baile", left: "Dos pasitos", right: "Pista completa" },
+  { id: "comida", left: "Dieta", right: "Pecado" },
+  { id: "humor", left: "Chiste de tío", right: "Chiste de terapia" },
+  { id: "futbol", left: "Pase atrás", right: "Tiro al ángulo" },
+  { id: "verano", left: "Pileta de inflable", right: "Mar en enero" },
+  { id: "laburo", left: "Home office en pijama", right: "Oficina con aire de 16°" },
+];

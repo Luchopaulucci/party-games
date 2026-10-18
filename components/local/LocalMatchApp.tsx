@@ -2,14 +2,20 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { CategoryFilters } from "@/components/CategoryFilters";
+import { RoomOptions } from "@/components/RoomOptions";
 import { ColorDots } from "@/components/ColorDots";
 import { GamePicker } from "@/components/GamePicker";
 import { HandoffScreen } from "@/components/HandoffScreen";
 import { PlayerList } from "@/components/PlayerList";
 import { ActiveGame } from "@/components/games/ActiveGame";
+import { HowToPlay } from "@/components/HowToPlay";
+import { PodiumScreen } from "@/components/PodiumScreen";
+import { FxToggle } from "@/components/FxToggle";
+import { nextLocalRound } from "@/lib/local-match";
+import { playFx } from "@/lib/fx";
 import { CATEGORIES, type Category } from "@/shared/games/closest/premise-types";
 import { getGameMeta } from "@/shared/games/registry";
-import type { GameId } from "@/shared/types";
+import type { GameId, GameOptions } from "@/shared/types";
 import { PLAYER_COLORS, nextPlayerColor } from "@/shared/ui/colors";
 import {
   createLocalMatch,
@@ -55,6 +61,7 @@ export function LocalMatchApp() {
   const [draft, setDraft] = useState("");
   const [categories, setCategories] = useState<string[]>([...CATEGORIES]);
   const [picante, setPicante] = useState(false);
+  const [options, setOptions] = useState<GameOptions>({ timerSec: 0, rounds: 1, mode: "no-pasarse" });
   const [match, setMatch] = useState<LocalMatch | null>(null);
   const [unlocked, setUnlocked] = useState<string | null>(null);
   const [hydrated, setHydrated] = useState(false);
@@ -88,7 +95,7 @@ export function LocalMatchApp() {
 
   function begin(gameId: GameId) {
     const created = createLocalMatch(players.filter((p) => p.name.trim().length >= 2));
-    const started = startLocalGame(created, gameId, { categories, picante });
+    const started = startLocalGame(created, gameId, { categories, picante, options });
     if (typeof started === "string") return;
     setUnlocked(null);
     persist(started);
@@ -162,6 +169,8 @@ export function LocalMatchApp() {
             }
             onPicante={() => setPicante((v) => !v)}
           />
+          <RoomOptions value={options} onChange={setOptions} />
+          <FxToggle />
         </div>
         <h2>Juegos</h2>
         <GamePicker onPick={begin} playerCount={players.length} />
@@ -191,14 +200,23 @@ export function LocalMatchApp() {
       </p>
 
       <div className="card stack">
-        <ActiveGame
-          gameId={match.gameId!}
-          publicView={view.public}
-          privateView={view.private}
-          isHost
-          youId={viewer.id}
-          players={match.players}
-          onAction={(type, payload) => {
+          {meta?.howTo ? <HowToPlay text={meta.howTo} /> : null}
+          {match.status === "finished" ? (
+            <PodiumScreen
+              players={match.players}
+              youId={viewer.id}
+              nightLabel={match.options.night ? "Noche de juegos" : null}
+            />
+          ) : null}
+          <ActiveGame
+            gameId={match.gameId!}
+            publicView={view.public}
+            privateView={view.private}
+            isHost
+            youId={viewer.id}
+            players={match.players}
+            timerSec={match.options.timerSec}
+            onAction={(type, payload) => {
             const applied = localAction(match, viewer.id, { type, payload });
             const shouldPass = match.gameId === "closest" && type === "guess";
             const nextIndex = match.passIndex + 1;
@@ -207,6 +225,7 @@ export function LocalMatchApp() {
               persist({ ...applied, passIndex: nextIndex });
               return;
             }
+            if (applied.status === "finished" && match.status !== "finished") playFx("reveal");
             persist(applied);
           }}
         />
@@ -237,13 +256,13 @@ export function LocalMatchApp() {
             type="button"
             onClick={() => {
               if (!match.gameId) return;
-              const next = startLocalGame({ ...match, passIndex: 0 }, match.gameId);
+              const next = nextLocalRound({ ...match, passIndex: 0 });
               if (typeof next === "string") return;
               setUnlocked(null);
               persist(next);
             }}
           >
-            Otra ronda
+            {match.options.night ? "Siguiente de la noche" : "Otra ronda"}
           </button>
           <button
             className="btn btn-ghost"

@@ -1,6 +1,7 @@
-import { getEngine } from "@/shared/games/registry";
+import { orderNightQueue } from "@/shared/games/night";
+import { getEngine, getGameMeta } from "@/shared/games/registry";
 import { mulberry32 } from "@/shared/rng";
-import type { GameId, RoomStatus } from "@/shared/types";
+import type { GameId, GameOptions, RoomStatus } from "@/shared/types";
 import { nextPlayerColor } from "@/shared/ui/colors";
 
 export interface LocalPlayer {
@@ -22,6 +23,9 @@ export interface LocalMatch {
   revealQueue: string[];
   categories: string[];
   picante: boolean;
+  options: GameOptions;
+  nightQueue: GameId[];
+  nightIndex: number;
 }
 
 export function newLocalId(): string {
@@ -49,6 +53,9 @@ export function createLocalMatch(input: { name: string; color?: string }[] | str
     revealQueue: [],
     categories: [],
     picante: false,
+    options: {},
+    nightQueue: [],
+    nightIndex: 0,
   };
 }
 
@@ -58,6 +65,9 @@ export function hydrateMatch(raw: LocalMatch): LocalMatch {
     ...raw,
     categories: raw.categories ?? [],
     picante: Boolean(raw.picante),
+    options: raw.options ?? {},
+    nightQueue: raw.nightQueue ?? [],
+    nightIndex: raw.nightIndex ?? 0,
     players: raw.players.map((p) => {
       const color = p.color || nextPlayerColor(used);
       used.push(color);
@@ -73,13 +83,15 @@ function ctx(match: LocalMatch) {
     usedContentIds: match.usedContentIds,
     categories: match.categories,
     picante: match.picante,
+    options: match.options,
+    now: Date.now,
   };
 }
 
 export function startLocalGame(
   match: LocalMatch,
   gameId: GameId,
-  pack?: { categories?: string[]; picante?: boolean },
+  pack?: { categories?: string[]; picante?: boolean; options?: GameOptions },
 ): LocalMatch | string {
   const engine = getEngine(gameId);
   if (!engine) return "Ese juego todavía es vaporware.";
@@ -87,8 +99,23 @@ export function startLocalGame(
     ...match,
     categories: pack?.categories ?? match.categories ?? [],
     picante: pack?.picante ?? match.picante ?? false,
+    options: pack?.options ?? match.options ?? {},
   };
   const gameState = engine.createState(ctx(next));
+  let nightQueue = next.nightQueue ?? [];
+  let nightIndex = next.nightIndex ?? 0;
+  if (next.options.night) {
+    if (next.status === "lobby" || nightQueue.length === 0) {
+      nightQueue = orderNightQueue(gameId).filter((id) => {
+        const meta = getGameMeta(id);
+        return Boolean(meta?.implemented && next.players.length >= meta.minPlayers);
+      });
+      nightIndex = Math.max(0, nightQueue.indexOf(gameId));
+    }
+  } else {
+    nightQueue = [];
+    nightIndex = 0;
+  }
   return {
     ...next,
     gameId,
@@ -96,8 +123,30 @@ export function startLocalGame(
     status: "playing",
     scoredRound: false,
     passIndex: 0,
-    revealQueue: next.players.map((p) => p.id),
+    revealQueue: revealQueueFor(gameId, gameState, next.players.map((p) => p.id)),
+    nightQueue,
+    nightIndex,
   };
+}
+
+export function nextLocalRound(match: LocalMatch): LocalMatch | string {
+  if (match.options.night && match.nightQueue.length) {
+    const nextIndex = match.nightIndex + 1;
+    if (nextIndex < match.nightQueue.length) {
+      return startLocalGame({ ...match, nightIndex: nextIndex }, match.nightQueue[nextIndex]!);
+    }
+  }
+  if (!match.gameId) return "Elegí un juego primero.";
+  return startLocalGame(match, match.gameId);
+}
+
+function revealQueueFor(_gameId: GameId, state: unknown, ids: string[]): string[] {
+  if (!state || typeof state !== "object") return ids;
+  const rec = state as Record<string, unknown>;
+  const keys = ["drawerId", "psychicId", "actorId", "storytellerId", "speakerId", "holderId", "chooserId", "currentId"];
+  const first = keys.map((k) => rec[k]).find((v): v is string => typeof v === "string" && ids.includes(v));
+  if (!first) return ids;
+  return [first, ...ids.filter((id) => id !== first)];
 }
 
 export function localAction(

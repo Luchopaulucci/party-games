@@ -9,7 +9,30 @@ export type GameId =
   | "mentira"
   | "dibuja"
   | "reflejos"
-  | "votacion";
+  | "votacion"
+  | "onda"
+  | "taboo"
+  | "yo-nunca"
+  | "tutti"
+  | "bombita"
+  | "mimica"
+  | "verdad-reto"
+  | "trivia"
+  | "cadena"
+  | "emoji"
+  | "telefono"
+  | "preferis";
+
+export interface GameOptions {
+  timerSec?: number;
+  rounds?: number;
+  packs?: string[];
+  mode?: string;
+  impostorCount?: number;
+  spyCount?: number;
+  maxGuesses?: number;
+  night?: boolean;
+}
 
 export type RoomStatus = "lobby" | "playing" | "finished";
 
@@ -31,6 +54,7 @@ export interface GameMeta {
   maxPlayers: number;
   implemented: boolean;
   emoji: string;
+  howTo: string;
 }
 
 export interface GameContext {
@@ -40,7 +64,8 @@ export interface GameContext {
   seed?: TestSeed;
   categories?: string[];
   picante?: boolean;
-  options?: Record<string, unknown>;
+  options?: GameOptions;
+  now?: () => number;
 }
 
 /** Only honored when ALLOW_TEST_SEEDS=1. Never enable that in production. */
@@ -59,6 +84,15 @@ export interface TestSeed {
   spyIds?: string[];
   min?: number;
   max?: number;
+  answer?: string;
+  answers?: string[];
+  lieIndex?: number;
+  target?: number;
+  letter?: string;
+  poles?: [string, string];
+  forbidden?: string[];
+  options?: string[];
+  correct?: number;
 }
 
 export interface GameAction {
@@ -86,6 +120,18 @@ export interface RoomNotice {
   text: string;
 }
 
+export interface RoomReaction {
+  id: string;
+  emoji: string;
+  playerId: string;
+  at: number;
+}
+
+export interface NightState {
+  queue: GameId[];
+  index: number;
+}
+
 export interface ClientRoomState {
   code: string;
   you: PlayerPublic;
@@ -96,6 +142,9 @@ export interface ClientRoomState {
   private: unknown;
   notice: RoomNotice | null;
   canHost: boolean;
+  reactions: RoomReaction[];
+  night: NightState | null;
+  options: GameOptions;
 }
 
 export const HOST_GRACE_DEFAULT_MS = 12_000;

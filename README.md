@@ -7,20 +7,46 @@ Dos modos:
 1. **En línea** — el anfitrión arma una sala (código corto + QR). Cada uno entra con su nombre desde el teléfono. El server es dueño del estado: asiento, puntaje y secretos. Si recargás o se te corta, volvés al mismo asiento. Si el host se va más de N segundos, hostea otro; el original reclama al recargar. Los mensajes de socket se validan (zod) y un payload podrido no tira el proceso. Las salas vacías o inactivas se borran después de un TTL.
 2. **Pasate el celu** — un solo teléfono, 100% client-side, anda offline (PWA / service worker). Pensado para 375px.
 
-## Juegos MVP (6)
+## Juegos (23)
 
-- **¿Quién está más cerca?** — pregunta numérica, palos tapados, gana el más cercano. Reusa el mazo, las categorías clásicas/fiesta/picante, los colores de jugador y el reveal con count-up de [¿Cuánto es?](https://github.com/Luchopaulucci/cuanto-es).
-- **¿Quién soy?** — todos ven el personaje menos el target. Preguntas sí/no y un palo al nombre.
-- **El impostor** — la misma palabra para todos menos el/los impostor(es). Se discute y se vota.
-- **¿Más o menos?** — número secreto. Por turno un palo; el server dice *más* / *menos*. El que clava suma 3. Si tirás afuera del rango que ya se sabe, te pasaste y perdés el turno.
-- **Espía** — tipo Spyfall: lugar + oficio para los civiles. El espía no recibe el lugar. Se pregunta, se vota, el espía puede adivinar el sitio. El celu equivocado nunca ve el rol de espía ni el lugar.
-- **Votación** — “¿Quién de este grupo…?”. Votos secretos. Al revelar **solo totales**, nunca el mapa de quién votó a quién.
+Extras de sala (timer, rondas, impostores/espías, modo subasta, **noche de juegos**) van en el lobby. En cada juego hay **¿Cómo se juega?**. Al terminar, podio con stats. Reacciones en vivo y sonido/vibración opcionales.
 
-Quedan para un PR aparte (stubs): Subasta de números, Completá la frase, Mentira creíble, Dibujá y adiviná, Reflejos. Ver `docs/plugins.md`.
+### Los 11 de la lista
+
+| Juego | Qué se sumó y de dónde |
+| --- | --- |
+| **¿Quién está más cerca?** | Packs clásico/fiesta/picante, count-up 900ms y colores de [¿Cuánto es?](https://github.com/Luchopaulucci/cuanto-es). Timer opcional. |
+| **¿Quién soy?** | Estilo Heads Up / Guess Who. `maxGuesses` por opciones. Timeout cierra. |
+| **El impostor** | Impostor count automático o 1/2 (Among Us / Spyfall). Al revelar **solo totales**, no el mapa de votos. |
+| **¿Más o menos?** | Rango que se achica. Timeout revela. |
+| **Espía** | [Spyfall](https://hobbyworldint.com/portfolio-item/spyfall/): 8 min típicos, el espía puede adivinar el lugar, N rondas. Acá: timer, spy count 1/2, oficio por civil. |
+| **Votación** | “Most likely to”. Solo totales. |
+| **Subasta de números** | [The Price is Right](https://en.wikipedia.org/wiki/List_of_The_Price_Is_Right_pricing_games) / Guesstimate: modo *sin pasarse* o *más cerca*. Pujas tapadas. |
+| **Completá la frase** | [Quiplash](https://jackbox.wiki/wiki/Quiplash): todos escriben, se vota, JINX si copian, puntos = votos. Sin mapa votante→respuesta. |
+| **Mentira creíble** | Two truths and a lie + scoring tipo [Fibbage](https://jackboxgames.fandom.com/wiki/Fibbage_(series)): el narrador suma si te creen. Totales por frase. |
+| **Dibujá y adiviná** | Pictionary / [Drawful](https://jackbox.wiki/wiki/Drawful) simplificado (sin mentiras falsas): trazo en el celu, palabra solo al artista. |
+| **Reflejos** | Primer toque correcto suma, el error resta. La opción buena no viaja hasta el cierre. |
+
+### Nuevos
+
+| Juego | Idea |
+| --- | --- |
+| **La onda** | [Wavelength](https://en.wikipedia.org/wiki/Wavelength_(game)): psíquico ve 0–100, tira una pista, el resto apunta. Target privado. |
+| **Palabra prohibida** | [Taboo](https://therulebook.com/party-games/): palabra + prohibidas solo para quien habla. Botón “dijo una prohibida”. |
+| **Yo nunca** | Never Have I Ever. **Solo totales** de “yo sí”, nunca quién levantó la mano. |
+| **Tutti frutti** | Stop / Scattergories. Letra + 5 categorías. Respuestas tapadas hasta el alto. Únicas = 2, repetidas = 1. |
+| **Bombita** | Papa caliente. El `explodeAt` **nunca** se manda al cliente. |
+| **Mímica** | Charadas / Heads Up. La consigna solo la ve quien actúa. |
+| **Verdad o reto** | Apps de previas AR: carta + la mesa vota si cumplió. Totales nomás. |
+| **Preguntados rápido** | Trivia 4 opciones. El índice correcto no viaja hasta el cierre. |
+| **Cadena de palabras** | Asociación libre. La cadena completa recién al revelar. |
+| **Adiviná el emoji** | Canción/peli/cosa en emojis. Respuesta tapada. |
+| **Teléfono descompuesto** | Cada uno reescribe lo anterior. Solo el escritor ve el texto previo. |
+| **¿Qué preferís?** | This or that. Votos anónimos, solo totales. |
 
 ## Estilo
 
-Tokens, tipografías (Fraunces + Source Sans 3), paleta de jugadores, handoff a pantalla completa del color del jugador, chips de categoría y el tono de previa salen de [¿Cuánto es?](https://github.com/Luchopaulucci/cuanto-es). Los 6 juegos de este MVP los reusan.
+Tokens, tipografías (Fraunces + Source Sans 3), paleta de jugadores, handoff a pantalla completa, chips de categoría y el tono de previa salen de [¿Cuánto es?](https://github.com/Luchopaulucci/cuanto-es).
 
 ## Stack
 

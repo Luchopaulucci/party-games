@@ -1,5 +1,6 @@
 import type { GameContext, GameEngine, ScoreMap } from "../../types";
 import { pickRandom, shuffle } from "../../rng";
+import { optionNumber } from "../helpers";
 import { IMPOSTOR_WORDS } from "./words";
 
 export type ImpostorPhase = "discuss" | "vote" | "reveal";
@@ -22,7 +23,7 @@ export interface ImpostorPublicView {
   impostorCount: number;
   word?: string;
   impostorIds?: string[];
-  votes?: Record<string, string>;
+  totals?: { playerId: string; count: number }[];
   wordGuess?: ImpostorState["wordGuess"];
   scores?: ScoreMap;
 }
@@ -53,7 +54,11 @@ function pickImpostors(ctx: GameContext): string[] {
   if (ctx.seed?.impostorIds?.length) {
     return ctx.seed.impostorIds.filter((id) => ctx.playerIds.includes(id));
   }
-  const count = Math.min(impostorCountFor(ctx.playerIds.length), Math.max(1, ctx.playerIds.length - 1));
+  const requested = optionNumber(ctx.options?.impostorCount, 0, 0, 2);
+  const count = Math.min(
+    requested || impostorCountFor(ctx.playerIds.length),
+    Math.max(1, ctx.playerIds.length - 1),
+  );
   return shuffle(ctx.playerIds, ctx.rng).slice(0, count);
 }
 
@@ -151,9 +156,12 @@ export const impostorEngine: GameEngine<ImpostorState> = {
       return { ...state, votes: { ...state.votes, [playerId]: target } };
     }
 
-    if (action.type === "reveal" && state.phase === "vote") {
+    if ((action.type === "reveal" || action.type === "timeout") && state.phase === "vote") {
       const next = { ...state, phase: "reveal" as const };
       return { ...next, scores: scoreImpostorRound(next) };
+    }
+    if (action.type === "timeout" && state.phase === "discuss") {
+      return { ...state, phase: "vote" };
     }
 
     return state;
@@ -169,9 +177,10 @@ export const impostorEngine: GameEngine<ImpostorState> = {
     if (state.phase === "reveal") {
       view.word = state.word;
       view.impostorIds = state.impostorIds;
-      view.votes = state.votes;
       view.wordGuess = state.wordGuess;
       view.scores = state.scores;
+      const { counts } = tallyVotes(state.votes);
+      view.totals = Object.entries(counts).map(([playerId, count]) => ({ playerId, count }));
     }
     return view;
   },

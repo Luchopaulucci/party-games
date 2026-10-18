@@ -8,7 +8,9 @@ import {
   ROOM_SWEEP_INTERVAL_MS,
   type GameId,
   type PlayerPublic,
+  type GameOptions,
   type RoomNotice,
+  type RoomReaction,
   type RoomStatus,
   type TestSeed,
 } from "../shared/types";
@@ -21,6 +23,8 @@ import {
   sanitizeToken,
 } from "../shared/protocol";
 import { getEngine, getGameMeta } from "../shared/games/registry";
+import { orderNightQueue } from "../shared/games/night";
+import { REACTION_EMOJIS } from "../shared/protocol";
 import { mulberry32 } from "../shared/rng";
 import { nextPlayerColor } from "../shared/ui/colors";
 
@@ -51,7 +55,10 @@ export interface Room {
   lastActivityAt: number;
   categories: string[];
   picante: boolean;
-  options: Record<string, unknown>;
+  options: GameOptions;
+  nightQueue: GameId[];
+  nightIndex: number;
+  reactions: RoomReaction[];
 }
 
 export interface HelloResult {
@@ -146,6 +153,9 @@ export class RoomManager {
       categories: [],
       picante: false,
       options: {},
+      nightQueue: [],
+      nightIndex: 0,
+      reactions: [],
       usedContentIds: [],
       notice: null,
       createdAt,
@@ -305,6 +315,19 @@ export class RoomManager {
     if (pack?.categories !== undefined) room.categories = sanitizeCategories(pack.categories);
     if (typeof pack?.picante === "boolean") room.picante = pack.picante;
     if (pack?.options !== undefined) room.options = sanitizeGameOptions(pack.options);
+    if (room.options.night) {
+      if (room.status === "lobby" || room.nightQueue.length === 0) {
+        const connectedCount = connected.length;
+        room.nightQueue = orderNightQueue(gameId).filter((id) => {
+          const m = getGameMeta(id);
+          return Boolean(m?.implemented && connectedCount >= m.minPlayers);
+        });
+        room.nightIndex = Math.max(0, room.nightQueue.indexOf(gameId));
+      }
+    } else {
+      room.nightQueue = [];
+      room.nightIndex = 0;
+    }
     const ctx = this.context(room, sanitizeTestSeed(seed, this.allowTestSeeds));
     try {
       room.gameState = engine.createState(ctx);
@@ -356,6 +379,13 @@ export class RoomManager {
     const room = this.rooms.get(code);
     if (!room) return "Sala introvable.";
     if (room.hostId !== hostId) return "Solo el anfitrión sigue la ronda.";
+    if (room.options.night && room.nightQueue.length) {
+      const nextIndex = room.nightIndex + 1;
+      if (nextIndex < room.nightQueue.length) {
+        room.nightIndex = nextIndex;
+        return this.startGame(code, hostId, room.nightQueue[nextIndex]!);
+      }
+    }
     if (!room.gameId) return "Elegí un juego primero.";
     return this.startGame(code, hostId, room.gameId);
   }
@@ -369,6 +399,24 @@ export class RoomManager {
     room.gameState = null;
     room.scoredRound = false;
     room.notice = null;
+    room.nightQueue = [];
+    room.nightIndex = 0;
+    this.emit(room);
+    return null;
+  }
+
+  react(code: string, playerId: string, emoji: string): string | null {
+    const room = this.rooms.get(code);
+    if (!room) return "Sala introvable.";
+    if (!room.seats.some((s) => s.id === playerId)) return "Sin asiento.";
+    if (!(REACTION_EMOJIS as readonly string[]).includes(emoji)) return "Ese emoji no entra.";
+    const reaction: RoomReaction = {
+      id: `${this.now()}-${playerId.slice(0, 6)}`,
+      emoji,
+      playerId,
+      at: this.now(),
+    };
+    room.reactions = [...room.reactions, reaction].slice(-20);
     this.emit(room);
     return null;
   }
@@ -388,6 +436,11 @@ export class RoomManager {
         private: engine && room.gameState != null ? engine.privateView(room.gameState, playerId) : null,
         notice: room.notice,
         canHost: room.hostId === playerId,
+        reactions: room.reactions,
+        night: room.options.night && room.nightQueue.length
+          ? { queue: room.nightQueue, index: room.nightIndex }
+          : null,
+        options: room.options,
       };
     } catch (err) {
       console.error("[project]", err);
@@ -423,6 +476,7 @@ export class RoomManager {
       categories: room.categories,
       picante: room.picante,
       options: room.options,
+      now: this.now,
     };
   }
 

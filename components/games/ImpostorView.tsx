@@ -92,11 +92,13 @@ export function ImpostorView({
               .map((p) => (
                 <button key={p.id} className="btn btn-ghost" type="button" onClick={() => onAction("vote", { targetId: p.id })}>
                   {p.name}
-                  {publicView.votedIds.includes(youId) ? " (ya votaste, podés cambiar)" : ""}
                 </button>
               ))}
           </div>
-          <p className="lead">Votos: {publicView.votedIds.length}/{players.length}</p>
+          <p className="lead">
+            Votos: {publicView.votedIds.length}/{players.length}
+            {publicView.votedIds.includes(youId) ? " · ya votaste, podés cambiar" : ""}
+          </p>
           {isHost ? (
             <button className="btn btn-gold" type="button" onClick={() => onAction("reveal")}>
               Cerrar urna

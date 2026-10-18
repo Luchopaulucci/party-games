@@ -4,6 +4,7 @@ import {
   MAX_NAME_LENGTH,
   MIN_NAME_LENGTH,
   ROOM_CODE_ALPHABET,
+  type GameOptions,
   type TestSeed,
 } from "./types";
 
@@ -21,6 +22,7 @@ export const gameOptionsSchema = z
     impostorCount: z.number().int().min(1).max(4).optional(),
     spyCount: z.number().int().min(1).max(4).optional(),
     maxGuesses: z.number().int().min(1).max(20).optional(),
+    night: z.boolean().optional(),
   })
   .strict();
 
@@ -116,10 +118,10 @@ export function sanitizeCategories(raw: unknown): string[] {
   return out;
 }
 
-export function sanitizeGameOptions(raw: unknown): z.infer<typeof gameOptionsSchema> {
+export function sanitizeGameOptions(raw: unknown): GameOptions {
   if (!raw || typeof raw !== "object" || Array.isArray(raw)) return {};
   const rec = raw as Record<string, unknown>;
-  const out: z.infer<typeof gameOptionsSchema> = {};
+  const out: GameOptions = {};
   const timer = gameOptionsSchema.shape.timerSec.safeParse(rec.timerSec);
   const rounds = gameOptionsSchema.shape.rounds.safeParse(rec.rounds);
   const packs = gameOptionsSchema.shape.packs.safeParse(rec.packs);
@@ -127,6 +129,7 @@ export function sanitizeGameOptions(raw: unknown): z.infer<typeof gameOptionsSch
   const impostorCount = gameOptionsSchema.shape.impostorCount.safeParse(rec.impostorCount);
   const spyCount = gameOptionsSchema.shape.spyCount.safeParse(rec.spyCount);
   const maxGuesses = gameOptionsSchema.shape.maxGuesses.safeParse(rec.maxGuesses);
+  const night = gameOptionsSchema.shape.night.safeParse(rec.night);
   if (timer.success && timer.data !== undefined) out.timerSec = timer.data;
   if (rounds.success && rounds.data !== undefined) out.rounds = rounds.data;
   if (packs.success && packs.data !== undefined) out.packs = packs.data;
@@ -134,8 +137,17 @@ export function sanitizeGameOptions(raw: unknown): z.infer<typeof gameOptionsSch
   if (impostorCount.success && impostorCount.data !== undefined) out.impostorCount = impostorCount.data;
   if (spyCount.success && spyCount.data !== undefined) out.spyCount = spyCount.data;
   if (maxGuesses.success && maxGuesses.data !== undefined) out.maxGuesses = maxGuesses.data;
+  if (night.success && night.data !== undefined) out.night = night.data;
   return out;
 }
+
+export const REACTION_EMOJIS = ["🔥", "😂", "💀", "🧉", "🍻", "😭", "👏", "👀"] as const;
+
+export const reactPayloadSchema = z
+  .object({
+    emoji: z.enum(REACTION_EMOJIS),
+  })
+  .strict();
 
 export function sanitizeTestSeed(raw: unknown, allow: boolean): TestSeed | undefined {
   if (!allow || raw == null) return undefined;
