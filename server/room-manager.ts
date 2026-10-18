@@ -8,6 +8,7 @@ import {
   ROOM_SWEEP_INTERVAL_MS,
   type GameId,
   type PlayerPublic,
+  type GameOptions,
   type RoomNotice,
   type RoomStatus,
   type TestSeed,
@@ -51,7 +52,7 @@ export interface Room {
   lastActivityAt: number;
   categories: string[];
   picante: boolean;
-  options: Record<string, unknown>;
+  options: GameOptions;
 }
 
 export interface HelloResult {
@@ -423,6 +424,7 @@ export class RoomManager {
       categories: room.categories,
       picante: room.picante,
       options: room.options,
+      now: this.now,
     };
   }
 

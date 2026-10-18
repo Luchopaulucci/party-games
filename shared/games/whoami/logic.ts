@@ -105,7 +105,7 @@ export const whoamiEngine: GameEngine<WhoAmIState> = {
       hint: character.hint,
       questions: [],
       guesses: [],
-      maxGuesses: 3,
+      maxGuesses: ctx.options?.maxGuesses && ctx.options.maxGuesses > 0 ? ctx.options.maxGuesses : 3,
       winnerId: null,
     };
   },
@@ -158,8 +158,8 @@ export const whoamiEngine: GameEngine<WhoAmIState> = {
       return { ...state, guesses };
     }
 
-    if (action.type === "give-up") {
-      if (playerId !== state.targetId) return state;
+    if (action.type === "give-up" || action.type === "timeout") {
+      if (action.type === "give-up" && playerId !== state.targetId) return state;
       return { ...state, phase: "done", winnerId: null };
     }
 

@@ -1,6 +1,6 @@
 import { getEngine } from "@/shared/games/registry";
 import { mulberry32 } from "@/shared/rng";
-import type { GameId, RoomStatus } from "@/shared/types";
+import type { GameId, GameOptions, RoomStatus } from "@/shared/types";
 import { nextPlayerColor } from "@/shared/ui/colors";
 
 export interface LocalPlayer {
@@ -22,6 +22,7 @@ export interface LocalMatch {
   revealQueue: string[];
   categories: string[];
   picante: boolean;
+  options: GameOptions;
 }
 
 export function newLocalId(): string {
@@ -49,6 +50,7 @@ export function createLocalMatch(input: { name: string; color?: string }[] | str
     revealQueue: [],
     categories: [],
     picante: false,
+    options: {},
   };
 }
 
@@ -58,6 +60,7 @@ export function hydrateMatch(raw: LocalMatch): LocalMatch {
     ...raw,
     categories: raw.categories ?? [],
     picante: Boolean(raw.picante),
+    options: raw.options ?? {},
     players: raw.players.map((p) => {
       const color = p.color || nextPlayerColor(used);
       used.push(color);
@@ -73,13 +76,15 @@ function ctx(match: LocalMatch) {
     usedContentIds: match.usedContentIds,
     categories: match.categories,
     picante: match.picante,
+    options: match.options,
+    now: Date.now,
   };
 }
 
 export function startLocalGame(
   match: LocalMatch,
   gameId: GameId,
-  pack?: { categories?: string[]; picante?: boolean },
+  pack?: { categories?: string[]; picante?: boolean; options?: GameOptions },
 ): LocalMatch | string {
   const engine = getEngine(gameId);
   if (!engine) return "Ese juego todavía es vaporware.";
@@ -87,6 +92,7 @@ export function startLocalGame(
     ...match,
     categories: pack?.categories ?? match.categories ?? [],
     picante: pack?.picante ?? match.picante ?? false,
+    options: pack?.options ?? match.options ?? {},
   };
   const gameState = engine.createState(ctx(next));
   return {

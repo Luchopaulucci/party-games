@@ -4,6 +4,7 @@ import {
   MAX_NAME_LENGTH,
   MIN_NAME_LENGTH,
   ROOM_CODE_ALPHABET,
+  type GameOptions,
   type TestSeed,
 } from "./types";
 
@@ -116,10 +117,10 @@ export function sanitizeCategories(raw: unknown): string[] {
   return out;
 }
 
-export function sanitizeGameOptions(raw: unknown): z.infer<typeof gameOptionsSchema> {
+export function sanitizeGameOptions(raw: unknown): GameOptions {
   if (!raw || typeof raw !== "object" || Array.isArray(raw)) return {};
   const rec = raw as Record<string, unknown>;
-  const out: z.infer<typeof gameOptionsSchema> = {};
+  const out: GameOptions = {};
   const timer = gameOptionsSchema.shape.timerSec.safeParse(rec.timerSec);
   const rounds = gameOptionsSchema.shape.rounds.safeParse(rec.rounds);
   const packs = gameOptionsSchema.shape.packs.safeParse(rec.packs);

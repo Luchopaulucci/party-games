@@ -117,6 +117,7 @@ describe("payloads malformados y limpieza", () => {
       { event: "action", data: { type: 1 } },
       { event: "action", data: { type: "guess", payload: { value: { nope: true } } } },
       { event: "action", data: { type: "x".repeat(80) } },
+      { event: "action", data: { type: "stroke", payload: { stroke: { color: "red", points: [null] } } } },
       { event: "nextRound", data: { sneaky: true } },
     ];
 
@@ -205,5 +206,56 @@ describe("payloads malformados y limpieza", () => {
 
     expect(srv.rooms.rooms.has(drop.code!)).toBe(false);
     expect(srv.rooms.rooms.has(keep.code!)).toBe(true);
+  });
+
+  it("un trazo de Dibujo con points:[null] no tumba el server ni la otra sala", async () => {
+    const srv = await listen();
+    cleanups.push(() => {
+      srv.rooms.dispose();
+      srv.io.close();
+      srv.httpServer.close();
+    });
+    const host = connect(srv.url);
+    const guest = connect(srv.url);
+    const third = connect(srv.url);
+    const other = connect(srv.url);
+    cleanups.push(() => {
+      host.socket.disconnect();
+      guest.socket.disconnect();
+      third.socket.disconnect();
+      other.socket.disconnect();
+    });
+    await Promise.all([
+      waitConnected(host.socket),
+      waitConnected(guest.socket),
+      waitConnected(third.socket),
+      waitConnected(other.socket),
+    ]);
+
+    const created = await hello(host.socket, { intent: "create", name: "Lucho" });
+    const joined = await hello(guest.socket, { intent: "join", name: "Meli", code: created.code });
+    const joined3 = await hello(third.socket, { intent: "join", name: "Coco", code: created.code });
+    expect(created.ok && joined.ok && joined3.ok).toBe(true);
+    await waitFor(host.box, host.socket, (s) => (s.players as unknown[]).length === 3);
+    const otherRoom = await hello(other.socket, { intent: "create", name: "Otra" });
+    expect(otherRoom.ok).toBe(true);
+
+    const started = await ack(host.socket, "startGame", {
+      gameId: "dibuja",
+      seed: { word: "mate", targetId: created.playerId },
+    });
+    expect(started.ok).toBe(true);
+    await waitFor(host.box, host.socket, (s) => s.gameId === "dibuja");
+
+    const stroke = await ack(host.socket, "action", {
+      type: "stroke",
+      payload: { stroke: { color: "not-a-color", points: [null, { x: 1, y: 2 }] } },
+    });
+    expect(stroke.ok).toBe(true);
+    expect(srv.rooms.rooms.has(created.code!)).toBe(true);
+    expect(srv.rooms.rooms.has(otherRoom.code!)).toBe(true);
+
+    const still = await hello(other.socket, { intent: "create", name: "Sigo" });
+    expect(still.ok).toBe(true);
   });
 });

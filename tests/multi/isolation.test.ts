@@ -313,4 +313,149 @@ describe("multi-client rooms", () => {
     expect(leak).not.toContain(roomB.code);
     expect(leak).not.toContain("solo B");
   });
+
+  it("cada juego extra no filtra secretos ni boletas", async () => {
+    const srv = await listen();
+    cleanups.push(() => {
+      srv.rooms.dispose();
+      srv.io.close();
+      srv.httpServer.close();
+    });
+    const names = ["Lucho", "Meli", "Coco", "Wanda", "Dibu", "Moria"];
+    const clients = names.map((name) => ({ name, ...connect(srv.url) }));
+    cleanups.push(() => {
+      for (const c of clients) c.socket.disconnect();
+    });
+    await Promise.all(
+      clients.map((c) =>
+        c.socket.connected ? Promise.resolve() : new Promise<void>((r) => c.socket.on("connect", () => r())),
+      ),
+    );
+    const created = await hello(clients[0]!.socket, { intent: "create", name: names[0] });
+    const code = created.code!;
+    for (let i = 1; i < 6; i += 1) {
+      await hello(clients[i]!.socket, { intent: "join", name: names[i], code });
+    }
+    await waitFor(clients[0]!, (s) => (s.players as unknown[]).length === 6, "6 extra");
+
+    const host = clients[0]!;
+    const dumpsAfter = async (label: string) => {
+      await waitFor(host, (s) => s.gameId === label, label);
+      await new Promise((r) => setTimeout(r, 50));
+      return clients.map((c) => JSON.stringify(c.box.last));
+    };
+
+    host.socket.emit("startGame", { gameId: "subasta", seed: { prompt: "precio secreto", trueAnswer: 777 } });
+    for (const dump of await dumpsAfter("subasta")) {
+      expect(dump, "subasta").not.toContain("777");
+    }
+
+    host.socket.emit("toLobby");
+    await waitFor(host, (s) => s.status === "lobby", "lobby frase");
+    const phraseStart = clients.map((c) => c.events.length);
+    host.socket.emit("startGame", { gameId: "completa-frase", seed: { prompt: "la frase ___" } });
+    await dumpsAfter("completa-frase");
+    host.socket.emit("action", { type: "write", payload: { text: "cierre A" } });
+    await new Promise((r) => setTimeout(r, 40));
+    for (let i = 0; i < clients.length; i += 1) {
+      const slice = JSON.stringify(clients[i]!.events.slice(phraseStart[i]));
+      assertNoBallotMap(clients[i]!.events.slice(phraseStart[i]));
+      if (i !== 0) expect(slice).not.toContain("cierre A");
+    }
+
+    host.socket.emit("toLobby");
+    await waitFor(host, (s) => s.status === "lobby", "lobby mentira");
+    host.socket.emit("startGame", {
+      gameId: "mentira",
+      seed: { targetId: created.playerId, answers: ["v1", "v2", "MENTIRA-X"], lieIndex: 2 },
+    });
+    await waitFor(host, (s) => s.gameId === "mentira", "mentira");
+    host.socket.emit("action", { type: "write", payload: { statements: ["v1", "v2", "MENTIRA-X"], lieIndex: 2 } });
+    await waitFor(clients[1]!, (s) => (s.public as { phase?: string })?.phase === "vote", "mentira vote");
+    for (const c of clients.slice(1)) {
+      const dump = JSON.stringify(c.box.last);
+      expect(dump).not.toContain('"lieIndex":2');
+      expect((c.box.last?.private as { lieIndex: number | null }).lieIndex).toBeNull();
+    }
+
+    host.socket.emit("toLobby");
+    await waitFor(host, (s) => s.status === "lobby", "lobby dibujo");
+    host.socket.emit("startGame", { gameId: "dibuja", seed: { word: "dibujo-secreto", targetId: created.playerId } });
+    const drawDumps = await dumpsAfter("dibuja");
+    expect(drawDumps[0]).toContain("dibujo-secreto");
+    for (const dump of drawDumps.slice(1)) expect(dump).not.toContain("dibujo-secreto");
+
+    host.socket.emit("toLobby");
+    await waitFor(host, (s) => s.status === "lobby", "lobby reflejos");
+    host.socket.emit("startGame", {
+      gameId: "reflejos",
+      seed: { prompt: "elige", options: ["uno", "dos", "tres", "cuatro"], correct: 3 },
+    });
+    for (const dump of await dumpsAfter("reflejos")) {
+      expect(dump).not.toContain('"correct":3');
+    }
+
+    host.socket.emit("toLobby");
+    await waitFor(host, (s) => s.status === "lobby", "lobby onda");
+    host.socket.emit("startGame", {
+      gameId: "onda",
+      seed: { targetId: created.playerId, target: 81, poles: ["Frío", "Caliente"] },
+    });
+    await dumpsAfter("onda");
+    expect((host.box.last?.private as { target: number | null }).target).toBe(81);
+    for (const c of clients.slice(1)) {
+      expect((c.box.last?.private as { target: number | null }).target).toBeNull();
+      expect((c.box.last?.public as { target?: number }).target).toBeUndefined();
+    }
+
+    host.socket.emit("toLobby");
+    await waitFor(host, (s) => s.status === "lobby", "lobby taboo");
+    host.socket.emit("startGame", {
+      gameId: "taboo",
+      seed: { word: "taboo-secreto", targetId: created.playerId, forbidden: ["aaa", "bbb", "ccc", "ddd"] },
+    });
+    const tabooDumps = await dumpsAfter("taboo");
+    expect(tabooDumps[0]).toContain("taboo-secreto");
+    for (const dump of tabooDumps.slice(1)) {
+      expect(dump).not.toContain("taboo-secreto");
+      expect(dump).not.toContain("aaa");
+    }
+
+    host.socket.emit("toLobby");
+    await waitFor(host, (s) => s.status === "lobby", "lobby never");
+    const neverStart = clients.map((c) => c.events.length);
+    host.socket.emit("startGame", { gameId: "yo-nunca", seed: { prompt: "yo nunca mentí en test" } });
+    await dumpsAfter("yo-nunca");
+    host.socket.emit("action", { type: "choose", payload: { value: "si" } });
+    await new Promise((r) => setTimeout(r, 40));
+    for (const c of clients) {
+      const slice = c.events.slice(neverStart[clients.indexOf(c)]);
+      assertNoBallotMap(slice);
+      expect(JSON.stringify(slice)).not.toContain('"choices"');
+    }
+
+    host.socket.emit("toLobby");
+    await waitFor(host, (s) => s.status === "lobby", "lobby tutti");
+    host.socket.emit("startGame", { gameId: "tutti", seed: { letter: "Z" } });
+    await dumpsAfter("tutti");
+    host.socket.emit("action", { type: "write", payload: { answers: { nombre: "Zulma-secreta" } } });
+    await new Promise((r) => setTimeout(r, 40));
+    for (const c of clients.slice(1)) {
+      expect(JSON.stringify(c.box.last)).not.toContain("Zulma-secreta");
+    }
+
+    host.socket.emit("toLobby");
+    await waitFor(host, (s) => s.status === "lobby", "lobby bombita");
+    host.socket.emit("startGame", { gameId: "bombita", seed: { targetId: created.playerId, min: 60_000 } });
+    for (const dump of await dumpsAfter("bombita")) {
+      expect(dump).not.toContain("explodeAt");
+    }
+
+    host.socket.emit("toLobby");
+    await waitFor(host, (s) => s.status === "lobby", "lobby mimica");
+    host.socket.emit("startGame", { gameId: "mimica", seed: { word: "mima-secreta", targetId: created.playerId } });
+    const mimicDumps = await dumpsAfter("mimica");
+    expect(mimicDumps[0]).toContain("mima-secreta");
+    for (const dump of mimicDumps.slice(1)) expect(dump).not.toContain("mima-secreta");
+  });
 });

@@ -1,5 +1,6 @@
 import type { GameContext, GameEngine, ScoreMap } from "../../types";
 import { pickRandom, shuffle } from "../../rng";
+import { optionNumber } from "../helpers";
 import { SPY_LOCATIONS } from "./locations";
 import { tallyVotes } from "../impostor/logic";
 
@@ -48,7 +49,9 @@ function pickSpies(ctx: GameContext): string[] {
   if (ctx.seed?.spyIds?.length) {
     return ctx.seed.spyIds.filter((id) => ctx.playerIds.includes(id));
   }
-  return shuffle(ctx.playerIds, ctx.rng).slice(0, 1);
+  const requested = optionNumber(ctx.options?.spyCount, 0, 0, 2);
+  const count = Math.min(requested || 1, Math.max(1, ctx.playerIds.length - 1));
+  return shuffle(ctx.playerIds, ctx.rng).slice(0, count);
 }
 
 function assignJobs(ctx: GameContext, roles: string[], spyIds: string[]): Record<string, string> {
@@ -140,9 +143,12 @@ export const spyEngine: GameEngine<SpyState> = {
       return { ...state, votes: { ...state.votes, [playerId]: target } };
     }
 
-    if (action.type === "reveal" && state.phase === "vote") {
+    if ((action.type === "reveal" || action.type === "timeout") && state.phase === "vote") {
       const next = { ...state, phase: "reveal" as const };
       return { ...next, scores: scoreSpyRound(next) };
+    }
+    if (action.type === "timeout" && state.phase === "discuss") {
+      return { ...state, phase: "vote" };
     }
 
     return state;
