@@ -28,6 +28,14 @@ export interface LocalMatch {
   nightIndex: number;
 }
 
+export function localStorageKey(gameId: GameId): string {
+  return `previa:local:v1:${gameId}`;
+}
+
+export function resetLocalToLobby(players: { name: string; color?: string }[]): LocalMatch {
+  return createLocalMatch(players);
+}
+
 export function newLocalId(): string {
   if (typeof crypto !== "undefined" && crypto.randomUUID) return crypto.randomUUID();
   return `p${Math.random().toString(36).slice(2, 10)}`;

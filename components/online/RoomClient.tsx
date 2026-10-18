@@ -1,10 +1,9 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { io, type Socket } from "socket.io-client";
 import { CategoryFilters } from "@/components/CategoryFilters";
 import { FxToggle } from "@/components/FxToggle";
-import { GamePicker } from "@/components/GamePicker";
 import { HowToPlay } from "@/components/HowToPlay";
 import { PlayerList } from "@/components/PlayerList";
 import { PodiumScreen } from "@/components/PodiumScreen";
@@ -14,6 +13,7 @@ import { RoomOptions, gameUsesCategories } from "@/components/RoomOptions";
 import { ActiveGame } from "@/components/games/ActiveGame";
 import { playFx } from "@/lib/fx";
 import { CATEGORIES, type Category } from "@/shared/games/closest/premise-types";
+import { supportsMode } from "@/shared/games/browse";
 import { getGameMeta } from "@/shared/games/registry";
 import type { ClientRoomState, GameId, GameOptions } from "@/shared/types";
 import { socketUrl, writeSession } from "@/lib/session";
@@ -23,23 +23,24 @@ export function RoomClient({
   name,
   token,
   preferredGame = null,
+  registerLeave,
+  onRoomClosed,
 }: {
   code?: string;
   name: string;
   token?: string;
   preferredGame?: GameId | null;
+  registerLeave?: (fn: () => void) => void;
+  onRoomClosed?: (text?: string) => void;
 }) {
   const [error, setError] = useState<string | null>(null);
   const [state, setState] = useState<ClientRoomState | null>(null);
   const [socket, setSocket] = useState<Socket | null>(null);
-  const [selectedGame, setSelectedGame] = useState<GameId | null>(preferredGame);
   const [categories, setCategories] = useState<string[]>([...CATEGORIES]);
   const [picante, setPicante] = useState(false);
   const [options, setOptions] = useState<GameOptions>({ timerSec: 0, rounds: 1 });
-
-  useEffect(() => {
-    setSelectedGame(preferredGame);
-  }, [preferredGame]);
+  const closedRef = useRef(onRoomClosed);
+  closedRef.current = onRoomClosed;
 
   useEffect(() => {
     const s = io(socketUrl(), { transports: ["websocket", "polling"] });
@@ -57,6 +58,9 @@ export function RoomClient({
         if (prev && prev.status !== "finished" && view.status === "finished") playFx("reveal");
         return view;
       });
+    });
+    s.on("roomClosed", (payload: { text?: string }) => {
+      closedRef.current?.(payload?.text);
     });
     s.on("connect", () => {
       s.emit("hello", hello, (res: { ok: boolean; error?: string; code?: string; playerId?: string; token?: string }) => {
@@ -82,13 +86,19 @@ export function RoomClient({
     };
   }, [code, name, token, preferredGame]);
 
+  useEffect(() => {
+    registerLeave?.(() => {
+      socket?.emit("leaveRoom");
+    });
+  }, [registerLeave, socket]);
+
   const joinUrl = useMemo(() => {
     if (!state) return "";
     const origin = typeof window === "undefined" ? "" : window.location.origin;
     return `${origin}/online?code=${state.code}`;
   }, [state]);
 
-  function send(type: "startGame" | "action" | "nextRound" | "toLobby" | "react", payload?: unknown) {
+  function send(type: "startGame" | "action" | "nextRound" | "toLobby" | "react" | "leaveRoom", payload?: unknown) {
     if (!socket) return;
     const onAck = (res?: { ok?: boolean; error?: string }) => {
       if (res && res.ok === false && res.error) setError(res.error);
@@ -104,8 +114,11 @@ export function RoomClient({
     socket.emit(type, onAck);
   }
 
+  const selectedGame = state?.gameId ?? preferredGame;
+  const selectedMeta = selectedGame ? getGameMeta(selectedGame) : null;
+
   function startSelected() {
-    if (!selectedGame) return;
+    if (!selectedGame || (selectedGame && !supportsMode(selectedGame, "online"))) return;
     if (gameUsesCategories(selectedGame) && categories.length === 0) return;
     send("startGame", {
       gameId: selectedGame,
@@ -130,8 +143,7 @@ export function RoomClient({
     );
   }
 
-  const meta = state.gameId ? getGameMeta(state.gameId) : null;
-  const selectedMeta = selectedGame ? getGameMeta(selectedGame) : null;
+  const meta = state.gameId ? getGameMeta(state.gameId) : selectedMeta;
   const connectedCount = state.players.filter((p) => p.connected).length;
   const canStartSelected =
     Boolean(selectedGame && selectedMeta) &&
@@ -151,6 +163,9 @@ export function RoomClient({
       {state.status === "lobby" ? (
         <>
           <QrCard value={joinUrl} code={state.code} />
+          <p className="lead" style={{ textAlign: "center", margin: 0 }}>
+            Link: {joinUrl}
+          </p>
           <div className="card stack">
             <h2>La barra</h2>
             <PlayerList players={state.players} youId={state.you.id} />
@@ -186,24 +201,9 @@ export function RoomClient({
                 >
                   Empezar {selectedMeta.name}
                 </button>
-                <button className="btn btn-ghost" type="button" onClick={() => setSelectedGame(null)}>
-                  Cambiar juego
-                </button>
               </>
             ) : (
-              <>
-                <h2>Elegí el juego</h2>
-                <p className="lead">Primero el juego. Después aparecen solo sus extras.</p>
-                <div className="card stack">
-                  <RoomOptions value={options} onChange={setOptions} allowNight />
-                  <FxToggle />
-                </div>
-                <GamePicker
-                  implementedOnly
-                  playerCount={connectedCount}
-                  onPick={(id: GameId) => setSelectedGame(id)}
-                />
-              </>
+              <p className="lead">Este link no trae juego. Volvé al home y elegí uno.</p>
             )
           ) : (
             <p className="lead">Esperá que el anfitrión deje de hablar y apriete un botón.</p>
@@ -217,30 +217,38 @@ export function RoomClient({
             </p>
             {meta?.howTo ? <HowToPlay text={meta.howTo} /> : null}
             {state.status === "finished" ? (
-              <PodiumScreen
-                players={state.players}
+              <>
+                <PodiumScreen
+                  players={state.players}
+                  youId={state.you.id}
+                  nightLabel={
+                    state.night ? `Noche · juego ${state.night.index + 1}/${state.night.queue.length}` : null
+                  }
+                />
+                <div className="card stack">
+                  <h3>Tabla</h3>
+                  <PlayerList players={state.players} youId={state.you.id} showScores />
+                </div>
+              </>
+            ) : null}
+            {state.status !== "finished" ? (
+              <ActiveGame
+                gameId={state.gameId!}
+                publicView={state.public}
+                privateView={state.private}
+                isHost={state.canHost}
                 youId={state.you.id}
-                nightLabel={
-                  state.night ? `Noche · juego ${state.night.index + 1}/${state.night.queue.length}` : null
-                }
+                players={state.players}
+                timerSec={state.options?.timerSec ?? options.timerSec}
+                onAction={(type, payload) => send("action", { type, payload })}
               />
             ) : null}
-            <ActiveGame
-              gameId={state.gameId!}
-              publicView={state.public}
-              privateView={state.private}
-              isHost={state.canHost}
-              youId={state.you.id}
-              players={state.players}
-              timerSec={state.options?.timerSec ?? options.timerSec}
-              onAction={(type, payload) => send("action", { type, payload })}
-            />
           </div>
-          <div className="card stack">
-            <h3>Puntaje acumulado</h3>
-            <PlayerList players={state.players} youId={state.you.id} />
+          {state.status !== "finished" ? (
             <ReactionsBar reactions={state.reactions ?? []} onReact={(emoji) => send("react", { emoji })} />
-          </div>
+          ) : (
+            <ReactionsBar reactions={state.reactions ?? []} onReact={(emoji) => send("react", { emoji })} />
+          )}
           {state.canHost && state.status === "finished" ? (
             <div className="row">
               <button className="btn btn-primary" type="button" onClick={() => send("nextRound")}>
@@ -251,10 +259,7 @@ export function RoomClient({
               <button
                 className="btn btn-ghost"
                 type="button"
-                onClick={() => {
-                  setSelectedGame(preferredGame ?? null);
-                  send("toLobby");
-                }}
+                onClick={() => send("toLobby")}
               >
                 Al living
               </button>

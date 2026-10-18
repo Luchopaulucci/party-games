@@ -7,6 +7,10 @@ Dos modos:
 1. **En línea** — el anfitrión arma una sala (código corto + QR). Cada uno entra con su nombre desde el teléfono. El server es dueño del estado: asiento, puntaje y secretos. Si recargás o se te corta, volvés al mismo asiento. Si el host se va más de N segundos, hostea otro; el original reclama al recargar. Los mensajes de socket se validan (zod) y un payload podrido no tira el proceso. Las salas vacías o inactivas se borran después de un TTL.
 2. **Pasate el celu** — un solo teléfono, 100% client-side, anda offline (PWA / service worker). Pensado para 375px.
 
+## Flujo
+
+Home con la lista de 15 juegos, en 4 categorías. Adentro de cada uno elegís local o en red (Yo nunca solo local; Tutti frutti y ¿Qué preferís? solo en red). Local: lobby de ese juego. En red: primero se crea la sala (código, link y QR) y después los ajustes. Unirse por código/link sigue directo. Salir arriba confirma; si se va el anfitrión, se cae la sala.
+
 ## Juegos (15)
 
 Extras de sala (timer, rondas, impostores/espías, **noche de juegos**) van en el lobby. En cada juego hay **¿Cómo se juega?**. Al terminar, podio con stats. Reacciones en vivo y sonido/vibración opcionales.
@@ -18,7 +22,7 @@ Extras de sala (timer, rondas, impostores/espías, **noche de juegos**) van en e
 | **El impostor** | Impostor count automático o 1/2 (Among Us / Spyfall). Al revelar **solo totales**, no el mapa de votos. |
 | **¿Más o menos?** | Rango que se achica. Timeout revela. |
 | **Espía** | [Spyfall](https://hobbyworldint.com/portfolio-item/spyfall/): 8 min típicos, el espía puede adivinar el lugar, N rondas. Acá: timer, spy count 1/2, oficio por civil. |
-| **Votación** | “Most likely to”. Solo totales. |
+| **¿Quién es más probable?** | “Most likely to”. Solo totales. |
 | **Completá la frase** | [Quiplash](https://jackbox.wiki/wiki/Quiplash): todos escriben, se vota, JINX si copian, puntos = votos. Sin mapa votante→respuesta. |
 | **Mentira creíble** | Two truths and a lie + scoring tipo [Fibbage](https://jackboxgames.fandom.com/wiki/Fibbage_(series)): el narrador suma si te creen. Totales por frase. |
 | **Reflejos** | Primer toque correcto suma, el error resta. La opción buena no viaja hasta el cierre. |

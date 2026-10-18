@@ -73,7 +73,7 @@ const IMPLEMENTED: GameMeta[] = [
   },
   {
     id: "votacion",
-    name: "Votación",
+    name: "¿Quién es más probable?",
     emoji: "🗳️",
     tagline: "¿Quién de este grupo…? Sin filtro, con consecuencias.",
     description: "Votos secretos. Solo totales.",

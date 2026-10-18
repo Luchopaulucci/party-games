@@ -4,16 +4,13 @@ import { useEffect, useMemo, useState } from "react";
 import { CategoryFilters } from "@/components/CategoryFilters";
 import { ColorDots } from "@/components/ColorDots";
 import { FxToggle } from "@/components/FxToggle";
-import { GamePicker } from "@/components/GamePicker";
-import { HandoffScreen } from "@/components/HandoffScreen";
 import { HowToPlay } from "@/components/HowToPlay";
 import { PlayerList } from "@/components/PlayerList";
 import { PodiumScreen } from "@/components/PodiumScreen";
 import { RoomOptions, gameUsesCategories } from "@/components/RoomOptions";
 import { ActiveGame } from "@/components/games/ActiveGame";
-import { nextLocalRound } from "@/lib/local-match";
+import { PassPhone } from "@/components/play/PassPhone";
 import { playFx } from "@/lib/fx";
-import { deviceCopy, useDeviceKind } from "@/lib/device";
 import { CATEGORIES, type Category } from "@/shared/games/closest/premise-types";
 import { getGameMeta } from "@/shared/games/registry";
 import type { GameId, GameOptions } from "@/shared/types";
@@ -22,17 +19,18 @@ import {
   createLocalMatch,
   hydrateMatch,
   localAction,
+  localStorageKey,
   localView,
   newLocalId,
+  nextLocalRound,
+  resetLocalToLobby,
   startLocalGame,
   type LocalMatch,
 } from "@/lib/local-match";
 
-const STORAGE = "previa:local:v1";
 const MIN_PLAYERS = 2;
 
 type DraftPlayer = { id: string; name: string; color: string };
-type Step = "pick" | "lobby";
 
 const DEFAULT_PLAYERS: DraftPlayer[] = [
   { id: "d1", name: "Luciano", color: PLAYER_COLORS[0]! },
@@ -41,28 +39,29 @@ const DEFAULT_PLAYERS: DraftPlayer[] = [
   { id: "d4", name: "Wanda", color: PLAYER_COLORS[3]! },
 ];
 
-function loadMatch(): LocalMatch | null {
+function loadMatch(gameId: GameId): LocalMatch | null {
   if (typeof window === "undefined") return null;
   try {
-    const raw = localStorage.getItem(STORAGE);
-    return raw ? hydrateMatch(JSON.parse(raw) as LocalMatch) : null;
+    const raw = localStorage.getItem(localStorageKey(gameId));
+    if (!raw) return null;
+    const match = hydrateMatch(JSON.parse(raw) as LocalMatch);
+    if (match.gameId && match.gameId !== gameId) return null;
+    return match;
   } catch {
     return null;
   }
 }
 
-function save(match: LocalMatch | null) {
+function save(gameId: GameId, match: LocalMatch | null) {
   if (!match) {
-    localStorage.removeItem(STORAGE);
+    localStorage.removeItem(localStorageKey(gameId));
     return;
   }
-  localStorage.setItem(STORAGE, JSON.stringify(match));
+  localStorage.setItem(localStorageKey(gameId), JSON.stringify(match));
 }
 
-export function LocalMatchApp() {
-  const copy = deviceCopy(useDeviceKind());
-  const [step, setStep] = useState<Step>("pick");
-  const [selectedGame, setSelectedGame] = useState<GameId | null>(null);
+export function LocalMatchApp({ gameId }: { gameId: GameId }) {
+  const meta = getGameMeta(gameId);
   const [players, setPlayers] = useState<DraftPlayer[]>(DEFAULT_PLAYERS);
   const [draft, setDraft] = useState("");
   const [categories, setCategories] = useState<string[]>([...CATEGORIES]);
@@ -73,18 +72,27 @@ export function LocalMatchApp() {
   const [hydrated, setHydrated] = useState(false);
 
   useEffect(() => {
-    setMatch(loadMatch());
+    setMatch(loadMatch(gameId));
     setHydrated(true);
-  }, []);
+  }, [gameId]);
 
-  const meta = selectedGame ? getGameMeta(selectedGame) : null;
+  useEffect(() => {
+    const onExit = () => {
+      save(gameId, null);
+      setMatch(null);
+      setUnlocked(null);
+    };
+    window.addEventListener("previa:local-exit", onExit);
+    return () => window.removeEventListener("previa:local-exit", onExit);
+  }, [gameId]);
+
   const readyPlayers = players.filter((p) => p.name.trim().length >= 2);
   const minNeeded = Math.max(MIN_PLAYERS, meta?.minPlayers ?? MIN_PLAYERS);
   const canStart =
-    Boolean(selectedGame) &&
+    Boolean(meta) &&
     readyPlayers.length >= minNeeded &&
     readyPlayers.length <= MAX_LOCAL_PLAYERS &&
-    (!gameUsesCategories(selectedGame) || categories.length > 0);
+    (!gameUsesCategories(gameId) || categories.length > 0);
 
   const currentPlayer = useMemo(() => {
     if (!match || match.revealQueue.length === 0) return null;
@@ -94,7 +102,7 @@ export function LocalMatchApp() {
 
   function persist(next: LocalMatch) {
     setMatch(next);
-    save(next);
+    save(gameId, next);
   }
 
   function addPlayer() {
@@ -116,11 +124,11 @@ export function LocalMatchApp() {
   }
 
   function begin() {
-    if (!selectedGame || !canStart) return;
+    if (!canStart) return;
     const created = createLocalMatch(readyPlayers);
-    const started = startLocalGame(created, selectedGame, {
-      categories: gameUsesCategories(selectedGame) ? categories : [],
-      picante: gameUsesCategories(selectedGame) ? picante : false,
+    const started = startLocalGame(created, gameId, {
+      categories: gameUsesCategories(gameId) ? categories : [],
+      picante: gameUsesCategories(gameId) ? picante : false,
       options,
     });
     if (typeof started === "string") return;
@@ -128,42 +136,21 @@ export function LocalMatchApp() {
     persist(started);
   }
 
-  function resetToPick() {
-    save(null);
+  function exitToLobby() {
+    const next = resetLocalToLobby(readyPlayers);
+    save(gameId, null);
     setMatch(null);
     setUnlocked(null);
-    setSelectedGame(null);
-    setStep("pick");
+    return next;
   }
 
-  if (!hydrated) {
+  if (!hydrated || !meta) {
     return <p className="lead">Acomodando la mesa…</p>;
   }
 
   if (!match) {
-    if (step === "pick" || !selectedGame || !meta) {
-      return (
-        <div className="stack">
-          <p className="kicker">{copy.kicker}</p>
-          <h1>Compartiendo el dispositivo</h1>
-          <p className="lead">Elegí el juego. Después armás el lobby.</p>
-          <h2>Juegos</h2>
-          <GamePicker
-            implementedOnly
-            onPick={(id) => {
-              setSelectedGame(id);
-              setStep("lobby");
-            }}
-          />
-        </div>
-      );
-    }
-
     return (
       <div className="stack">
-        <button className="btn btn-ghost" type="button" onClick={() => setStep("pick")}>
-          ← Cambiar juego
-        </button>
         <p className="pill">
           {meta.emoji} {meta.name}
         </p>
@@ -235,11 +222,13 @@ export function LocalMatchApp() {
             </button>
           </form>
           {readyPlayers.length < minNeeded ? (
-            <p className="category-hint">Faltan jugadores para arrancar ({readyPlayers.length}/{minNeeded}).</p>
+            <p className="category-hint">
+              Faltan jugadores para arrancar ({readyPlayers.length}/{minNeeded}).
+            </p>
           ) : null}
         </div>
 
-        {gameUsesCategories(selectedGame) ? (
+        {gameUsesCategories(gameId) ? (
           <div className="card stack">
             <CategoryFilters
               selected={categories}
@@ -253,7 +242,7 @@ export function LocalMatchApp() {
         ) : null}
 
         <div className="card stack">
-          <RoomOptions value={options} onChange={setOptions} gameId={selectedGame} />
+          <RoomOptions value={options} onChange={setOptions} gameId={gameId} />
           <FxToggle />
         </div>
 
@@ -264,19 +253,13 @@ export function LocalMatchApp() {
     );
   }
 
-  const playingMeta = match.gameId ? getGameMeta(match.gameId) : null;
+  const playingMeta = match.gameId ? getGameMeta(match.gameId) : meta;
   const viewer = currentPlayer ?? match.players[0]!;
   const view = localView(match, viewer.id);
   const needsGate = match.status === "playing" && match.revealQueue.length > 0 && unlocked !== viewer.id;
 
   if (needsGate && currentPlayer) {
-    return (
-      <HandoffScreen
-        name={currentPlayer.name}
-        color={currentPlayer.color}
-        onReady={() => setUnlocked(currentPlayer.id)}
-      />
-    );
+    return <PassPhone name={currentPlayer.name} color={currentPlayer.color} onReady={() => setUnlocked(currentPlayer.id)} />;
   }
 
   return (
@@ -288,33 +271,41 @@ export function LocalMatchApp() {
       <div className="card stack">
         {playingMeta?.howTo ? <HowToPlay text={playingMeta.howTo} /> : null}
         {match.status === "finished" ? (
-          <PodiumScreen
-            players={match.players}
+          <>
+            <PodiumScreen
+              players={match.players}
+              youId={viewer.id}
+              nightLabel={match.options.night ? "Noche de juegos" : null}
+            />
+            <div className="card stack">
+              <h3>Tabla</h3>
+              <PlayerList players={match.players} youId={viewer.id} showScores />
+            </div>
+          </>
+        ) : null}
+        {match.status !== "finished" ? (
+          <ActiveGame
+            gameId={match.gameId!}
+            publicView={view.public}
+            privateView={view.private}
+            isHost
             youId={viewer.id}
-            nightLabel={match.options.night ? "Noche de juegos" : null}
+            players={match.players}
+            timerSec={match.options.timerSec}
+            onAction={(type, payload) => {
+              const applied = localAction(match, viewer.id, { type, payload });
+              const shouldPass = match.gameId === "closest" && type === "guess";
+              const nextIndex = match.passIndex + 1;
+              if (shouldPass && nextIndex < match.revealQueue.length && applied.status === "playing") {
+                setUnlocked(null);
+                persist({ ...applied, passIndex: nextIndex });
+                return;
+              }
+              if (applied.status === "finished" && match.status !== "finished") playFx("reveal");
+              persist(applied);
+            }}
           />
         ) : null}
-        <ActiveGame
-          gameId={match.gameId!}
-          publicView={view.public}
-          privateView={view.private}
-          isHost
-          youId={viewer.id}
-          players={match.players}
-          timerSec={match.options.timerSec}
-          onAction={(type, payload) => {
-            const applied = localAction(match, viewer.id, { type, payload });
-            const shouldPass = match.gameId === "closest" && type === "guess";
-            const nextIndex = match.passIndex + 1;
-            if (shouldPass && nextIndex < match.revealQueue.length && applied.status === "playing") {
-              setUnlocked(null);
-              persist({ ...applied, passIndex: nextIndex });
-              return;
-            }
-            if (applied.status === "finished" && match.status !== "finished") playFx("reveal");
-            persist(applied);
-          }}
-        />
         {match.status === "playing" && match.revealQueue.length > 1 ? (
           <button
             className="btn btn-ghost"
@@ -328,11 +319,6 @@ export function LocalMatchApp() {
             Pasar celu
           </button>
         ) : null}
-      </div>
-
-      <div className="card stack">
-        <h3>Tabla</h3>
-        <PlayerList players={match.players} youId={viewer.id} />
       </div>
 
       {match.status === "finished" ? (
@@ -350,15 +336,11 @@ export function LocalMatchApp() {
           >
             {match.options.night ? "Siguiente de la noche" : "Otra ronda"}
           </button>
-          <button className="btn btn-ghost" type="button" onClick={resetToPick}>
-            Nueva previa
+          <button className="btn btn-ghost" type="button" onClick={exitToLobby}>
+            Al lobby
           </button>
         </div>
-      ) : (
-        <button className="btn btn-ghost" type="button" onClick={resetToPick}>
-          Cortar y volver
-        </button>
-      )}
+      ) : null}
     </div>
   );
 }

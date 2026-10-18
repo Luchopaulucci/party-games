@@ -110,6 +110,7 @@ export class RoomManager {
   private readonly hostTimers = new Map<string, NodeJS.Timeout>();
   private readonly sweepTimer: NodeJS.Timeout | null;
   onChange: ((room: Room) => void) | null = null;
+  onClosed: ((info: { code: string; text: string; seats: Seat[] }) => void) | null = null;
 
   constructor(opts: RoomManagerOptions = {}) {
     this.hostGraceMs = opts.hostGraceMs ?? HOST_GRACE_DEFAULT_MS;
@@ -391,6 +392,31 @@ export class RoomManager {
     }
     if (!room.gameId) return "Elegí un juego primero.";
     return this.startGame(code, hostId, room.gameId);
+  }
+
+  leaveRoom(code: string, playerId: string): { closed: boolean; text?: string } | string {
+    const room = this.rooms.get(code);
+    if (!room) return "Sala introvable.";
+    const seat = room.seats.find((s) => s.id === playerId);
+    if (!seat) return "No estás en esta sala.";
+    if (seat.id === room.hostId) {
+      const text = `${seat.name} se fue. Se cayó la previa.`;
+      this.closeRoom(room, text);
+      return { closed: true, text };
+    }
+    room.seats = room.seats.filter((s) => s.id !== playerId);
+    this.emit(room);
+    if (room.seats.length === 0) {
+      this.deleteRoom(room.code);
+      return { closed: true, text: "La sala quedó vacía." };
+    }
+    return { closed: false };
+  }
+
+  closeRoom(room: Room, text: string) {
+    const seats = room.seats.map((s) => s);
+    this.onClosed?.({ code: room.code, text, seats });
+    this.deleteRoom(room.code);
   }
 
   toLobby(code: string, hostId: string): string | null {

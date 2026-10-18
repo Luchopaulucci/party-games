@@ -166,6 +166,23 @@ describe("RoomManager", () => {
     mgr.dispose();
   });
 
+  it("si sale el anfitrión se borra la sala; si sale otro, no", () => {
+    const mgr = new RoomManager({ allowTestSeeds: true, sweepIntervalMs: 0 });
+    const host = mgr.createRoom("Lucho");
+    expect(host.ok).toBe(true);
+    if (!host.ok) return;
+    const guest = mgr.joinRoom(host.code, "Meli");
+    expect(guest.ok).toBe(true);
+    if (!guest.ok) return;
+    const guestLeft = mgr.leaveRoom(host.code, guest.playerId);
+    expect(guestLeft).toEqual({ closed: false });
+    expect(mgr.rooms.get(host.code)?.seats.map((s) => s.name)).toEqual(["Lucho"]);
+    const hostLeft = mgr.leaveRoom(host.code, host.playerId);
+    expect(hostLeft).toMatchObject({ closed: true });
+    expect(mgr.rooms.has(host.code)).toBe(false);
+    mgr.dispose();
+  });
+
   it("arranca cada uno de los 15 juegos restantes", () => {
     const mgr = new RoomManager({ allowTestSeeds: true, sweepIntervalMs: 0 });
     const host = mgr.createRoom("Lucho");

@@ -583,6 +583,79 @@ select:focus-visible {
   opacity: 0.55;
 }
 
+.btn-exit {
+  width: auto;
+  min-height: 44px;
+  padding: 8px 14px;
+  flex-shrink: 0;
+}
+
+.confirm-exit {
+  position: fixed;
+  inset: 0;
+  z-index: 50;
+  display: grid;
+  place-items: center;
+  padding: 24px;
+  background: rgba(20, 12, 51, 0.72);
+}
+
+.confirm-exit .card {
+  width: min(390px, 100%);
+}
+
+.guess-slider {
+  display: grid;
+  gap: 10px;
+  justify-items: center;
+  text-align: center;
+}
+
+.guess-slider-value {
+  font-family: var(--display);
+  font-size: 4.2rem;
+  line-height: 0.9;
+  margin: 12px 0 0;
+  font-variant-numeric: tabular-nums;
+}
+
+.guess-slider-unit {
+  margin: 0;
+  color: var(--color-mist);
+}
+
+.guess-slider-pad {
+  width: 100%;
+  min-height: 160px;
+  display: grid;
+  place-items: center;
+  gap: 10px;
+  touch-action: none;
+}
+
+.guess-swipe-hint {
+  margin: 0;
+  letter-spacing: 0.28em;
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: var(--color-mist);
+}
+
+.guess-card {
+  width: 100%;
+  background: var(--color-gold);
+  color: var(--color-ink);
+  border-radius: 28px 28px 0 0;
+  padding: 22px 18px 28px;
+}
+
+.guess-card p {
+  margin: 0;
+  font-family: var(--display);
+  font-size: 1.35rem;
+  line-height: 1.2;
+}
+
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,
