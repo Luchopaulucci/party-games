@@ -1,6 +1,6 @@
 "use client";
 
-import type { GameOptions } from "@/shared/types";
+import type { GameId, GameOptions } from "@/shared/types";
 
 const TIMERS = [0, 30, 45, 60, 90];
 const ROUNDS = [1, 3, 5, 8];
@@ -8,16 +8,21 @@ const ROUNDS = [1, 3, 5, 8];
 export function RoomOptions({
   value,
   onChange,
+  gameId,
+  allowNight = false,
 }: {
   value: GameOptions;
   onChange: (next: GameOptions) => void;
+  gameId?: GameId | null;
+  allowNight?: boolean;
 }) {
+  const showImpostors = !gameId || gameId === "impostor";
+  const showSpies = !gameId || gameId === "espia";
+  const showAuction = !gameId || gameId === "subasta";
+
   return (
     <div className="stack">
-      <p className="kicker">Extras de sala</p>
-      <p className="lead" style={{ margin: 0 }}>
-        Luciano después saca lo que no le cierre. Por default, sin timer y una ronda.
-      </p>
+      <p className="kicker">Extras de la sala</p>
       <label>
         Timer de ronda
         <select
@@ -44,50 +49,62 @@ export function RoomOptions({
           ))}
         </select>
       </label>
-      <label>
-        Impostores (si aplica)
-        <select
-          value={value.impostorCount ?? 0}
-          onChange={(e) => onChange({ ...value, impostorCount: Number(e.target.value) })}
-        >
-          <option value={0}>Automático</option>
-          <option value={1}>1</option>
-          <option value={2}>2</option>
-        </select>
-      </label>
-      <label>
-        Espías (si aplica)
-        <select
-          value={value.spyCount ?? 0}
-          onChange={(e) => onChange({ ...value, spyCount: Number(e.target.value) })}
-        >
-          <option value={0}>Automático</option>
-          <option value={1}>1</option>
-          <option value={2}>2</option>
-        </select>
-      </label>
-      <label>
-        Modo Subasta
-        <select
-          value={value.mode ?? "no-pasarse"}
-          onChange={(e) => onChange({ ...value, mode: e.target.value })}
-        >
-          <option value="no-pasarse">The Price is Right: sin pasarse</option>
-          <option value="cerca">El más cercano (aunque se pase)</option>
-        </select>
-      </label>
-      <label className="player" style={{ display: "flex", justifyContent: "space-between" }}>
-        <span>
-          <strong>Noche de juegos</strong>
-          <small>Encadena varios juegos y acumula puntos. El podio sale al final.</small>
-        </span>
-        <input
-          type="checkbox"
-          checked={Boolean(value.night)}
-          onChange={(e) => onChange({ ...value, night: e.target.checked })}
-          style={{ width: 22, height: 22, accentColor: "#ff8fab" }}
-        />
-      </label>
+      {showImpostors ? (
+        <label>
+          Impostores
+          <select
+            value={value.impostorCount ?? 0}
+            onChange={(e) => onChange({ ...value, impostorCount: Number(e.target.value) })}
+          >
+            <option value={0}>Automático</option>
+            <option value={1}>1</option>
+            <option value={2}>2</option>
+          </select>
+        </label>
+      ) : null}
+      {showSpies ? (
+        <label>
+          Espías
+          <select
+            value={value.spyCount ?? 0}
+            onChange={(e) => onChange({ ...value, spyCount: Number(e.target.value) })}
+          >
+            <option value={0}>Automático</option>
+            <option value={1}>1</option>
+            <option value={2}>2</option>
+          </select>
+        </label>
+      ) : null}
+      {showAuction ? (
+        <label>
+          Modo Subasta
+          <select
+            value={value.mode ?? "no-pasarse"}
+            onChange={(e) => onChange({ ...value, mode: e.target.value })}
+          >
+            <option value="no-pasarse">The Price is Right: sin pasarse</option>
+            <option value="cerca">El más cercano (aunque se pase)</option>
+          </select>
+        </label>
+      ) : null}
+      {allowNight ? (
+        <label className="player" style={{ display: "flex", justifyContent: "space-between" }}>
+          <span>
+            <strong>Noche de juegos</strong>
+            <small>Encadena varios juegos y acumula puntos. El podio sale al final.</small>
+          </span>
+          <input
+            type="checkbox"
+            checked={Boolean(value.night)}
+            onChange={(e) => onChange({ ...value, night: e.target.checked })}
+            style={{ width: 22, height: 22, accentColor: "#ff8fab" }}
+          />
+        </label>
+      ) : null}
     </div>
   );
+}
+
+export function gameUsesCategories(gameId: GameId | null | undefined): boolean {
+  return gameId === "closest";
 }

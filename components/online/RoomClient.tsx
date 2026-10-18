@@ -3,15 +3,15 @@
 import { useEffect, useMemo, useState } from "react";
 import { io, type Socket } from "socket.io-client";
 import { CategoryFilters } from "@/components/CategoryFilters";
-import { GamePicker } from "@/components/GamePicker";
-import { RoomOptions } from "@/components/RoomOptions";
-import { PlayerList } from "@/components/PlayerList";
-import { QrCard } from "@/components/QrCard";
-import { ActiveGame } from "@/components/games/ActiveGame";
-import { HowToPlay } from "@/components/HowToPlay";
-import { PodiumScreen } from "@/components/PodiumScreen";
-import { ReactionsBar } from "@/components/ReactionsBar";
 import { FxToggle } from "@/components/FxToggle";
+import { GamePicker } from "@/components/GamePicker";
+import { HowToPlay } from "@/components/HowToPlay";
+import { PlayerList } from "@/components/PlayerList";
+import { PodiumScreen } from "@/components/PodiumScreen";
+import { QrCard } from "@/components/QrCard";
+import { ReactionsBar } from "@/components/ReactionsBar";
+import { RoomOptions, gameUsesCategories } from "@/components/RoomOptions";
+import { ActiveGame } from "@/components/games/ActiveGame";
 import { playFx } from "@/lib/fx";
 import { CATEGORIES, type Category } from "@/shared/games/closest/premise-types";
 import { getGameMeta } from "@/shared/games/registry";
@@ -22,17 +22,24 @@ export function RoomClient({
   code,
   name,
   token,
+  preferredGame = null,
 }: {
   code?: string;
   name: string;
   token?: string;
+  preferredGame?: GameId | null;
 }) {
   const [error, setError] = useState<string | null>(null);
   const [state, setState] = useState<ClientRoomState | null>(null);
   const [socket, setSocket] = useState<Socket | null>(null);
+  const [selectedGame, setSelectedGame] = useState<GameId | null>(preferredGame);
   const [categories, setCategories] = useState<string[]>([...CATEGORIES]);
   const [picante, setPicante] = useState(false);
   const [options, setOptions] = useState<GameOptions>({ timerSec: 0, rounds: 1, mode: "no-pasarse" });
+
+  useEffect(() => {
+    setSelectedGame(preferredGame);
+  }, [preferredGame]);
 
   useEffect(() => {
     const s = io(socketUrl(), { transports: ["websocket", "polling"] });
@@ -64,7 +71,8 @@ export function RoomClient({
           name,
         });
         if (!code && res.code) {
-          window.history.replaceState(null, "", `/online/sala/${res.code}`);
+          const q = preferredGame ? `?game=${preferredGame}` : "";
+          window.history.replaceState(null, "", `/online/sala/${res.code}${q}`);
         }
       });
     });
@@ -72,7 +80,7 @@ export function RoomClient({
     return () => {
       s.disconnect();
     };
-  }, [code, name, token]);
+  }, [code, name, token, preferredGame]);
 
   const joinUrl = useMemo(() => {
     if (!state) return "";
@@ -96,6 +104,17 @@ export function RoomClient({
     socket.emit(type, onAck);
   }
 
+  function startSelected() {
+    if (!selectedGame) return;
+    if (gameUsesCategories(selectedGame) && categories.length === 0) return;
+    send("startGame", {
+      gameId: selectedGame,
+      categories: gameUsesCategories(selectedGame) ? categories : [],
+      picante: gameUsesCategories(selectedGame) ? picante : false,
+      options,
+    });
+  }
+
   if (!state) {
     return (
       <div className="stack">
@@ -112,6 +131,12 @@ export function RoomClient({
   }
 
   const meta = state.gameId ? getGameMeta(state.gameId) : null;
+  const selectedMeta = selectedGame ? getGameMeta(selectedGame) : null;
+  const connectedCount = state.players.filter((p) => p.connected).length;
+  const canStartSelected =
+    Boolean(selectedGame && selectedMeta) &&
+    connectedCount >= (selectedMeta?.minPlayers ?? 2) &&
+    (!gameUsesCategories(selectedGame) || categories.length > 0);
 
   return (
     <div className="stack">
@@ -131,25 +156,55 @@ export function RoomClient({
             <PlayerList players={state.players} youId={state.you.id} />
           </div>
           {state.canHost ? (
-            <>
-              <div className="card stack">
-                <CategoryFilters
-                  selected={categories}
-                  picante={picante}
-                  onToggle={(id: Category) =>
-                    setCategories((cur) => (cur.includes(id) ? cur.filter((c) => c !== id) : [...cur, id]))
-                  }
-                onPicante={() => setPicante((v) => !v)}
-              />
-              <RoomOptions value={options} onChange={setOptions} />
-              <FxToggle />
-            </div>
-            <h2>Elegí el juego</h2>
-            <GamePicker
-              playerCount={state.players.filter((p) => p.connected).length}
-              onPick={(id: GameId) => send("startGame", { gameId: id, categories, picante, options })}
-            />
-            </>
+            selectedGame && selectedMeta ? (
+              <>
+                <div className="card stack">
+                  <p className="pill">
+                    {selectedMeta.emoji} {selectedMeta.name}
+                  </p>
+                  <p className="lead" style={{ margin: 0 }}>
+                    Configurá este juego y dale play cuando esté la mesa.
+                  </p>
+                  {gameUsesCategories(selectedGame) ? (
+                    <CategoryFilters
+                      selected={categories}
+                      picante={picante}
+                      onToggle={(id: Category) =>
+                        setCategories((cur) => (cur.includes(id) ? cur.filter((c) => c !== id) : [...cur, id]))
+                      }
+                      onPicante={() => setPicante((v) => !v)}
+                    />
+                  ) : null}
+                  <RoomOptions value={options} onChange={setOptions} gameId={selectedGame} />
+                  <FxToggle />
+                </div>
+                <button
+                  className="btn btn-primary"
+                  type="button"
+                  disabled={!canStartSelected}
+                  onClick={startSelected}
+                >
+                  Empezar {selectedMeta.name}
+                </button>
+                <button className="btn btn-ghost" type="button" onClick={() => setSelectedGame(null)}>
+                  Cambiar juego
+                </button>
+              </>
+            ) : (
+              <>
+                <h2>Elegí el juego</h2>
+                <p className="lead">Primero el juego. Después aparecen solo sus extras.</p>
+                <div className="card stack">
+                  <RoomOptions value={options} onChange={setOptions} allowNight />
+                  <FxToggle />
+                </div>
+                <GamePicker
+                  implementedOnly
+                  playerCount={connectedCount}
+                  onPick={(id: GameId) => setSelectedGame(id)}
+                />
+              </>
+            )
           ) : (
             <p className="lead">Esperá que el anfitrión deje de hablar y apriete un botón.</p>
           )}
@@ -157,13 +212,17 @@ export function RoomClient({
       ) : (
         <>
           <div className="card stack">
-            <p className="pill">{meta?.emoji} {meta?.name}</p>
+            <p className="pill">
+              {meta?.emoji} {meta?.name}
+            </p>
             {meta?.howTo ? <HowToPlay text={meta.howTo} /> : null}
             {state.status === "finished" ? (
               <PodiumScreen
                 players={state.players}
                 youId={state.you.id}
-                nightLabel={state.night ? `Noche · juego ${state.night.index + 1}/${state.night.queue.length}` : null}
+                nightLabel={
+                  state.night ? `Noche · juego ${state.night.index + 1}/${state.night.queue.length}` : null
+                }
               />
             ) : null}
             <ActiveGame
@@ -189,7 +248,14 @@ export function RoomClient({
                   ? "Siguiente juego de la noche"
                   : "Otra ronda"}
               </button>
-              <button className="btn btn-ghost" type="button" onClick={() => send("toLobby")}>
+              <button
+                className="btn btn-ghost"
+                type="button"
+                onClick={() => {
+                  setSelectedGame(preferredGame ?? null);
+                  send("toLobby");
+                }}
+              >
                 Al living
               </button>
             </div>

@@ -5,6 +5,13 @@ import { Suspense } from "react";
 import { RoomClient } from "@/components/online/RoomClient";
 import { Shell } from "@/components/Shell";
 import { readSession } from "@/lib/session";
+import { getGameMeta } from "@/shared/games/registry";
+import type { GameId } from "@/shared/types";
+
+function parseGame(raw: string | null): GameId | null {
+  if (!raw) return null;
+  return getGameMeta(raw as GameId) ? (raw as GameId) : null;
+}
 
 function RoomInner() {
   const params = useParams<{ code: string }>();
@@ -14,8 +21,9 @@ function RoomInner() {
   const stored = rawCode ? readSession(rawCode) : null;
   const name = nameFromQuery || stored?.name || "Invitado";
   const token = stored?.token;
+  const preferredGame = parseGame(search.get("game"));
 
-  return <RoomClient code={rawCode} name={name} token={token} />;
+  return <RoomClient code={rawCode} name={name} token={token} preferredGame={preferredGame} />;
 }
 
 export default function SalaPage() {

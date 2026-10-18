@@ -3,7 +3,7 @@ import Link from "next/link";
 export function Shell({
   children,
   backHref = "/",
-  kicker = "la previa",
+  kicker,
 }: {
   children: React.ReactNode;
   backHref?: string;
@@ -14,9 +14,8 @@ export function Shell({
       <div className="topbar">
         <Link href={backHref} className="brand">
           <b>La Previa</b>
-          <span>{kicker}</span>
+          {kicker ? <span>{kicker}</span> : null}
         </Link>
-        <span className="pill">🇦🇷 rioplatense</span>
       </div>
       {children}
     </div>

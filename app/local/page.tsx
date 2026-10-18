@@ -5,7 +5,7 @@ import { Shell } from "@/components/Shell";
 
 export default function LocalPage() {
   return (
-    <Shell backHref="/" kicker="un solo celu">
+    <Shell backHref="/" kicker="compartiendo">
       <LocalMatchApp />
     </Shell>
   );
