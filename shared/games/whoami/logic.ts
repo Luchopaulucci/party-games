@@ -1,6 +1,6 @@
 import type { GameContext, GameEngine, ScoreMap } from "../../types";
 import { pickRandom } from "../../rng";
-import { WHOAMI_CHARACTERS } from "./characters";
+import { filterWhoAmI, WHOAMI_CHARACTERS } from "./characters";
 
 export type WhoAmIPhase = "questioning" | "done";
 export type YesNo = "si" | "no" | "nose";
@@ -63,7 +63,8 @@ function pickCharacter(ctx: GameContext) {
       hint: ctx.seed.hint ?? "pista de prueba",
     };
   }
-  return pickRandom(WHOAMI_CHARACTERS, ctx.rng, ctx.usedContentIds ?? [], (c) => c.id);
+  const pool = filterWhoAmI(ctx.options?.packs ?? ctx.categories);
+  return pickRandom(pool.length ? pool : WHOAMI_CHARACTERS, ctx.rng, ctx.usedContentIds ?? [], (c) => c.id);
 }
 
 function pickTarget(ctx: GameContext): string {
@@ -115,7 +116,8 @@ export const whoamiEngine: GameEngine<WhoAmIState> = {
 
     if (action.type === "ask") {
       if (playerId !== state.targetId) return state;
-      const text = String((action.payload as { text?: unknown })?.text ?? "").trim();
+      const raw = action.payload && typeof action.payload === "object" ? (action.payload as { text?: unknown }).text : action.payload;
+      const text = typeof raw === "string" ? raw.trim() : "";
       if (text.length < 3 || text.length > 140) return state;
       const open = state.questions.some((q) => q.answer === null);
       if (open) return state;
@@ -130,14 +132,15 @@ export const whoamiEngine: GameEngine<WhoAmIState> = {
 
     if (action.type === "answer") {
       if (playerId === state.targetId) return state;
-      const payload = action.payload as { questionId?: string; value?: YesNo } | undefined;
-      if (!payload?.questionId || !payload.value) return state;
-      if (!["si", "no", "nose"].includes(payload.value)) return state;
+      if (!action.payload || typeof action.payload !== "object") return state;
+      const payload = action.payload as { questionId?: unknown; value?: unknown };
+      if (typeof payload.questionId !== "string" || !payload.value) return state;
+      if (!["si", "no", "nose"].includes(String(payload.value))) return state;
       return {
         ...state,
         questions: state.questions.map((q) =>
           q.id === payload.questionId && q.answer === null
-            ? { ...q, answer: payload.value!, answeredBy: playerId }
+            ? { ...q, answer: payload.value as YesNo, answeredBy: playerId }
             : q,
         ),
       };

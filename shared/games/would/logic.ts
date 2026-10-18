@@ -1,5 +1,6 @@
 import type { GameEngine, ScoreMap } from "../../types";
 import { pickRandom } from "../../rng";
+import { pickRandomReader } from "../../play/reader";
 import { filterByPack } from "../packs";
 import { WOULD_PROMPTS, type WouldPrompt } from "./prompts";
 
@@ -9,6 +10,7 @@ export interface WouldState {
   phase: WouldPhase;
   prompt: WouldPrompt;
   votes: Record<string, "left" | "right">;
+  readerId: string;
 }
 
 export interface WouldPublicView {
@@ -16,11 +18,13 @@ export interface WouldPublicView {
   left: string;
   right: string;
   votedIds: string[];
+  readerId: string;
   totals?: { left: number; right: number };
 }
 
 export interface WouldPrivateView {
   myVote: "left" | "right" | null;
+  isReader: boolean;
 }
 
 export const wouldEngine: GameEngine<WouldState> = {
@@ -31,15 +35,25 @@ export const wouldEngine: GameEngine<WouldState> = {
       ctx.seed?.prompt && ctx.seed.answer
         ? { id: "seeded", pack: "clasico" as const, left: ctx.seed.prompt, right: ctx.seed.answer }
         : pickRandom(filterByPack(WOULD_PROMPTS, ctx), ctx.rng, ctx.usedContentIds ?? [], (p) => p.id);
-    return { phase: "vote", prompt, votes: {} };
+    const reader = pickRandomReader(
+      ctx.playerIds.map((id) => ({ id })),
+      ctx.rng,
+    );
+    return { phase: "vote", prompt, votes: {}, readerId: reader?.id ?? ctx.playerIds[0]! };
   },
 
-  reduce(state, action, playerId) {
+  reduce(state, action, playerId, ctx) {
     if (state.phase === "reveal") return state;
     if (action.type === "vote") {
-      const side = (action.payload as { side?: unknown })?.side;
+      const side =
+        action.payload && typeof action.payload === "object"
+          ? (action.payload as { side?: unknown }).side
+          : undefined;
       if (side !== "left" && side !== "right") return state;
-      return { ...state, votes: { ...state.votes, [playerId]: side } };
+      const pick: "left" | "right" = side;
+      const votes: Record<string, "left" | "right"> = { ...state.votes, [playerId]: pick };
+      const allIn = ctx.playerIds.every((id) => votes[id]);
+      return { ...state, votes, phase: allIn ? "reveal" : "vote" };
     }
     if (action.type === "reveal" || action.type === "timeout") {
       return { ...state, phase: "reveal" };
@@ -53,6 +67,7 @@ export const wouldEngine: GameEngine<WouldState> = {
       left: state.prompt.left,
       right: state.prompt.right,
       votedIds: Object.keys(state.votes),
+      readerId: state.readerId,
     };
     if (state.phase === "reveal") {
       const values = Object.values(state.votes);
@@ -65,25 +80,15 @@ export const wouldEngine: GameEngine<WouldState> = {
   },
 
   privateView(state, playerId): WouldPrivateView {
-    return { myVote: state.votes[playerId] ?? null };
+    return { myVote: state.votes[playerId] ?? null, isReader: state.readerId === playerId };
   },
 
   isFinished(state) {
     return state.phase === "reveal";
   },
 
-  scores(state): ScoreMap {
-    if (state.phase !== "reveal") return {};
-    const values = Object.values(state.votes);
-    const left = values.filter((v) => v === "left").length;
-    const right = values.filter((v) => v === "right").length;
-    const winner = left === right ? null : left > right ? "left" : "right";
-    if (!winner) return Object.fromEntries(Object.keys(state.votes).map((id) => [id, 1]));
-    const out: ScoreMap = {};
-    for (const [id, side] of Object.entries(state.votes)) {
-      if (side === winner) out[id] = 2;
-    }
-    return out;
+  scores(): ScoreMap {
+    return {};
   },
 
   usedContentId(state) {

@@ -37,6 +37,8 @@ const PASS_AFTER: Partial<Record<GameId, string[]>> = {
   mentira: ["write", "vote"],
   "completa-frase": ["write", "vote"],
   cadena: ["word"],
+  votacion: ["vote"],
+  reflejos: ["stop"],
 };
 
 function advancePass(match: LocalMatch, applied: LocalMatch, type: string): LocalMatch {

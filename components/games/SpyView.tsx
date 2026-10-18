@@ -56,17 +56,26 @@ export function SpyView({
 
   return (
     <div className="stack">
-      <p className="lead">Hay {publicView.spyCount} espía(s). Pregunten como si fuera una cena incómoda.</p>
+      <p className="lead">
+        Hay un escenario secreto y {publicView.spyCount} espía{publicView.spyCount === 1 ? "" : "s"}. Cada civil tiene un
+        rol y lo actúa con mímica. El espía no sabe el lugar: inventá y no te mandes al frente.
+      </p>
       <div className="secret">
         {privateView.role === "espia" ? (
           <>
+            <p className="kicker">Tu rol</p>
             <div className="prompt">Sos el espía</div>
-            <p>No sabés el lugar. Chamuyá y sobreviví. Si lo pescás, tiralo.</p>
+            <p>No ves el escenario. Actuá un oficio con mímica y pescá el lugar. El resto no ve tu rol.</p>
           </>
         ) : (
           <>
+            <p className="kicker">Escenario</p>
             <div className="prompt">{privateView.location}</div>
-            <p>Tu oficio: {privateView.job}. No se lo des al aire.</p>
+            <p className="kicker">Tu rol (se actúa con mímica)</p>
+            <p className="prompt" style={{ fontSize: "1.7rem" }}>
+              {privateView.job}
+            </p>
+            <p>Hacé mímica de ese rol. Pregunten para pescar al que no está en el lugar.</p>
           </>
         )}
       </div>

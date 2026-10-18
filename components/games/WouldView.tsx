@@ -1,51 +1,59 @@
 "use client";
 
+import { RandomReader } from "@/components/play/RandomReader";
+import { RoundReveal } from "@/components/play/RoundReveal";
 import type { WouldPrivateView, WouldPublicView } from "@/shared/games/would/logic";
 
 export function WouldView({
   publicView,
   privateView,
-  isHost,
   players,
   onAction,
 }: {
   publicView: WouldPublicView;
   privateView: WouldPrivateView;
   isHost: boolean;
-  players: { id: string }[];
+  players: { id: string; name: string; color?: string }[];
   onAction: (type: string, payload?: unknown) => void;
 }) {
+  const reader = players.find((p) => p.id === publicView.readerId);
+
   if (publicView.phase === "reveal") {
     const t = publicView.totals ?? { left: 0, right: 0 };
     return (
-      <div className="stack">
-        <p className="prompt">¿Qué eligió la mesa?</p>
-        <p className="lead">
-          {publicView.left}: {t.left} · {publicView.right}: {t.right}
-        </p>
-      </div>
+      <RoundReveal
+        title="La mesa eligió"
+        headline="¿Qué preferís?"
+        lines={[`${publicView.left}: ${t.left}`, `${publicView.right}: ${t.right}`, "Sin puntaje. Solo vergüenza."]}
+      />
     );
   }
 
   return (
     <div className="stack">
+      {reader ? <RandomReader name={reader.name} color={reader.color} prompt="Lee las dos opciones. El resto vota." /> : null}
       <p className="prompt">¿Qué preferís?</p>
-      <button className="btn btn-primary" type="button" onClick={() => onAction("vote", { side: "left" })}>
+      <button
+        className="btn btn-primary"
+        type="button"
+        disabled={privateView.myVote != null}
+        onClick={() => onAction("vote", { side: "left" })}
+      >
         {publicView.left}
         {privateView.myVote === "left" ? " · tu voto" : ""}
       </button>
-      <button className="btn btn-gold" type="button" onClick={() => onAction("vote", { side: "right" })}>
+      <button
+        className="btn btn-gold"
+        type="button"
+        disabled={privateView.myVote != null}
+        onClick={() => onAction("vote", { side: "right" })}
+      >
         {publicView.right}
         {privateView.myVote === "right" ? " · tu voto" : ""}
       </button>
       <p className="lead">
-        Votos: {publicView.votedIds.length}/{players.length}
+        Votos: {publicView.votedIds.length}/{players.length}. Sin puntaje.
       </p>
-      {isHost ? (
-        <button className="btn btn-ghost" type="button" onClick={() => onAction("reveal")}>
-          Revelar
-        </button>
-      ) : null}
     </div>
   );
 }
