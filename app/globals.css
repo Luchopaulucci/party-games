@@ -453,9 +453,113 @@ select:focus-visible {
   background: var(--color-paper);
   border: 1px solid var(--color-carbon);
   border-radius: var(--radius-card);
-  padding: 10px 12px;
+  padding: 6px 8px;
   gap: 8px;
   min-width: 0;
+}
+
+.player-row {
+  align-items: center;
+  flex-wrap: nowrap;
+}
+
+.player-name-input {
+  flex: 1 1 auto;
+  min-width: 0;
+  min-height: 44px;
+  border: 0;
+  background: transparent;
+  padding: 4px 0;
+}
+
+.btn-fuiste {
+  width: auto;
+  min-height: 44px;
+  padding: 6px 10px;
+}
+
+.color-picker {
+  position: relative;
+  flex-shrink: 0;
+}
+
+.color-picker-trigger {
+  width: 44px;
+  height: 44px;
+  min-width: 44px;
+  min-height: 44px;
+  padding: 0;
+  border: 1px solid var(--color-carbon);
+  border-radius: 50%;
+}
+
+.color-sheet-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 85;
+  border: 0;
+  padding: 0;
+  background: rgba(0, 0, 0, 0.45);
+}
+
+.color-sheet {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 86;
+  display: grid;
+  gap: 12px;
+  width: min(430px, 100%);
+  margin: 0 auto;
+  padding: 16px 16px calc(16px + var(--safe-bottom));
+  background: var(--color-paper);
+  border: 1px solid var(--color-carbon);
+  border-bottom: 0;
+  border-radius: 20px 20px 0 0;
+}
+
+.color-sheet-grid {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(44px, 1fr));
+  gap: 8px;
+}
+
+.color-swatch {
+  width: 100%;
+  min-width: 44px;
+  min-height: 44px;
+  aspect-ratio: 1;
+  padding: 0;
+  border: 1px solid var(--color-carbon);
+  border-radius: 50%;
+}
+
+.color-swatch.on {
+  outline: 2px solid var(--color-carbon);
+  outline-offset: 2px;
+}
+
+.color-swatch.taken {
+  opacity: 0.28;
+  cursor: not-allowed;
+  position: relative;
+}
+
+.lobby-local {
+  gap: 8px;
+}
+
+.lobby-local .card {
+  padding: 12px;
+}
+
+.lobby-local .stack {
+  gap: 8px;
+}
+
+.lobby-local h1 {
+  font-size: clamp(1.85rem, 9vw, 2.6rem);
 }
 
 .player .meta {

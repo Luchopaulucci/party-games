@@ -1,15 +1,17 @@
 import type { Metadata, Viewport } from "next";
-import { Bowlby_One, Inter } from "next/font/google";
+import localFont from "next/font/local";
+import { Inter } from "next/font/google";
 import { RegisterSW } from "@/components/RegisterSW";
 import "./globals.css";
 
-const display = Bowlby_One({
-  subsets: ["latin"],
-  weight: "400",
+const display = localFont({
+  src: "./fonts/BowlbyOne-Regular.woff2",
   variable: "--font-display",
+  weight: "400",
   display: "swap",
   preload: true,
-  adjustFontFallback: true,
+  fallback: ["Arial Black", "Impact", "sans-serif"],
+  adjustFontFallback: "Arial",
 });
 
 const sans = Inter({
@@ -38,7 +40,7 @@ export const viewport: Viewport = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="es-AR" className={`${display.variable} ${sans.variable}`}>
+    <html lang="es-AR" className={`${display.variable} ${sans.variable} ${display.className}`}>
       <body className={sans.className}>
         <RegisterSW />
         {children}

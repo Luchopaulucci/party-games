@@ -23,32 +23,34 @@ export function RoomOptions({
   return (
     <div className="stack">
       <p className="kicker">Extras de la sala</p>
-      <label>
-        Timer de ronda
-        <select
-          value={value.timerSec ?? 0}
-          onChange={(e) => onChange({ ...value, timerSec: Number(e.target.value) })}
-        >
-          {TIMERS.map((n) => (
-            <option key={n} value={n}>
-              {n === 0 ? "Sin timer (el host cierra)" : `${n} segundos`}
-            </option>
-          ))}
-        </select>
-      </label>
-      <label>
-        Rondas sugeridas
-        <select
-          value={value.rounds ?? 1}
-          onChange={(e) => onChange({ ...value, rounds: Number(e.target.value) })}
-        >
-          {ROUNDS.map((n) => (
-            <option key={n} value={n}>
-              {n === 1 ? "Una (el host pide otra)" : `${n} rondas`}
-            </option>
-          ))}
-        </select>
-      </label>
+      <div className="grid-2">
+        <label>
+          Timer de ronda
+          <select
+            value={value.timerSec ?? 0}
+            onChange={(e) => onChange({ ...value, timerSec: Number(e.target.value) })}
+          >
+            {TIMERS.map((n) => (
+              <option key={n} value={n}>
+                {n === 0 ? "Sin timer (el host cierra)" : `${n} segundos`}
+              </option>
+            ))}
+          </select>
+        </label>
+        <label>
+          Rondas
+          <select
+            value={value.rounds ?? 1}
+            onChange={(e) => onChange({ ...value, rounds: Number(e.target.value) })}
+          >
+            {ROUNDS.map((n) => (
+              <option key={n} value={n}>
+                {n === 1 ? "Una (el host pide otra)" : `${n} rondas`}
+              </option>
+            ))}
+          </select>
+        </label>
+      </div>
       {showImpostors ? (
         <label>
           Impostores (siempre menos que el resto)

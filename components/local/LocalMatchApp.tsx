@@ -151,7 +151,7 @@ export function LocalMatchApp({ gameId }: { gameId: GameId }) {
 
   if (!match) {
     return (
-      <div className="stack">
+      <div className="stack lobby-local">
         <p className="pill">
           {meta.emoji} {meta.name}
         </p>
@@ -167,27 +167,23 @@ export function LocalMatchApp({ gameId }: { gameId: GameId }) {
           {players.map((p) => {
             const taken = players.filter((x) => x.id !== p.id).map((x) => x.color);
             return (
-              <div className="player" key={p.id} style={{ alignItems: "flex-start", flexWrap: "wrap" }}>
-                <span className="swatch" style={{ background: p.color, marginTop: 8 }} />
-                <div className="meta" style={{ flex: 1, gap: 8 }}>
-                  <input
-                    value={p.name}
-                    onChange={(e) =>
-                      setPlayers(players.map((x) => (x.id === p.id ? { ...x, name: e.target.value } : x)))
-                    }
-                    aria-label={`Nombre de ${p.name}`}
-                    style={{ minHeight: 48, background: "transparent", padding: "4px 0" }}
-                  />
-                  <ColorDots
-                    value={p.color}
-                    name={p.name}
-                    taken={taken}
-                    onChange={(color) => setPlayerColor(p.id, color)}
-                  />
-                </div>
+              <div className="player player-row" key={p.id}>
+                <ColorDots
+                  value={p.color}
+                  name={p.name}
+                  taken={taken}
+                  onChange={(color) => setPlayerColor(p.id, color)}
+                />
+                <input
+                  className="player-name-input"
+                  value={p.name}
+                  onChange={(e) =>
+                    setPlayers(players.map((x) => (x.id === p.id ? { ...x, name: e.target.value } : x)))
+                  }
+                  aria-label={`Nombre de ${p.name}`}
+                />
                 <button
-                  className="btn btn-ghost"
-                  style={{ width: "auto", padding: "6px 10px", minHeight: 48 }}
+                  className="btn btn-ghost btn-fuiste"
                   type="button"
                   onClick={() => setPlayers(players.filter((x) => x.id !== p.id))}
                 >

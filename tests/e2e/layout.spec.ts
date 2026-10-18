@@ -168,6 +168,19 @@ test.describe("layout márgenes", () => {
         await page.goto(`/juego/${id}/local`);
         await expect(page.getByRole("heading", { name: "Lobby" })).toBeVisible();
         await expect(page.getByText("pass-and-play", { exact: false })).toHaveCount(0);
+        await expect(page.locator(".color-dots")).toHaveCount(0);
+        const trigger = page.getByTestId("color-picker-trigger").first();
+        await expect(trigger).toBeVisible();
+        const triggerSize = await trigger.evaluate((el) => {
+          const r = el.getBoundingClientRect();
+          return { w: r.width, h: r.height };
+        });
+        expect(triggerSize.w).toBeGreaterThanOrEqual(44);
+        expect(triggerSize.h).toBeGreaterThanOrEqual(44);
+        if (id === "impostor" && vp.width === 375) {
+          const lobbyH = await page.evaluate(() => document.documentElement.scrollHeight);
+          expect(lobbyH, "lobby 4 jugadores ~ una pantalla").toBeLessThanOrEqual(900);
+        }
         await assertLayout(page);
       }
 

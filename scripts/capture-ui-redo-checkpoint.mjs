@@ -42,6 +42,10 @@ await shot(page, "02_elegir_modo_impostor");
 await page.goto(`${base}/juego/impostor/local`, { waitUntil: "networkidle" });
 await page.getByRole("heading", { name: "Lobby" }).waitFor();
 await shot(page, "03_lobby_local_impostor");
+await page.getByTestId("color-picker-trigger").first().click();
+await page.getByTestId("color-picker-sheet").waitFor();
+await shot(page, "03b_lobby_color_selector");
+await page.getByTestId("color-picker-backdrop").click();
 
 await page.getByRole("button", { name: /Empezar/ }).click();
 const handoff = page.getByTestId("handoff-screen");
