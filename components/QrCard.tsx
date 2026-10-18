@@ -8,7 +8,11 @@ export function QrCard({ value, code }: { value: string; code: string }) {
 
   useEffect(() => {
     let alive = true;
-    QRCode.toDataURL(value, { width: 240, margin: 1, color: { dark: "#140c33", light: "#fff8f0" } }).then((url) => {
+    QRCode.toDataURL(value, {
+      width: 240,
+      margin: 1,
+      color: { dark: "#ffffff", light: "#000000" },
+    }).then((url) => {
       if (alive) setSrc(url);
     });
     return () => {
@@ -17,7 +21,7 @@ export function QrCard({ value, code }: { value: string; code: string }) {
   }, [value]);
 
   return (
-    <div className="card stack">
+    <div className="qr-panel">
       <div className="code">{code}</div>
       <div className="qr">
         {src ? (

@@ -57,7 +57,7 @@ export function ActiveGame({
   const common = { isHost, players, onAction };
   const skipTimer = gameId === "impostor" || gameId === "emoji";
   return (
-    <div className="stack">
+    <div className="stack" data-enter>
       {skipTimer ? null : <RoundTimer seconds={timerSec} active onTimeout={() => onAction("timeout")} />}
       {gameId === "closest" ? (
         <ClosestView publicView={publicView as ClosestPublicView} privateView={privateView as ClosestPrivateView} {...common} />

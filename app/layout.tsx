@@ -1,10 +1,16 @@
 import type { Metadata, Viewport } from "next";
-import { Fraunces, Source_Sans_3 } from "next/font/google";
+import { Source_Code_Pro } from "next/font/google";
 import { RegisterSW } from "@/components/RegisterSW";
 import "./globals.css";
 
-const sans = Source_Sans_3({ subsets: ["latin"], variable: "--font-sans" });
-const display = Fraunces({ subsets: ["latin"], variable: "--font-display" });
+const mono = Source_Code_Pro({
+  subsets: ["latin"],
+  weight: ["400", "600", "700"],
+  variable: "--font-mono",
+  display: "swap",
+  preload: true,
+  adjustFontFallback: true,
+});
 
 export const metadata: Metadata = {
   title: "La Previa",
@@ -18,13 +24,13 @@ export const viewport: Viewport = {
   width: "device-width",
   initialScale: 1,
   maximumScale: 1,
-  themeColor: "#1e1446",
+  themeColor: "#000000",
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="es-AR">
-      <body className={`${sans.variable} ${display.variable}`}>
+      <body className={`${mono.variable} ${mono.className}`}>
         <RegisterSW />
         {children}
       </body>

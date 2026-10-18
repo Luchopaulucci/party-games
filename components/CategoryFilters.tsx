@@ -82,7 +82,7 @@ export function CategoryFilters({
           checked={picante && hasCategory}
           disabled={!hasCategory}
           onChange={onPicante}
-          style={{ width: 22, height: 22, accentColor: "#ff8fab" }}
+          style={{ width: 22, height: 22, accentColor: "var(--color-kippo-pink)" }}
         />
       </label>
     </div>

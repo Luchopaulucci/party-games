@@ -1,6 +1,8 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useRef, useState } from "react";
+import { gsap, useGSAP } from "@/components/motion/register";
+import { prefersReducedMotion } from "@/lib/motion";
 import { formatReveal, formatRevealUnit } from "@/shared/ui/format";
 
 export function CountUp({
@@ -13,29 +15,31 @@ export function CountUp({
   unit?: string;
 }) {
   const [shown, setShown] = useState(from);
+  const root = useRef<HTMLDivElement>(null);
 
-  useEffect(() => {
-    const reduce =
-      typeof window !== "undefined" && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-    if (reduce) {
-      setShown(to);
-      return;
-    }
-    const start = performance.now();
-    let frame = 0;
-    const step = (stamp: number) => {
-      const t = Math.min(1, (stamp - start) / 900);
-      const eased = 1 - (1 - t) ** 3;
-      setShown(from + (to - from) * eased);
-      if (t < 1) frame = requestAnimationFrame(step);
-      else setShown(to);
-    };
-    frame = requestAnimationFrame(step);
-    return () => cancelAnimationFrame(frame);
-  }, [from, to]);
+  useGSAP(
+    () => {
+      if (prefersReducedMotion()) {
+        setShown(to);
+        return;
+      }
+      const proxy = { n: from };
+      gsap.to(proxy, {
+        n: to,
+        duration: 0.32,
+        ease: "power2.out",
+        onUpdate: () => setShown(proxy.n),
+        onComplete: () => setShown(to),
+      });
+      if (root.current) {
+        gsap.fromTo(root.current, { scale: 0.96 }, { scale: 1, duration: 0.2, ease: "power2.out" });
+      }
+    },
+    { scope: root, dependencies: [from, to] },
+  );
 
   return (
-    <div className="big" data-testid="reveal-value">
+    <div className="big" data-testid="reveal-value" ref={root}>
       {formatReveal(shown, to, unit)}
       {formatRevealUnit(to, unit) ? ` ${formatRevealUnit(to, unit)}` : ""}
     </div>
