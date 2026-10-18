@@ -1,3 +1,11 @@
+@font-face {
+  font-family: "Bowlby One";
+  src: url("/fonts/BowlbyOne-Regular.woff2") format("woff2");
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
 :root {
   --color-carbon: #000000;
   --color-paper: #ffffff;
@@ -27,7 +35,7 @@
   --gold: var(--color-carbon);
 
   --font: var(--font-sans), Inter, system-ui, sans-serif;
-  --display: var(--font-display), "Bowlby One", "Arial Black", Impact, sans-serif;
+  --display: "Bowlby One", var(--font-display), "Arial Black", Impact, sans-serif;
 
   --text-caption: 12px;
   --text-ui: 13px;
@@ -159,7 +167,7 @@ button.brand {
   display: flex;
   gap: 0.35em;
   min-width: 0;
-  font-family: var(--font-display), "Bowlby One", "Arial Black", Impact, sans-serif;
+  font-family: "Bowlby One", var(--font-display), "Arial Black", Impact, sans-serif;
   font-size: 18px;
   font-weight: 400;
   letter-spacing: 0.02em;
@@ -215,7 +223,7 @@ button.brand {
 h1,
 h2,
 h3 {
-  font-family: var(--font-display), "Bowlby One", "Arial Black", Impact, sans-serif;
+  font-family: "Bowlby One", var(--font-display), "Arial Black", Impact, sans-serif;
   letter-spacing: 0;
   margin: 0;
   font-weight: 400;
@@ -395,7 +403,7 @@ select:focus-visible {
 }
 
 .tile b {
-  font-family: var(--font-display), "Bowlby One", "Arial Black", Impact, sans-serif;
+  font-family: "Bowlby One", var(--font-display), "Arial Black", Impact, sans-serif;
   font-size: 1rem;
   font-weight: 400;
   letter-spacing: 0;
@@ -546,6 +554,16 @@ select:focus-visible {
   position: relative;
 }
 
+.extras-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+
+.extras-grid-3 {
+  grid-template-columns: 1fr 1fr 1fr;
+}
+
 .lobby-local {
   gap: 8px;
 }
@@ -559,7 +577,27 @@ select:focus-visible {
 }
 
 .lobby-local h1 {
-  font-size: clamp(1.85rem, 9vw, 2.6rem);
+  font-size: clamp(1.7rem, 8vw, 2.3rem);
+}
+
+.lobby-local .lead {
+  font-size: 13px;
+  line-height: 1.3;
+}
+
+.lobby-local select {
+  min-height: 40px;
+  padding: 6px 8px;
+  font-size: 12px;
+}
+
+.lobby-local .player small {
+  display: none;
+}
+
+.lobby-local .pill {
+  min-height: 36px;
+  padding: 4px 10px;
 }
 
 .player .meta {
@@ -669,7 +707,7 @@ select:focus-visible {
 }
 
 .code {
-  font-family: var(--font-display), "Bowlby One", "Arial Black", Impact, sans-serif;
+  font-family: "Bowlby One", var(--font-display), "Arial Black", Impact, sans-serif;
   font-size: clamp(1.6rem, 9vw, 3rem);
   font-weight: 400;
   letter-spacing: 0.08em;
@@ -680,7 +718,7 @@ select:focus-visible {
 }
 
 .prompt {
-  font-family: var(--font-display), "Bowlby One", "Arial Black", Impact, sans-serif;
+  font-family: "Bowlby One", var(--font-display), "Arial Black", Impact, sans-serif;
   font-size: clamp(1.35rem, 6vw, 2rem);
   line-height: 0.95;
   font-weight: 400;
@@ -689,7 +727,7 @@ select:focus-visible {
 }
 
 .big {
-  font-family: var(--font-display), "Bowlby One", "Arial Black", Impact, sans-serif;
+  font-family: "Bowlby One", var(--font-display), "Arial Black", Impact, sans-serif;
   font-size: clamp(2rem, 12vw, 3.5rem);
   text-align: center;
   font-weight: 400;
@@ -949,7 +987,7 @@ select:focus-visible {
 }
 
 .guess-slider-value {
-  font-family: var(--font-display), "Bowlby One", "Arial Black", Impact, sans-serif;
+  font-family: "Bowlby One", var(--font-display), "Arial Black", Impact, sans-serif;
   font-size: clamp(2.2rem, 16vw, 3.5rem);
   font-weight: 400;
   line-height: 0.95;
@@ -1035,7 +1073,7 @@ select:focus-visible {
 .home-wordmark {
   display: flex;
   flex-direction: column;
-  font-family: var(--font-display), "Bowlby One", "Arial Black", Impact, sans-serif;
+  font-family: "Bowlby One", var(--font-display), "Arial Black", Impact, sans-serif;
   font-size: clamp(3rem, 18vw, 4.5rem);
   font-weight: 400;
   letter-spacing: 0;

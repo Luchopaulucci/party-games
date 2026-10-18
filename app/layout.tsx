@@ -4,7 +4,7 @@ import { Inter } from "next/font/google";
 import { RegisterSW } from "@/components/RegisterSW";
 import "./globals.css";
 
-const display = localFont({
+const bowlby = localFont({
   src: "./fonts/BowlbyOne-Regular.woff2",
   variable: "--font-display",
   weight: "400",
@@ -40,7 +40,7 @@ export const viewport: Viewport = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="es-AR" className={`${display.variable} ${sans.variable} ${display.className}`}>
+    <html lang="es-AR" className={`${bowlby.variable} ${bowlby.className} ${sans.variable}`}>
       <body className={sans.className}>
         <RegisterSW />
         {children}

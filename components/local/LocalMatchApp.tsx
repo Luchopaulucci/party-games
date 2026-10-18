@@ -222,10 +222,7 @@ export function LocalMatchApp({ gameId }: { gameId: GameId }) {
               Faltan jugadores para arrancar ({readyPlayers.length}/{minNeeded}).
             </p>
           ) : null}
-        </div>
-
-        {gameUsesCategories(gameId) ? (
-          <div className="card stack">
+          {gameUsesCategories(gameId) ? (
             <CategoryFilters
               selected={categories}
               picante={picante}
@@ -234,10 +231,7 @@ export function LocalMatchApp({ gameId }: { gameId: GameId }) {
               }
               onPicante={() => setPicante((v) => !v)}
             />
-          </div>
-        ) : null}
-
-        <div className="card stack">
+          ) : null}
           <RoomOptions value={options} onChange={setOptions} gameId={gameId} />
           <FxToggle />
         </div>

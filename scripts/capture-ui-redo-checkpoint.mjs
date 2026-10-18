@@ -45,7 +45,7 @@ await shot(page, "03_lobby_local_impostor");
 await page.getByTestId("color-picker-trigger").first().click();
 await page.getByTestId("color-picker-sheet").waitFor();
 await shot(page, "03b_lobby_color_selector");
-await page.getByTestId("color-picker-backdrop").click();
+await page.getByRole("button", { name: "Listo" }).click();
 
 await page.getByRole("button", { name: /Empezar/ }).click();
 const handoff = page.getByTestId("handoff-screen");

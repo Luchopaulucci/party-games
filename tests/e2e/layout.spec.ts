@@ -186,7 +186,7 @@ test.describe("layout márgenes", () => {
 
       for (const id of ["closest", "votacion", "impostor"] as const) {
         await page.goto(`/juego/${id}/local`);
-        if (id === "impostor") await expect(page.getByText("Timer de ronda")).toBeVisible();
+        if (id === "impostor") await expect(page.getByText("Impostores")).toBeVisible();
         await page.getByRole("button", { name: /Empezar/ }).click();
         const handoff = page.getByTestId("handoff-screen");
         if (await handoff.isVisible()) {

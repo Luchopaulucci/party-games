@@ -23,16 +23,16 @@ export function RoomOptions({
   return (
     <div className="stack">
       <p className="kicker">Extras de la sala</p>
-      <div className="grid-2">
+      <div className={`extras-grid${showImpostors || showSpies ? " extras-grid-3" : ""}`}>
         <label>
-          Timer de ronda
+          Timer
           <select
             value={value.timerSec ?? 0}
             onChange={(e) => onChange({ ...value, timerSec: Number(e.target.value) })}
           >
             {TIMERS.map((n) => (
               <option key={n} value={n}>
-                {n === 0 ? "Sin timer (el host cierra)" : `${n} segundos`}
+                {n === 0 ? "Sin timer" : `${n}s`}
               </option>
             ))}
           </select>
@@ -45,25 +45,38 @@ export function RoomOptions({
           >
             {ROUNDS.map((n) => (
               <option key={n} value={n}>
-                {n === 1 ? "Una (el host pide otra)" : `${n} rondas`}
+                {n === 1 ? "Una" : `${n}`}
               </option>
             ))}
           </select>
         </label>
+        {showImpostors ? (
+          <label>
+            Impostores
+            <select
+              value={value.impostorCount ?? 0}
+              onChange={(e) => onChange({ ...value, impostorCount: Number(e.target.value) })}
+            >
+              <option value={0}>Auto</option>
+              <option value={1}>1</option>
+              <option value={2}>2</option>
+            </select>
+          </label>
+        ) : null}
+        {showSpies ? (
+          <label>
+            Espías
+            <select
+              value={value.spyCount ?? 0}
+              onChange={(e) => onChange({ ...value, spyCount: Number(e.target.value) })}
+            >
+              <option value={0}>Auto</option>
+              <option value={1}>1</option>
+              <option value={2}>2</option>
+            </select>
+          </label>
+        ) : null}
       </div>
-      {showImpostors ? (
-        <label>
-          Impostores (siempre menos que el resto)
-          <select
-            value={value.impostorCount ?? 0}
-            onChange={(e) => onChange({ ...value, impostorCount: Number(e.target.value) })}
-          >
-            <option value={0}>Automático</option>
-            <option value={1}>1</option>
-            <option value={2}>2</option>
-          </select>
-        </label>
-      ) : null}
       {gameId === "whoami" ? (
         <div className="stack">
           <p className="kicker">Filtros de ¿Quién soy?</p>
@@ -89,19 +102,6 @@ export function RoomOptions({
             })}
           </div>
         </div>
-      ) : null}
-      {showSpies ? (
-        <label>
-          Espías
-          <select
-            value={value.spyCount ?? 0}
-            onChange={(e) => onChange({ ...value, spyCount: Number(e.target.value) })}
-          >
-            <option value={0}>Automático</option>
-            <option value={1}>1</option>
-            <option value={2}>2</option>
-          </select>
-        </label>
       ) : null}
       {allowNight ? (
         <label className="player" style={{ display: "flex", justifyContent: "space-between" }}>
