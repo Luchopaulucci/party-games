@@ -157,7 +157,7 @@ export function LocalMatchApp({ gameId }: { gameId: GameId }) {
         </p>
         <h1>Lobby</h1>
         <p className="lead">
-          Mínimo {minNeeded} jugadores, máximo {MAX_LOCAL_PLAYERS}. El color se asigna solo.
+          Mínimo {minNeeded}, máximo {MAX_LOCAL_PLAYERS}. El color se asigna solo.
         </p>
 
         <div className="card stack">
@@ -236,7 +236,7 @@ export function LocalMatchApp({ gameId }: { gameId: GameId }) {
           <FxToggle />
         </div>
 
-        <button className="btn btn-primary" type="button" disabled={!canStart} onClick={begin}>
+        <button className="btn btn-primary lobby-cta" type="button" disabled={!canStart} onClick={begin}>
           Empezar {meta.name}
         </button>
       </div>
