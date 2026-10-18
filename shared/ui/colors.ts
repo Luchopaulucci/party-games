@@ -1,4 +1,4 @@
-/** Paleta oscura, contrastada con texto claro (WCAG AA sobre #fff8f0). */
+/** Paleta de fichas, contrastada con texto claro (WCAG AA sobre #000). */
 export const PLAYER_COLORS = [
   "#C42B54",
   "#1D4ED8",
@@ -29,14 +29,14 @@ export function nextPlayerColor(used: string[]): string {
   return free ?? PLAYER_COLORS[used.length % PLAYER_COLORS.length]!;
 }
 
-export function contrastText(hex: string): "#fff8f0" | "#1a1233" {
+export function contrastText(hex: string): "#ffffff" | "#000000" {
   const raw = hex.replace("#", "");
-  if (raw.length < 6) return "#fff8f0";
+  if (raw.length < 6) return "#ffffff";
   const r = Number.parseInt(raw.slice(0, 2), 16);
   const g = Number.parseInt(raw.slice(2, 4), 16);
   const b = Number.parseInt(raw.slice(4, 6), 16);
   const luma = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
-  return luma > 0.62 ? "#1a1233" : "#fff8f0";
+  return luma > 0.62 ? "#000000" : "#ffffff";
 }
 
 export function withAlpha(hex: string, alpha: number): string {

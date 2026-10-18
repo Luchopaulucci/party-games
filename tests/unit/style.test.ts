@@ -16,8 +16,8 @@ describe("tokens de ¿Cuánto es?", () => {
   });
 
   it("elige tinta clara u oscura según el color", () => {
-    expect(contrastText("#C42B54")).toBe("#fff8f0");
-    expect(contrastText("#f5d56a")).toBe("#1a1233");
+    expect(contrastText("#C42B54")).toBe("#ffffff");
+    expect(contrastText("#f5d56a")).toBe("#000000");
   });
 
   it("arma el titular del reveal", () => {

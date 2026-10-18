@@ -111,7 +111,7 @@ export function RoomOptions({
             type="checkbox"
             checked={Boolean(value.night)}
             onChange={(e) => onChange({ ...value, night: e.target.checked })}
-            style={{ width: 22, height: 22, accentColor: "#ff8fab" }}
+            style={{ width: 22, height: 22, accentColor: "var(--color-kippo-pink)" }}
           />
         </label>
       ) : null}

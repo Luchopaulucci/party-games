@@ -3,7 +3,10 @@
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 import { ConfirmExit } from "@/components/ConfirmExit";
+import { ScreenMotion } from "@/components/motion/ScreenMotion";
+import { gsap, useGSAP } from "@/components/motion/register";
 import { brandUsesConfirm, shouldGuardNavigation } from "@/lib/exit-guard";
+import { prefersReducedMotion } from "@/lib/motion";
 
 export function Shell({
   children,
@@ -21,6 +24,22 @@ export function Shell({
   const [ask, setAsk] = useState(false);
   const leaving = useRef(false);
   const confirmExit = brandUsesConfirm(onExit);
+  const brandRef = useRef<HTMLSpanElement>(null);
+
+  useGSAP(
+    () => {
+      const mark = brandRef.current;
+      if (!mark || prefersReducedMotion()) return;
+      gsap.to(mark, {
+        autoAlpha: 0.7,
+        duration: 0.9,
+        repeat: -1,
+        yoyo: true,
+        ease: "sine.inOut",
+      });
+    },
+    { scope: brandRef },
+  );
 
   useEffect(() => {
     if (!shouldGuardNavigation(onExit)) return;
@@ -61,13 +80,23 @@ export function Shell({
       <div className="topbar">
         {confirmExit ? (
           <button type="button" className="brand" data-testid="brand-exit" onClick={requestExit}>
-            <b>La Previa</b>
-            {kicker ? <span>{kicker}</span> : null}
+            <span className="wordmark">
+              <span className="wordmark-la">LA</span>
+              <span className="wordmark-previa" ref={brandRef}>
+                PREVIA
+              </span>
+            </span>
+            {kicker ? <span className="brand-kicker">{kicker}</span> : null}
           </button>
         ) : (
           <Link href={backHref} className="brand" data-testid="brand-link">
-            <b>La Previa</b>
-            {kicker ? <span>{kicker}</span> : null}
+            <span className="wordmark">
+              <span className="wordmark-la">LA</span>
+              <span className="wordmark-previa" ref={brandRef}>
+                PREVIA
+              </span>
+            </span>
+            {kicker ? <span className="brand-kicker">{kicker}</span> : null}
           </Link>
         )}
         {onExit ? (
@@ -76,7 +105,7 @@ export function Shell({
           </button>
         ) : null}
       </div>
-      {children}
+      <ScreenMotion replay={kicker}>{children}</ScreenMotion>
       <ConfirmExit
         open={ask}
         body={exitBody}

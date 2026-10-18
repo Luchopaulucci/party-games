@@ -34,7 +34,7 @@ export function PodiumScreen({
               {i + 1}. {p.name}
               {p.id === youId ? " (vos)" : ""}
             </strong>
-            <div className="score">{p.score}</div>
+            <div className={`score${i === 0 ? " is-lead" : ""}`}>{p.score}</div>
           </div>
         ))}
       </div>

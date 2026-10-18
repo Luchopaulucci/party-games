@@ -5,7 +5,7 @@ import { useState } from "react";
 export function HowToPlay({ text }: { text: string }) {
   const [open, setOpen] = useState(false);
   return (
-    <div className="stack" style={{ gap: 8 }}>
+    <div className="stack">
       <button className="btn btn-ghost" type="button" onClick={() => setOpen((v) => !v)} aria-expanded={open}>
         ¿Cómo se juega?
       </button>

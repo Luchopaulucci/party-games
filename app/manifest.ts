@@ -9,8 +9,8 @@ export default function manifest(): MetadataRoute.Manifest {
     description: "Juegos de celu para la juntada. Online o pasate el teléfono.",
     start_url: "/",
     display: "standalone",
-    background_color: "#140c33",
-    theme_color: "#1e1446",
+    background_color: "#000000",
+    theme_color: "#000000",
     lang: "es-AR",
     icons: [
       {

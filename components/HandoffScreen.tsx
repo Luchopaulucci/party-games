@@ -27,11 +27,11 @@ export function HandoffScreen({
         </p>
       </div>
       <button
-        className="btn"
+        className="btn btn-primary"
         type="button"
         data-testid="handoff-continue"
         onClick={onReady}
-        style={{ background: "#fff", color: "#1e1446", maxWidth: 360 }}
+        style={{ maxWidth: 360 }}
       >
         Soy {name}
       </button>
