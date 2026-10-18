@@ -66,16 +66,6 @@ export function RoomOptions({
           <option value={2}>2</option>
         </select>
       </label>
-      <label>
-        Modo Subasta
-        <select
-          value={value.mode ?? "no-pasarse"}
-          onChange={(e) => onChange({ ...value, mode: e.target.value })}
-        >
-          <option value="no-pasarse">The Price is Right: sin pasarse</option>
-          <option value="cerca">El más cercano (aunque se pase)</option>
-        </select>
-      </label>
       <label className="player" style={{ display: "flex", justifyContent: "space-between" }}>
         <span>
           <strong>Noche de juegos</strong>

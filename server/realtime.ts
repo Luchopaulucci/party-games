@@ -12,7 +12,7 @@ import {
   type HelloPayload,
   type StartGamePayload,
 } from "../shared/protocol";
-import { MAX_HTTP_BUFFER_SIZE, type GameId } from "../shared/types";
+import { MAX_HTTP_BUFFER_SIZE } from "../shared/types";
 import { RoomManager, type Room, type RoomManagerOptions } from "./room-manager";
 
 export type CreateRealtimeOptions = RoomManagerOptions;
@@ -64,7 +64,7 @@ export function createRealtimeServer(httpServer: HttpServer, opts: CreateRealtim
     onValidated(socket, "startGame", startGamePayloadSchema, (payload: StartGamePayload, cb) => {
       const data = socket.data as SocketData;
       if (!data.code || !data.playerId) return cb?.({ ok: false, error: "Primero entra a una sala." });
-      const error = rooms.startGame(data.code, data.playerId, payload.gameId as GameId, payload.seed, {
+      const error = rooms.startGame(data.code, data.playerId, payload.gameId, payload.seed, {
         categories: payload.categories,
         picante: payload.picante,
         options: payload.options,

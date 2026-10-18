@@ -5,22 +5,14 @@ import { impostorEngine } from "./impostor/logic";
 import { higherLowerEngine } from "./higherlower/logic";
 import { spyEngine } from "./spy/logic";
 import { voteEngine } from "./vote/logic";
-import { auctionEngine } from "./auction/logic";
 import { phraseEngine } from "./phrase/logic";
 import { lieEngine } from "./lie/logic";
-import { drawEngine } from "./draw/logic";
 import { reflexEngine } from "./reflex/logic";
-import { waveEngine } from "./wave/logic";
-import { tabooEngine } from "./taboo/logic";
 import { neverEngine } from "./never/logic";
 import { stopEngine } from "./stop/logic";
-import { bombEngine } from "./bomb/logic";
-import { mimicEngine } from "./charades/logic";
-import { dareEngine } from "./dare/logic";
 import { triviaEngine } from "./trivia/logic";
 import { chainEngine } from "./chain/logic";
 import { emojiEngine } from "./emoji/logic";
-import { phoneEngine } from "./phone/logic";
 import { wouldEngine } from "./would/logic";
 
 const IMPLEMENTED: GameMeta[] = [
@@ -91,17 +83,6 @@ const IMPLEMENTED: GameMeta[] = [
     howTo: "Leé la pregunta. Votá en secreto. Se revelan totales, nunca quién votó a quién.",
   },
   {
-    id: "subasta",
-    name: "Subasta de números",
-    emoji: "🔨",
-    tagline: "Ofertá como si fuera Mercado Libre a las 3 AM.",
-    description: "The Price is Right: más cerca sin pasarse, o modo más cercano.",
-    minPlayers: 3,
-    maxPlayers: 10,
-    implemented: true,
-    howTo: "Pujá tapado. En modo sin pasarse, gana el más alto que no se pasó.",
-  },
-  {
     id: "completa-frase",
     name: "Completá la frase",
     emoji: "✍️",
@@ -124,17 +105,6 @@ const IMPLEMENTED: GameMeta[] = [
     howTo: "El narrador tira 3 frases. El resto vota cuál es mentira. No se ve el mapa de votos.",
   },
   {
-    id: "dibuja",
-    name: "Dibujá y adiviná",
-    emoji: "✏️",
-    tagline: "El Pictionary de la previa. El arte es opcional.",
-    description: "Uno dibuja, el resto adivina. La palabra solo la ve el artista.",
-    minPlayers: 3,
-    maxPlayers: 12,
-    implemented: true,
-    howTo: "Si te toca dibujar, ves la palabra. El resto adivina. El arte es opcional, el chamuyo no.",
-  },
-  {
     id: "reflejos",
     name: "Reflejos",
     emoji: "⚡",
@@ -144,28 +114,6 @@ const IMPLEMENTED: GameMeta[] = [
     maxPlayers: 12,
     implemented: true,
     howTo: "Leé y tocá. El primero que acierta suma. El que erra, resta.",
-  },
-  {
-    id: "onda",
-    name: "La onda",
-    emoji: "📡",
-    tagline: "Una pista. Un espectro. Un número escondido.",
-    description: "Wavelength: el psíquico ve 0–100 y tira una pista. El resto apunta.",
-    minPlayers: 3,
-    maxPlayers: 12,
-    implemented: true,
-    howTo: "El psíquico ve un número y tira una pista. El resto apunta en la escala.",
-  },
-  {
-    id: "taboo",
-    name: "Palabra prohibida",
-    emoji: "🚫",
-    tagline: "Describí sin decir lo obvio. Imposible para tu cuñado.",
-    description: "Taboo: palabra + prohibidas solo para quien habla.",
-    minPlayers: 3,
-    maxPlayers: 10,
-    implemented: true,
-    howTo: "Describí la palabra sin usar las prohibidas. Si las decís, te pitan.",
   },
   {
     id: "yo-nunca",
@@ -188,39 +136,6 @@ const IMPLEMENTED: GameMeta[] = [
     maxPlayers: 12,
     implemented: true,
     howTo: "Una letra, cinco categorías. Únicas valen 2, repetidas 1. Nadie ve lo tuyo hasta el alto.",
-  },
-  {
-    id: "bombita",
-    name: "Bombita",
-    emoji: "💣",
-    tagline: "Pasala. El timer es secreto.",
-    description: "Papa caliente. Nadie ve cuándo explota. Al que le queda, -1.",
-    minPlayers: 2,
-    maxPlayers: 12,
-    implemented: true,
-    howTo: "Pasala rápido. Nadie ve cuándo explota. Al que le queda, menos un punto.",
-  },
-  {
-    id: "mimica",
-    name: "Mímica",
-    emoji: "🙈",
-    tagline: "Actuá. Si hablás, te silban.",
-    description: "Charadas / Heads Up. La palabra solo la ve quien actúa.",
-    minPlayers: 3,
-    maxPlayers: 12,
-    implemented: true,
-    howTo: "Si actuás, ves la palabra. El resto adivina. Sin hablar.",
-  },
-  {
-    id: "verdad-reto",
-    name: "Verdad o reto",
-    emoji: "😈",
-    tagline: "La previa clásica. El juez es la mesa.",
-    description: "Como las apps de previas AR: una carta, la mesa vota si cumplió.",
-    minPlayers: 3,
-    maxPlayers: 12,
-    implemented: true,
-    howTo: "Uno elige verdad o reto. Hace la carta. El resto vota si cumplió. Solo totales.",
   },
   {
     id: "trivia",
@@ -256,17 +171,6 @@ const IMPLEMENTED: GameMeta[] = [
     howTo: "Mirá los emojis. Escribí qué es. El primero que clava, suma 3.",
   },
   {
-    id: "telefono",
-    name: "Teléfono descompuesto",
-    emoji: "📞",
-    tagline: "Lo que entendiste no es lo que dijeron.",
-    description: "Cada uno reescribe lo anterior. Solo el que escribe ve el texto previo.",
-    minPlayers: 3,
-    maxPlayers: 12,
-    implemented: true,
-    howTo: "Te toca, ves solo la frase anterior y la reescribís. Al final se muestra el desastre.",
-  },
-  {
     id: "preferis",
     name: "¿Qué preferís?",
     emoji: "🤷",
@@ -281,29 +185,21 @@ const IMPLEMENTED: GameMeta[] = [
 
 export const GAME_CATALOG: GameMeta[] = IMPLEMENTED;
 
-const ENGINES: Record<string, GameEngine> = {
+const ENGINES: Record<GameId, GameEngine> = {
   closest: closestEngine as GameEngine,
   whoami: whoamiEngine as GameEngine,
   impostor: impostorEngine as GameEngine,
   "mas-o-menos": higherLowerEngine as GameEngine,
   espia: spyEngine as GameEngine,
   votacion: voteEngine as GameEngine,
-  subasta: auctionEngine as GameEngine,
   "completa-frase": phraseEngine as GameEngine,
   mentira: lieEngine as GameEngine,
-  dibuja: drawEngine as GameEngine,
   reflejos: reflexEngine as GameEngine,
-  onda: waveEngine as GameEngine,
-  taboo: tabooEngine as GameEngine,
   "yo-nunca": neverEngine as GameEngine,
   tutti: stopEngine as GameEngine,
-  bombita: bombEngine as GameEngine,
-  mimica: mimicEngine as GameEngine,
-  "verdad-reto": dareEngine as GameEngine,
   trivia: triviaEngine as GameEngine,
   cadena: chainEngine as GameEngine,
   emoji: emojiEngine as GameEngine,
-  telefono: phoneEngine as GameEngine,
   preferis: wouldEngine as GameEngine,
 };
 

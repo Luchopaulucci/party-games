@@ -4,7 +4,6 @@ export const NIGHT_PLAYLIST: GameId[] = [
   "closest",
   "preferis",
   "trivia",
-  "verdad-reto",
   "cadena",
   "emoji",
   "votacion",

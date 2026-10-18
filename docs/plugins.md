@@ -20,9 +20,9 @@ El socket manda `{ public, private }` por asiento. Tests en `tests/multi` recorr
 - el target de ¿Quién soy? recibe el personaje
 - el espía recibe el lugar, o un civil recibe `"role":"espia"`
 - cualquier votación manda un mapa votante→voto
-- Subasta / Onda / Reflejos / Bombita / Dibujo / Taboo / Mímica filtran el secreto al celu equivocado
+- Reflejos filtra el índice correcto hasta el cierre
 - Yo nunca o Completá la frase exponen choices/respuestas ajenas antes de tiempo
 
-## Implementados (17)
+## Implementados (15)
 
-closest, whoami, impostor, mas-o-menos, espia, votacion, subasta, completa-frase, mentira, dibuja, reflejos, onda, taboo, yo-nunca, tutti, bombita, mimica.
+closest, whoami, impostor, mas-o-menos, espia, votacion, completa-frase, mentira, reflejos, yo-nunca, tutti, trivia, cadena, emoji, preferis.

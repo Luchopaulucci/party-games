@@ -32,7 +32,7 @@ export function RoomClient({
   const [socket, setSocket] = useState<Socket | null>(null);
   const [categories, setCategories] = useState<string[]>([...CATEGORIES]);
   const [picante, setPicante] = useState(false);
-  const [options, setOptions] = useState<GameOptions>({ timerSec: 0, rounds: 1, mode: "no-pasarse" });
+  const [options, setOptions] = useState<GameOptions>({ timerSec: 0, rounds: 1 });
 
   useEffect(() => {
     const s = io(socketUrl(), { transports: ["websocket", "polling"] });

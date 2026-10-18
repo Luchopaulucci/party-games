@@ -1,27 +1,26 @@
-export type GameId =
-  | "closest"
-  | "whoami"
-  | "impostor"
-  | "mas-o-menos"
-  | "subasta"
-  | "espia"
-  | "completa-frase"
-  | "mentira"
-  | "dibuja"
-  | "reflejos"
-  | "votacion"
-  | "onda"
-  | "taboo"
-  | "yo-nunca"
-  | "tutti"
-  | "bombita"
-  | "mimica"
-  | "verdad-reto"
-  | "trivia"
-  | "cadena"
-  | "emoji"
-  | "telefono"
-  | "preferis";
+export const GAME_IDS = [
+  "closest",
+  "whoami",
+  "impostor",
+  "mas-o-menos",
+  "espia",
+  "votacion",
+  "completa-frase",
+  "mentira",
+  "reflejos",
+  "yo-nunca",
+  "tutti",
+  "trivia",
+  "cadena",
+  "emoji",
+  "preferis",
+] as const;
+
+export type GameId = (typeof GAME_IDS)[number];
+
+export function isPlayableGameId(id: unknown): id is GameId {
+  return typeof id === "string" && (GAME_IDS as readonly string[]).includes(id);
+}
 
 export interface GameOptions {
   timerSec?: number;

@@ -1,15 +1,18 @@
 import { z } from "zod";
 import { CATEGORIES } from "./games/closest/premise-types";
 import {
+  GAME_IDS,
   MAX_NAME_LENGTH,
   MIN_NAME_LENGTH,
   ROOM_CODE_ALPHABET,
+  type GameId,
   type GameOptions,
   type TestSeed,
 } from "./types";
 
 export const BAD_PAYLOAD_ERROR = "Ese mensaje no tiene forma. Mandá de nuevo, no improvises.";
 export const SERVER_SAFE_ERROR = "Algo se rompió del lado de la sala, pero seguimos en pie.";
+export const UNKNOWN_GAME_ERROR = "Ese juego no existe más. Elegí uno de la lista.";
 
 const ALLOWED_CATEGORIES = new Set<string>(CATEGORIES);
 
@@ -63,9 +66,11 @@ export const helloPayloadSchema = z
   })
   .strict();
 
+const PLAYABLE_GAME_IDS = GAME_IDS as unknown as [GameId, ...GameId[]];
+
 export const startGamePayloadSchema = z
   .object({
-    gameId: z.string().min(1).max(32),
+    gameId: z.enum(PLAYABLE_GAME_IDS),
     seed: z.unknown().optional(),
     categories: z.array(z.string().min(1).max(40)).max(16).optional(),
     picante: z.boolean().optional(),
@@ -153,12 +158,4 @@ export function sanitizeTestSeed(raw: unknown, allow: boolean): TestSeed | undef
   if (!allow || raw == null) return undefined;
   const parsed = testSeedSchema.safeParse(raw);
   return parsed.success ? (parsed.data as TestSeed) : undefined;
-}
-
-const HEX_COLOR = /^#(?:[0-9a-fA-F]{6})$/;
-
-export function sanitizeStrokeColor(raw: unknown, fallback = "#1e1446"): string {
-  if (typeof raw !== "string") return fallback;
-  if (HEX_COLOR.test(raw)) return raw.toLowerCase();
-  return fallback;
 }
