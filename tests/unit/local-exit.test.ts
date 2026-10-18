@@ -1,6 +1,13 @@
 import { describe, expect, it } from "vitest";
 import { localGameError } from "@/shared/games/browse";
-import { createLocalMatch, localAction, resetLocalToLobby, startLocalGame } from "@/lib/local-match";
+import {
+  advancePass,
+  createLocalMatch,
+  localAction,
+  localView,
+  resetLocalToLobby,
+  startLocalGame,
+} from "@/lib/local-match";
 
 describe("salida local sin fantasmas", () => {
   it("jugar → salir al lobby → Impostor no arrastra jugadores de la partida anterior", () => {
@@ -34,6 +41,25 @@ describe("salida local sin fantasmas", () => {
     expect(impostor.players.every((p) => p.score === 0)).toBe(true);
     expect(new Set(impostor.players.map((p) => p.id)).size).toBe(3);
     expect(impostor.players.some((p) => p.name === "Fantasma")).toBe(false);
+  });
+
+  it("en Mentira el write válido pasa el celu (sin un segundo botón)", () => {
+    const match = createLocalMatch(["Lucho", "Meli", "Coco"]);
+    const playing = startLocalGame(match, "mentira");
+    expect(typeof playing).not.toBe("string");
+    if (typeof playing === "string") return;
+    const storyteller = (localView(playing, playing.players[0]!.id).public as { storytellerId: string }).storytellerId;
+    const stuck = localAction(playing, storyteller, {
+      type: "write",
+      payload: { statements: ["corto"], lieIndex: 0 },
+    });
+    expect(advancePass(playing, stuck, "write").passIndex).toBe(playing.passIndex);
+    const applied = localAction(playing, storyteller, {
+      type: "write",
+      payload: { statements: ["verdad una", "verdad dos", "el verso"], lieIndex: 2 },
+    });
+    const next = advancePass(playing, applied, "write");
+    expect(next.passIndex).not.toBe(playing.passIndex);
   });
 
   it("tutti y preferís no arrancan en local", () => {

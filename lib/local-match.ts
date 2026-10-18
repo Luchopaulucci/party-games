@@ -160,6 +160,42 @@ function revealQueueFor(_gameId: GameId, state: unknown, ids: string[]): string[
   return [first, ...ids.filter((id) => id !== first)];
 }
 
+const PASS_AFTER: Partial<Record<GameId, string[]>> = {
+  closest: ["guess"],
+  impostor: ["ready"],
+  emoji: ["pass"],
+  mentira: ["write", "vote"],
+  "completa-frase": ["write", "vote"],
+  cadena: ["word"],
+  votacion: ["vote"],
+  reflejos: ["stop"],
+};
+
+export function currentPassId(match: LocalMatch): string | undefined {
+  const pub = localView(match, match.players[0]?.id ?? "").public as Record<string, unknown> | null;
+  return [pub?.currentId, pub?.currentPlayerId, pub?.currentWriterId].find(
+    (v): v is string => typeof v === "string",
+  );
+}
+
+export function gameProgressed(before: LocalMatch, after: LocalMatch): boolean {
+  return before.gameState !== after.gameState || before.status !== after.status;
+}
+
+export function advancePass(match: LocalMatch, applied: LocalMatch, type: string): LocalMatch {
+  if (applied.status !== "playing" || !applied.gameId) return applied;
+  if (!gameProgressed(match, applied)) return applied;
+  const current = currentPassId(applied);
+  if (current) {
+    const idx = applied.revealQueue.indexOf(current);
+    if (idx >= 0 && idx !== match.passIndex) return { ...applied, passIndex: idx };
+  }
+  if (!PASS_AFTER[applied.gameId]?.includes(type)) return applied;
+  const nextIndex = match.passIndex + 1;
+  if (nextIndex < applied.revealQueue.length) return { ...applied, passIndex: nextIndex };
+  return applied;
+}
+
 export function localAction(
   match: LocalMatch,
   playerId: string,

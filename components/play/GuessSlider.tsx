@@ -1,6 +1,7 @@
 "use client";
 
 import { useRef, useState } from "react";
+import { formatRevealUnit } from "@/shared/ui/format";
 import { defaultGuess, formatGuess, nudgeGuess, snapGuess } from "@/shared/play/slider";
 
 export function GuessSlider({
@@ -51,9 +52,9 @@ export function GuessSlider({
   return (
     <div className="guess-slider" data-testid="guess-slider">
       <p className="guess-slider-value" data-testid="guess-value">
-        {formatGuess(current)}
+        {formatGuess(current, unit)}
       </p>
-      {unit ? <p className="guess-slider-unit">{unit}</p> : null}
+      {formatRevealUnit(current, unit) ? <p className="guess-slider-unit">{formatRevealUnit(current, unit)}</p> : null}
       <div
         className="guess-slider-pad"
         data-testid="guess-swipe"

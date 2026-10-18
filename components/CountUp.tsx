@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { formatReveal } from "@/shared/ui/format";
+import { formatReveal, formatRevealUnit } from "@/shared/ui/format";
 
 export function CountUp({
   from = 0,
@@ -37,7 +37,7 @@ export function CountUp({
   return (
     <div className="big" data-testid="reveal-value">
       {formatReveal(shown, to, unit)}
-      {unit ? ` ${unit}` : ""}
+      {formatRevealUnit(to, unit) ? ` ${formatRevealUnit(to, unit)}` : ""}
     </div>
   );
 }

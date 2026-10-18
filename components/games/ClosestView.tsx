@@ -6,6 +6,7 @@ import { GuessSlider } from "@/components/play/GuessSlider";
 import { RoundReveal } from "@/components/play/RoundReveal";
 import { defaultGuess } from "@/shared/play/slider";
 import type { ClosestPrivateView, ClosestPublicView } from "@/shared/games/closest/logic";
+import { formatGuess } from "@/shared/play/slider";
 import { winnerHeadline } from "@/shared/ui/format";
 
 export function ClosestView({
@@ -48,7 +49,7 @@ export function ClosestView({
                 <div className="meta" style={{ flex: 1 }}>
                   <strong>{nameOf(row.playerId)}</strong>
                   <small>
-                    palo {row.guess} · a {row.distance} de distancia
+                    palo {formatGuess(row.guess, publicView.unit)} · a {row.distance} de distancia
                   </small>
                 </div>
                 <div className="score">+{row.points}</div>
