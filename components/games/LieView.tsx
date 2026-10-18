@@ -37,7 +37,16 @@ export function LieView({
 
   if (publicView.phase === "vote") {
     if (privateView.isStoryteller) {
-      return <p className="lead">Ahora votan los demás. El último voto revela.</p>;
+      return (
+        <div className="stack">
+          <p className="lead">Ahora votan los demás. El último voto revela.</p>
+          {local ? (
+            <button className="btn btn-primary" type="button" onClick={() => onAction("pass-phone")}>
+              Listo, pasá el celu
+            </button>
+          ) : null}
+        </div>
+      );
     }
     return (
       <div className="stack">
@@ -54,9 +63,11 @@ export function LieView({
             {privateView.myVote === String(i) ? " · tu voto" : ""}
           </button>
         ))}
-        <p className="lead">
-          Votos: {publicView.votedIds.length}/{Math.max(0, players.length - 1)}. El último revela.
-        </p>
+        {local ? null : (
+          <p className="lead">
+            Votos: {publicView.votedIds.length}/{Math.max(0, players.length - 1)}. El último revela.
+          </p>
+        )}
       </div>
     );
   }

@@ -10,6 +10,7 @@ export function SpyView({
   isHost,
   youId,
   players,
+  local,
   onAction,
 }: {
   publicView: SpyPublicView;
@@ -17,6 +18,7 @@ export function SpyView({
   isHost: boolean;
   youId: string;
   players: { id: string; name: string; color?: string }[];
+  local?: boolean;
   onAction: (type: string, payload?: unknown) => void;
 }) {
   const [guess, setGuess] = useState("");
@@ -118,9 +120,11 @@ export function SpyView({
                 </button>
               ))}
           </div>
-          <p className="lead">
-            Votos: {publicView.votedIds.length}/{players.length}
-          </p>
+          {local ? null : (
+            <p className="lead">
+              Votos: {publicView.votedIds.length}/{players.length}
+            </p>
+          )}
           {isHost ? (
             <button className="btn btn-gold" type="button" onClick={() => onAction("reveal")}>
               Cerrar urna
