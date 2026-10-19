@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { groupedCatalog } from "@/shared/games/browse";
+import { gameSticker } from "@/shared/ui/stickers";
 
 export function GameCatalog() {
   return (
@@ -8,17 +9,24 @@ export function GameCatalog() {
         <section key={group.id} className="category-section" data-testid={`group-${group.id}`}>
           <div className="category-section-head">
             <p className="kicker">{group.name}</p>
-            <small>{group.blurb}</small>
           </div>
-          <div className="stack">
-            {group.games.map((game) => (
-              <Link key={game.id} className="tile" href={`/juego/${game.id}`}>
-                <span>{game.emoji}</span>
-                <b>{game.name}</b>
-                <p>{game.tagline}</p>
-                <small>{game.minPlayers}+ jugadores</small>
-              </Link>
-            ))}
+          <div className="grid-2 game-grid">
+            {group.games.map((game) => {
+              const sticker = gameSticker(game.id);
+              return (
+                <Link
+                  key={game.id}
+                  className="tile game-tile"
+                  href={`/juego/${game.id}`}
+                  style={{ background: sticker.fill, color: sticker.ink }}
+                >
+                  <span className="game-tile-emoji" aria-hidden>
+                    {game.emoji}
+                  </span>
+                  <b>{game.name}</b>
+                </Link>
+              );
+            })}
           </div>
         </section>
       ))}

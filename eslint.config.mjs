@@ -22,6 +22,9 @@ const config = [
       "next-env.d.ts",
       "playwright-report/**",
       "test-results/**",
+      ".agents/**",
+      ".cursor/**",
+      ".taste-skill/**",
     ],
   },
 ];

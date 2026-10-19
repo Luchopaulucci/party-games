@@ -10,6 +10,7 @@ import { useOnlineAccess } from "@/lib/online-access";
 import { roomPagePath } from "@/lib/room-url";
 import { parseGameId, supportsMode } from "@/shared/games/browse";
 import { getGameMeta } from "@/shared/games/registry";
+import { titleClass } from "@/shared/ui/stickers";
 
 export default function JuegoPage() {
   const params = useParams<{ id: string }>();
@@ -38,11 +39,11 @@ export default function JuegoPage() {
   }
 
   return (
-    <Shell backHref="/" kicker={meta.name}>
+    <Shell backHref="/" kicker={meta.name} gameId={gameId}>
       <p className="pill">
         {meta.emoji} {meta.name}
       </p>
-      <h1>{meta.name}</h1>
+      <h1 className={titleClass(meta.name)}>{meta.name}</h1>
       <p className="lead">{meta.tagline}</p>
       <div className="stack">
       <HowToPlay text={meta.howTo} />

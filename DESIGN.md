@@ -1,82 +1,77 @@
-# La Previa — Style Reference
+# La Previa — Style Reference (Slush)
 
-> Pixel arcade boot screen in a black void. Monospace glyphs traced in white neon against a pure black void, with a single hot-pink power-up color that should feel rare and electric when it appears.
+> Inflatable sticker universe on pastel paper. A sticker-book on the kitchen table: cut-out blobs, fat type, one black CTA.
 
-**Theme:** dark  
-**Wordmark:** `LA PREVIA` (Source Code Pro 700, all-caps). First word white, second word Kippo Pink.
+**Theme:** light  
+**Wordmark:** `LA PREVIA` (Bowlby One, all-caps). Black on paper. A circular black-outline mark can sit beside it.
 
-La Previa is a neon-on-black arcade: a pitch-black canvas where every element is drawn as a thin white outline or rendered in a single hot magenta accent. Typography is exclusively monospace (Source Code Pro) at every size. Display text sits in all-caps with generous tracking, evoking a CRT boot screen or a chat log header. Cards are transparent panels defined only by a 1px white border, never by fill or shadow — the page reads as a wireframe brought to life. The single chromatic accent (#ee1f66) is rationed sparingly: the word `PREVIA`, the primary CTA, and small active badges.
+Reemplaza el sistema Kippo (PR #18). Luciano lo rechazó: demasiado aire, no se entiende, feo. Este sistema prioriza **densidad compacta** y **jerarquía de un vistazo** en celu 375px.
 
-Adapted from the Kippo style reference. Components that do not apply to this product stay documented as **no aplica / referencia**.
+## De dónde sale
 
-## Product rules (La Previa)
+- **Guía Slush** (referente de Luciano): canvas papel, stickers vivos con borde negro 1px, radios de píldora, paleta de 6 colores de sticker.
+- **ui-ux-pro-max:** compact labels / no-wrap, contraste 4.5:1, focus visible, `prefers-reduced-motion`. El `--design-system` para “gaming” devolvió dark + 3D: **no aplica**. Luciano pidió tema claro Slush.
+- **taste-skill (app screens):** paneles quietos, labels chicos, color gastado en datos/identidad — acá, en el color de cada juego. Sin glow ni gradientes de IA.
 
-- Toda la configuración (timer, rondas, impostores, categorías, packs, picante) se elige **antes** de `Empezar`, en lobby/setup. Nunca adentro de la partida.
-- En modo local, un solo CTA de pase: **Listo, pasá el celu**. El contador `Listos 0/N` queda solo online.
-- Textos en **español rioplatense**.
-- Mobile-first **360–414 px**. Gaps ≥ 12 px (token de elemento: 15 px). Pills `Pasando el celu` nowrap + ellipsis.
-- Safe-area: `--safe-top` / `--safe-bottom`. Topbar sticky opaca (void black), borde inferior, sin que el scroll se meta debajo.
-- Contraste AA. Un solo botón relleno por pantalla (rosa). El resto, ghost outline.
-- Animaciones GSAP cortas, pocas a la vez, solo `transform`/`opacity`. Sin blur ni filtros animados. Respetar `prefers-reduced-motion`. Tienen que andar en celus baratos.
+## Product rules (no se rompen)
+
+- Toda la configuración **antes** de `Empezar`. Nunca adentro de la partida.
+- Local: un solo CTA de pase **Listo, pasá el celu**. `Listos 0/N` solo online.
+- Español rioplatense.
+- Mobile-first **360–414 px**. Entre elementos **4–12 px**. Entre secciones **máximo 24 px**.
+- Cada pantalla de juego: el botón principal visible **sin scrollear**.
+- Botones en **una línea**. Alto mínimo **44 px** (mejor **48**).
+- Contraste AA. Texto blanco **solo** sobre negro o Voltage Violet `#5c4ade`. Texto **negro** sobre azul, menta, lavanda, amarillo y naranja `#fb4903`.
+- Stickers decorativos **solo en la home**. Nunca en partidas. No tapan botones ni texto (`pointer-events: none`).
+- Fuentes empaquetadas con `next/font` (APK offline).
+- GSAP corto (`transform`/`opacity`). `prefers-reduced-motion` → sin animación.
 
 ## Colors
 
-| Name | Hex / value | Token | Use |
+| Name | Hex | Token | Use |
 | --- | --- | --- | --- |
-| Kippo Pink | `#ee1f66` | `--color-kippo-pink` | Primary CTA, accent word, active badges. Rationed. |
-| Void Black | `#000000` | `--color-void-black` | Page canvas, card backgrounds. |
-| Carbon | `#29292a` | `--color-carbon` | Elevated surfaces, secondary panels. |
-| Ash | `#333333` | `--color-ash` | Subtle borders and dividers. |
-| Ghost White | `#ffffff` | `--color-ghost-white` | Hairline borders, type, input outlines. |
-| Sunset Gradient | `linear-gradient(to right, #ffc400, #ff33e0)` | `--color-sunset-gradient` | Decorative only. |
-| Terminal Cyan | `linear-gradient(to right, #33beff, #33ffb8)` | `--color-terminal-cyan` | Decorative only, sparingly. |
+| Carbon | `#000000` | `--color-carbon` | Texto, bordes 1px, CTA relleno. Texto blanco encima. |
+| Paper White | `#ffffff` | `--color-paper` | Canvas y superficies. |
+| Sky Wash | `#dceeff` | `--color-sky` | Fondo hero home. No texto encima en chico. |
+| Concrete Gray | `#cccccc` | `--color-concrete` | Bordes suaves, tracks. |
+| Soft Mist | `#e9e9e9` | `--color-mist` | Disabled, tintes. |
+| Electric Blue | `#4da2ff` | `--color-blue` | Sticker / marca. Texto negro. |
+| Mint Pop | `#55db9c` | `--color-mint` | Sticker. Texto negro. |
+| Lavender | `#e9ccff` | `--color-lavender` | Sticker. Texto negro. |
+| Ember | `#fb4903` | `--color-ember` | Sticker. Texto negro. (Impostor) |
+| Sunburst | `#ffd731` | `--color-sun` | Sticker. Texto negro. Nunca fondo de párrafo largo. |
+| Voltage Violet | `#5c4ade` | `--color-violet` | Sticker, QR. Texto blanco OK. |
 
-Do not invent extra brand colors. Player swatches stay as identity chips, not as a second brand accent.
+Los 6 vivos son **relleno de stickers/cards**, no acentos tímidos. Cada juego tiene un color (`shared/ui/stickers.ts`) en su tarjeta y en su pantalla.
 
 ## Typography
 
-Source Code Pro is the **sole typeface** (substitutes: JetBrains Mono, Fira Code, IBM Plex Mono). Weights 400 / 600 / 700. OpenType `"zero"`.
-
-| Role | Size | Line-height | Tracking | Token |
-| --- | --- | --- | --- | --- |
-| Caption | 10px | 1.2 | 0.08em | `--text-caption` |
-| UI / button | 12px | 1.67 | 0.1em | `--text-ui` |
-| Body | 16px | 1.88 | 0 | `--text-body` |
-| Display | 42px | 1.19 | 0.12–0.5em | `--text-display` |
-
-42px / 700 all-caps tracked = arcade marquee. 16px / 400 = body. Display text is uppercase.
+- **Display:** Bowlby One (sustituto: Antonio). Mayúsculas. En celu **48–72 px** para wordmark y títulos cortos, `line-height: 0.8`. Títulos largos (`¿Quién está más cerca?`) **clamp ~28–48 px**, `line-height: ~0.95` para que las 2 líneas no se pisen.
+- **UI / body:** Inter 500 / 700. Body `-0.01em`. Botones/labels `0.03em`. Features `ss01` + `tnum`.
+- No 200–640 px de display. No más de 2 líneas de título.
 
 ## Spacing & shapes
 
-Density comfortable.
+Escala base **4 px**: 4 / 8 / 12 / 16 / 20 / 24 / 28 / 32.
 
-- Spacing tokens: `--spacing-5/10/15/20/25/30/35/50/100/128/150`
-- Radius: cards **15px**, buttons **10px**, icons **50px**, images **15px**
-- Layout: max-width 1200px (shell mobile 430px), section gap 100px (desktop), card padding **30px** (mobile may drop to **20px**), element gap **15px**
+- Element gap: **8 px** (rango 4–12).
+- Card padding: **16–20 px** en celu.
+- Section gap: **16–24 px** (nunca 48+ en celu).
+- Radios: botones/pills **1600 px** (píldora), cards **20 px**, cards elevadas **40 px**, íconos **16 px**.
 
 ## Components
 
-- **Primary CTA Button:** bg `#ee1f66`, text `#000` (blanco sobre rosa no llega a AA 4.5), Source Code Pro 12px 700, ls 0.1em, uppercase, padding 10px 15px, radius 10px, no border. **Only filled button.** Rosa en texto chico solo si pasa 4.5:1; si no, solo fondo de CTA o display.
-- **Ghost Outline Button:** transparent, border 1px `#fff`, text `#fff`, 12px 700 uppercase ls 0.1em, padding 10px 15px, radius 10px. Secondary actions.
-- **Navigation Link:** `#fff` 12px 700 uppercase ls 0.1em, bottom border 1px transparent, on hover/active `#ee1f66`.
-- **Outlined Card:** bg `#000` or `#29292a`, border 1px `#fff`, radius 15px, padding 30px (20px on 360px), **no shadow, no gradient** — the border IS the card. Dominant pattern.
-- **Press Logo Strip:** no aplica / referencia.
-- **App Store Badge:** no aplica / referencia (~120×40 white on black).
-- **QR Code Block:** white QR on black 1px-bordered square panel, sharp bitmap, no shadow.
-- **Phone Mockup Frame:** no aplica / referencia.
-- **Code-Style Card Stack:** no aplica / referencia (overlapping 15px cards with thin white border).
-- **Code Block / Terminal Snippet:** monospace on `#29292a`, slashed zero, pink accent border. Use for sala codes.
-- **Logo Wordmark:** Source Code Pro 700 all-caps. `LA` white, `PREVIA` pink, ls 0.1–0.2em.
-- **Section Heading Pair:** two-tone display headline — first word white, second word (or the rest) Kippo Pink.
+- **Filled CTA:** fondo negro, texto blanco, 700 13–14 px, **uno por pantalla**, min-height 48, nowrap.
+- **Pill / Ghost:** borde negro 1 px, fondo blanco, texto negro, 700 12–14 px, min-height 48, nowrap.
+- **Game tile:** relleno = color del juego, tinta según regla AA, borde negro 1 px, radio 20.
+- **QR Card** (después del checkpoint): radio 20, fondo `#5c4ade`, panel QR blanco + borde negro, label blanco.
+- **Sticker Decoration (solo home):** blobs recortados, borde negro, rotados, detrás del hero. Nunca grilla. Nunca sobre CTAs.
+- **Logo mark:** círculo con borde negro (opcional junto al wordmark).
 
 ## Motion
 
-GSAP (`gsap` + `@gsap/react`, `useGSAP` with scope and cleanup).
+GSAP + `useGSAP`. Entradas fade (`autoAlpha`) ≤ 200 ms, stagger corto. Press `scale(0.97)`. Sin blur, sin filtros, sin layout. Reduced-motion: duration 0.
 
-- Screen and card entrances: short `y` + `autoAlpha`, stagger capped (few items).
-- Button press: slight `scale`.
-- Role / card reveal, results, timer tick, turn change: one element at a time.
-- Slider de ¿Cuánto es? / ¿Más o menos?: same swipe/nudge API; only the drawing and a cheap scale tick.
-- Wordmark: faint opacity flicker. No blur, no animated filters, no layout props.
-- `prefers-reduced-motion: reduce` → duration 0 / skip.
-- Must run on the static APK export (`build:mobile`).
+## Checkpoint
+
+Aplicado primero a: **home**, **elegir modo**, **lobby local**, **partida del Impostor**. El resto de juegos hereda tokens; no se pule hasta que Luciano apruebe.

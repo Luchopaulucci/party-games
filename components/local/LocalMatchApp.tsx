@@ -151,13 +151,13 @@ export function LocalMatchApp({ gameId }: { gameId: GameId }) {
 
   if (!match) {
     return (
-      <div className="stack">
+      <div className="stack lobby-local">
         <p className="pill">
           {meta.emoji} {meta.name}
         </p>
         <h1>Lobby</h1>
         <p className="lead">
-          Mínimo {minNeeded} jugadores, máximo {MAX_LOCAL_PLAYERS}. El color se asigna solo.
+          Mínimo {minNeeded}, máximo {MAX_LOCAL_PLAYERS}. El color se asigna solo.
         </p>
 
         <div className="card stack">
@@ -167,27 +167,23 @@ export function LocalMatchApp({ gameId }: { gameId: GameId }) {
           {players.map((p) => {
             const taken = players.filter((x) => x.id !== p.id).map((x) => x.color);
             return (
-              <div className="player" key={p.id} style={{ alignItems: "flex-start", flexWrap: "wrap" }}>
-                <span className="swatch" style={{ background: p.color, marginTop: 8 }} />
-                <div className="meta" style={{ flex: 1, gap: 8 }}>
-                  <input
-                    value={p.name}
-                    onChange={(e) =>
-                      setPlayers(players.map((x) => (x.id === p.id ? { ...x, name: e.target.value } : x)))
-                    }
-                    aria-label={`Nombre de ${p.name}`}
-                    style={{ minHeight: 40, background: "transparent", padding: "4px 0" }}
-                  />
-                  <ColorDots
-                    value={p.color}
-                    name={p.name}
-                    taken={taken}
-                    onChange={(color) => setPlayerColor(p.id, color)}
-                  />
-                </div>
+              <div className="player player-row" key={p.id}>
+                <ColorDots
+                  value={p.color}
+                  name={p.name}
+                  taken={taken}
+                  onChange={(color) => setPlayerColor(p.id, color)}
+                />
+                <input
+                  className="player-name-input"
+                  value={p.name}
+                  onChange={(e) =>
+                    setPlayers(players.map((x) => (x.id === p.id ? { ...x, name: e.target.value } : x)))
+                  }
+                  aria-label={`Nombre de ${p.name}`}
+                />
                 <button
-                  className="btn btn-ghost"
-                  style={{ width: "auto", padding: "6px 10px", minHeight: 40 }}
+                  className="btn btn-ghost btn-fuiste"
                   type="button"
                   onClick={() => setPlayers(players.filter((x) => x.id !== p.id))}
                 >
@@ -208,7 +204,7 @@ export function LocalMatchApp({ gameId }: { gameId: GameId }) {
               <input
                 value={draft}
                 onChange={(e) => setDraft(e.target.value)}
-                placeholder="Nombre, apodo, trauma"
+                placeholder="Nombre o apodo"
                 disabled={players.length >= MAX_LOCAL_PLAYERS}
               />
             </label>
@@ -226,10 +222,7 @@ export function LocalMatchApp({ gameId }: { gameId: GameId }) {
               Faltan jugadores para arrancar ({readyPlayers.length}/{minNeeded}).
             </p>
           ) : null}
-        </div>
-
-        {gameUsesCategories(gameId) ? (
-          <div className="card stack">
+          {gameUsesCategories(gameId) ? (
             <CategoryFilters
               selected={categories}
               picante={picante}
@@ -238,10 +231,7 @@ export function LocalMatchApp({ gameId }: { gameId: GameId }) {
               }
               onPicante={() => setPicante((v) => !v)}
             />
-          </div>
-        ) : null}
-
-        <div className="card stack">
+          ) : null}
           <RoomOptions value={options} onChange={setOptions} gameId={gameId} />
           <FxToggle />
         </div>
@@ -262,13 +252,15 @@ export function LocalMatchApp({ gameId }: { gameId: GameId }) {
     return <PassPhone name={currentPlayer.name} color={currentPlayer.color} onReady={() => setUnlocked(currentPlayer.id)} />;
   }
 
+  const impostorPlay = match.gameId === "impostor";
+
   return (
-    <div className="stack">
+    <div className={impostorPlay ? "stack play-fill" : "stack"}>
       <p className="pill">
         <span className="pill-name">
           {playingMeta?.emoji} {playingMeta?.name}
         </span>
-        <span className="pill-mode">Pasando el celu</span>
+        {impostorPlay ? null : <span className="pill-mode">Pasando el celu</span>}
       </p>
 
       <div className="card stack">

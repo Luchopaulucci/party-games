@@ -78,6 +78,55 @@ test.describe("layout márgenes", () => {
         return title.getBoundingClientRect().top - tile.getBoundingClientRect().bottom;
       });
       expect(Math.round(homeGap), "gap Tengo un código → Los juegos").toBeGreaterThanOrEqual(12);
+      const stickerPe = await page.locator("[data-testid='home-stickers']").evaluate((el) => getComputedStyle(el).pointerEvents);
+      expect(stickerPe).toBe("none");
+      const displayFont = await page.locator("h1").evaluate((el) => getComputedStyle(el).fontFamily);
+      expect(displayFont.toLowerCase()).toMatch(/bowlby/);
+      const tileClash = await page.evaluate(() => {
+        const tile = document.querySelector(".game-tile");
+        const emoji = tile?.querySelector(".game-tile-emoji");
+        const title = tile?.querySelector("b");
+        if (!tile || !emoji || !title) return "missing";
+        const a = emoji.getBoundingClientRect();
+        const b = title.getBoundingClientRect();
+        const overlap = a.bottom > b.top + 1;
+        const titleCs = getComputedStyle(title);
+        const lh = parseFloat(titleCs.lineHeight);
+        const fs = parseFloat(titleCs.fontSize);
+        return { overlap, lhRatio: lh / fs, titleH: b.height, lines: b.height / lh };
+      });
+      expect(tileClash).not.toBe("missing");
+      if (typeof tileClash !== "string") {
+        expect(tileClash.overlap, "emoji pega al título").toBe(false);
+        expect(tileClash.lhRatio).toBeGreaterThanOrEqual(0.95);
+      }
+      const whiteOnBright = await page.evaluate(() => {
+        const parse = (c: string) => {
+          const m = c.match(/rgba?\((\d+),\s*(\d+),\s*(\d+)/);
+          return m ? [Number(m[1]), Number(m[2]), Number(m[3])] : [0, 0, 0];
+        };
+        const isWhite = (rgb: number[]) => rgb[0]! > 240 && rgb[1]! > 240 && rgb[2]! > 240;
+        const brights = [
+          [251, 73, 3],
+          [77, 162, 255],
+          [85, 219, 156],
+          [233, 204, 255],
+          [255, 215, 49],
+        ];
+        return [...document.querySelectorAll<HTMLElement>(".game-tile")]
+          .filter((el) => {
+            const bg = parse(getComputedStyle(el).backgroundColor);
+            const fg = parse(getComputedStyle(el).color);
+            return (
+              isWhite(fg) &&
+              brights.some(
+                ([r, g, b]) => Math.abs(r - bg[0]!) < 10 && Math.abs(g - bg[1]!) < 10 && Math.abs(b - bg[2]!) < 10,
+              )
+            );
+          })
+          .map((el) => el.innerText.replace(/\s+/g, " ").trim());
+      });
+      expect(whiteOnBright, "blanco sobre naranja/celeste/verde/lavanda/amarillo").toEqual([]);
       await assertLayout(page);
 
       await page.goto("/online");
@@ -94,6 +143,24 @@ test.describe("layout márgenes", () => {
           return modes.getBoundingClientRect().top - how.getBoundingClientRect().bottom;
         });
         expect(Math.round(modeGap), `gap HowToPlay → modos en ${id}`).toBeGreaterThanOrEqual(12);
+        if (id === "closest") {
+          const metrics = await page.locator("h1").evaluate((el) => {
+            const cs = getComputedStyle(el);
+            return {
+              fontSize: parseFloat(cs.fontSize),
+              lineHeight: parseFloat(cs.lineHeight),
+              height: el.getBoundingClientRect().height,
+            };
+          });
+          expect(metrics.lineHeight / metrics.fontSize).toBeGreaterThanOrEqual(0.9);
+          if (metrics.height / metrics.lineHeight > 1.4) {
+            expect(metrics.height).toBeGreaterThanOrEqual(metrics.fontSize * 1.7);
+          }
+        }
+        const btnHeights = await page.evaluate(() =>
+          [...document.querySelectorAll<HTMLElement>(".btn")].map((el) => el.getBoundingClientRect().height),
+        );
+        expect(Math.min(...btnHeights)).toBeGreaterThanOrEqual(44);
         await assertLayout(page);
       }
 
@@ -101,12 +168,25 @@ test.describe("layout márgenes", () => {
         await page.goto(`/juego/${id}/local`);
         await expect(page.getByRole("heading", { name: "Lobby" })).toBeVisible();
         await expect(page.getByText("pass-and-play", { exact: false })).toHaveCount(0);
+        await expect(page.locator(".color-dots")).toHaveCount(0);
+        const trigger = page.getByTestId("color-picker-trigger").first();
+        await expect(trigger).toBeVisible();
+        const triggerSize = await trigger.evaluate((el) => {
+          const r = el.getBoundingClientRect();
+          return { w: r.width, h: r.height };
+        });
+        expect(triggerSize.w).toBeGreaterThanOrEqual(44);
+        expect(triggerSize.h).toBeGreaterThanOrEqual(44);
+        if (id === "impostor" && vp.width === 375) {
+          const lobbyH = await page.evaluate(() => document.documentElement.scrollHeight);
+          expect(lobbyH, "lobby 4 jugadores ~ una pantalla").toBeLessThanOrEqual(900);
+        }
         await assertLayout(page);
       }
 
       for (const id of ["closest", "votacion", "impostor"] as const) {
         await page.goto(`/juego/${id}/local`);
-        if (id === "impostor") await expect(page.getByText("Timer de ronda")).toBeVisible();
+        if (id === "impostor") await expect(page.getByText("Impostores")).toBeVisible();
         await page.getByRole("button", { name: /Empezar/ }).click();
         const handoff = page.getByTestId("handoff-screen");
         if (await handoff.isVisible()) {
@@ -114,11 +194,21 @@ test.describe("layout márgenes", () => {
           await page.getByTestId("handoff-continue").click();
         }
         await expect(page.getByText("pass-and-play", { exact: false })).toHaveCount(0);
-        await expect(page.locator(".pill-mode")).toHaveText("Pasando el celu");
+        if (id === "impostor") {
+          await expect(page.locator(".pill-mode")).toHaveCount(0);
+        } else {
+          await expect(page.locator(".pill-mode")).toHaveText("Pasando el celu");
+        }
         const pillWraps = await page.locator(".pill").first().evaluate((el) => el.scrollHeight > el.clientHeight + 2);
         expect(pillWraps, `pill partida ${id}`).toBe(false);
         if (id === "impostor") {
           await expect(page.getByText(/Sos impostor|No sos impostor/)).toBeVisible();
+          const secretInk = await page.locator(".secret").evaluate((el) => {
+            const cs = getComputedStyle(el);
+            return { color: cs.color.replace(/\s/g, ""), bg: cs.backgroundColor.replace(/\s/g, "") };
+          });
+          expect(secretInk.color).toMatch(/rgb\(0,0,0\)/);
+          expect(secretInk.bg).toMatch(/rgb\(251,73,3\)/);
           await expect(page.getByRole("button", { name: "Listo, pasá el celu" })).toBeVisible();
           await expect(page.getByText(/Listos:/)).toHaveCount(0);
           await expect(page.getByTestId("clock-preset-30")).toHaveCount(0);

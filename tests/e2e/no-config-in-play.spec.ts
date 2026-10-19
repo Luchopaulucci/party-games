@@ -30,7 +30,11 @@ test.describe("en la partida no se configura nada", () => {
       await expect(page.getByRole("heading", { name: "Lobby" })).toBeVisible();
       await page.getByRole("button", { name: /Empezar/ }).click();
       await dismissHandoff(page);
-      await expect(page.locator(".pill-mode")).toHaveText("Pasando el celu");
+      if (id === "impostor") {
+        await expect(page.locator(".pill-mode")).toHaveCount(0);
+      } else {
+        await expect(page.locator(".pill-mode")).toHaveText("Pasando el celu");
+      }
       await assertNoConfigInPlay(page);
       await assertSingleLocalPassButton(page);
       if (id === "impostor") {

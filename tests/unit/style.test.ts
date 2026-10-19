@@ -20,11 +20,12 @@ describe("tokens de ¿Cuánto es?", () => {
     expect(contrastText("#f5d56a")).toBe("#000000");
   });
 
-  it("blanco y rosa Kippo cumplen AA sobre negro; el CTA usa tinta negra", () => {
+  it("blanco solo sobre negro o violeta; negro sobre naranja y pasteles", () => {
     expect(contrastRatio("#ffffff", "#000000")).toBeGreaterThanOrEqual(4.5);
-    expect(contrastRatio("#ee1f66", "#000000")).toBeGreaterThanOrEqual(4.5);
-    expect(contrastRatio("#000000", "#ee1f66")).toBeGreaterThanOrEqual(4.5);
-    expect(contrastRatio("#ffffff", "#ee1f66")).toBeLessThan(4.5);
+    expect(contrastRatio("#ffffff", "#5c4ade")).toBeGreaterThanOrEqual(4.5);
+    expect(contrastRatio("#000000", "#fb4903")).toBeGreaterThanOrEqual(4.5);
+    expect(contrastRatio("#000000", "#4da2ff")).toBeGreaterThanOrEqual(4.5);
+    expect(contrastRatio("#ffffff", "#fb4903")).toBeLessThan(4.5);
   });
 
   it("arma el titular del reveal", () => {
